@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   getNextRegistroStatuses,
   REGISTRO_STATUS_LABELS,
@@ -14,6 +15,7 @@ import {
 import { changeRegistroStatus } from "@/lib/changeRegistroStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
 
 interface RegistroPanelProps {
   registro: Registro | null;
