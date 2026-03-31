@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, FileText, ChevronRight, Loader2 } from "lucide-react";
+import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
