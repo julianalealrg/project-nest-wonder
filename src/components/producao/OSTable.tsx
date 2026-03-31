@@ -50,7 +50,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-muted-foreground">
+                <td colSpan={9} className="text-center py-12 text-muted-foreground">
                   Nenhuma OS encontrada.
                 </td>
               </tr>
