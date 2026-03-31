@@ -64,13 +64,20 @@ function ProgressBar({ status }: { status: string }) {
 
 export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState("");
   const { profile } = useAuth();
 
   if (!os) return null;
 
   const nextStatuses = getNextStatuses(os.status);
 
-  async function handleStatusChange(newStatus: string) {
+  function handleSelect(newStatus: string) {
+    setPendingStatus(newStatus);
+    setDialogOpen(true);
+  }
+
+  async function handleConfirm(extraFields: Record<string, string>) {
     if (!os) return;
     setLoading(true);
     try {
@@ -78,10 +85,12 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         osId: os.id,
         osCodigo: os.codigo,
         fromStatus: os.status,
-        toStatus: newStatus,
+        toStatus: pendingStatus,
         userName: profile?.nome || "Sistema",
+        extraFields,
       });
-      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[newStatus]}` });
+      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[pendingStatus]}` });
+      setDialogOpen(false);
       onStatusChanged?.();
     } catch (err: any) {
       toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
