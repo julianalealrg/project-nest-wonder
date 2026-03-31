@@ -130,7 +130,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-001", codigo: "OS-2025-0401", cliente: "Construtora Moura Dubeux", cliente_id: "c1",
     ambiente: "Cozinha", material: "Quartzito Taj Mahal", projetista: "Arq. Carla Mendes",
-    supervisor: "Roberto Lima", area_m2: 12.5, data_emissao: daysAgo(15), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 12.5, data_emissao: daysAgo(15), data_entrega: daysAgo(-8),
     status: "cortando", localizacao: "Base 1", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(1),
     pecas: makePecas(6, "concluido", "pendente", "Kelson", null, 3),
@@ -139,7 +139,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-002", codigo: "OS-2025-0398", cliente: "Edifício Paço do Frevo", cliente_id: "c2",
     ambiente: "BWC Suíte", material: "Mármore Branco Paraná", projetista: "Arq. Felipe Torres",
-    supervisor: "Ana Souza", area_m2: 8.2, data_emissao: daysAgo(22), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 8.2, data_emissao: daysAgo(22), data_entrega: daysAgo(-5),
     status: "acabamento", localizacao: "Base 2", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(0),
     pecas: makePecas(4, "concluido", "em_andamento", "Kelson", "Marcelo", 2),
@@ -162,7 +162,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-004", codigo: "OS-2025-0402", cliente: "Construtora Moura Dubeux", cliente_id: "c1",
     ambiente: "Varanda Gourmet", material: "Quartzito Taj Mahal", projetista: "Arq. Carla Mendes",
-    supervisor: "Roberto Lima", area_m2: 18.0, data_emissao: daysAgo(8), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 18.0, data_emissao: daysAgo(8), data_entrega: daysAgo(-20),
     status: "aguardando_chapa", localizacao: "Base 1", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(6),
     pecas: makePecas(8, "pendente", "pendente", null, null, 0),
@@ -171,7 +171,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-005", codigo: "OS-2025-0399", cliente: "Shopping RioMar", cliente_id: "c4",
     ambiente: "Fachada", material: "Granito Cinza Andorinha", projetista: "Arq. Lucas Barros",
-    supervisor: "Ana Souza", area_m2: 45.0, data_emissao: daysAgo(18), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 45.0, data_emissao: daysAgo(18), data_entrega: daysAgo(-2),
     status: "cq", localizacao: "Base 2", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(4),
     pecas: makePecas(12, "concluido", "concluido", "Kelson", "Marcelo", 10),
@@ -181,7 +181,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-006", codigo: "REP-2025-0015", cliente: "Edifício Paço do Frevo", cliente_id: "c2",
     ambiente: "BWC Social", material: "Mármore Branco Paraná", projetista: "Arq. Felipe Torres",
-    supervisor: "Ana Souza", area_m2: 1.2, data_emissao: daysAgo(5), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 1.2, data_emissao: daysAgo(5), data_entrega: daysAgo(-1),
     status: "fila_corte", localizacao: "Base 1", origem: "rep", terceiro: null, pdf_url: null,
     updated_at: daysAgo(3),
     pecas: makePecas(2, "pendente", "pendente", null, null, 0),
@@ -191,7 +191,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-007", codigo: "OS-2025-0396", cliente: "Casa Forte Empreendimentos", cliente_id: "c5",
     ambiente: "Sala Jantar", material: "Nanoglass", projetista: "Arq. Juliana Maia",
-    supervisor: "Roberto Lima", area_m2: 6.8, data_emissao: daysAgo(25), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 6.8, data_emissao: daysAgo(25), data_entrega: daysAgo(-3),
     status: "expedicao", localizacao: "Base 2", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(1),
     pecas: makePecas(5, "concluido", "concluido", "Luiz", "Marcelo", 5),
@@ -200,7 +200,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-008", codigo: "OC-2025-0003", cliente: "Res. Beira Mar", cliente_id: "c3",
     ambiente: "Piscina", material: "Granito Preto São Gabriel", projetista: "Arq. Renata Dias",
-    supervisor: "Roberto Lima", area_m2: 22.0, data_emissao: daysAgo(12), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 22.0, data_emissao: daysAgo(12), data_entrega: daysAgo(-15),
     status: "cortando", localizacao: "Base 1", origem: "oc", terceiro: null, pdf_url: null,
     updated_at: daysAgo(0),
     pecas: makePecas(7, "em_andamento", "pendente", "Kelson", null, 4),
@@ -209,7 +209,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-009", codigo: "OF-2025-0002", cliente: "Shopping RioMar", cliente_id: "c4",
     ambiente: "Hall", material: "Mármore Travertino", projetista: "Arq. Lucas Barros",
-    supervisor: "Ana Souza", area_m2: 15.0, data_emissao: daysAgo(20), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 15.0, data_emissao: daysAgo(20), data_entrega: daysAgo(2),
     status: "terceiros", localizacao: "Trânsito", origem: "of", terceiro: "Marmoraria Aliança", pdf_url: null,
     updated_at: daysAgo(7),
     pecas: makePecas(5, "pendente", "pendente", null, null, 0),
@@ -218,7 +218,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-010", codigo: "OS-2025-0400", cliente: "Cond. Reserva do Paiva", cliente_id: "c6",
     ambiente: "Closet", material: "Quartzo Stellar Branco", projetista: "Arq. Mariana Lins",
-    supervisor: "Roberto Lima", area_m2: 4.5, data_emissao: daysAgo(10), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 4.5, data_emissao: daysAgo(10), data_entrega: daysAgo(-12),
     status: "enviado_base2", localizacao: "Trânsito", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(5),
     pecas: makePecas(4, "concluido", "pendente", "Luiz", null, 4),
