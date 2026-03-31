@@ -1,13 +1,19 @@
-import { X, FileText, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { X, FileText, ChevronRight, Loader2 } from "lucide-react";
 import { MockOS, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
+import { changeOSStatus } from "@/lib/changeOSStatus";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface OSPanelProps {
   os: MockOS | null;
   onClose: () => void;
+  onStatusChanged?: () => void;
 }
 
 function StationBadge({ status }: { status: string }) {
@@ -55,17 +61,33 @@ function ProgressBar({ status }: { status: string }) {
   );
 }
 
-function getNextStatuses(current: string): string[] {
-  const idx = STATUS_MAP[current];
-  if (idx === undefined || idx >= STATUS_STEPS.length - 1) return [];
-  const nextKey = Object.entries(STATUS_MAP).find(([, v]) => v === idx + 1)?.[0];
-  return nextKey ? [nextKey] : [];
-}
+export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
+  const [loading, setLoading] = useState(false);
+  const { profile } = useAuth();
 
-export function OSPanel({ os, onClose }: OSPanelProps) {
   if (!os) return null;
 
   const nextStatuses = getNextStatuses(os.status);
+
+  async function handleStatusChange(newStatus: string) {
+    if (!os) return;
+    setLoading(true);
+    try {
+      await changeOSStatus({
+        osId: os.id,
+        osCodigo: os.codigo,
+        fromStatus: os.status,
+        toStatus: newStatus,
+        userName: profile?.nome || "Sistema",
+      });
+      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[newStatus]}` });
+      onStatusChanged?.();
+    } catch (err: any) {
+      toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -222,12 +244,19 @@ export function OSPanel({ os, onClose }: OSPanelProps) {
             <FileText className="h-4 w-4 mr-1" />
             Gerar PDF
           </Button>
-          {nextStatuses.length > 0 && (
-            <Button size="sm" className="flex-1">
-              {STATUS_LABELS[nextStatuses[0]]}
+          {nextStatuses.map((ns) => (
+            <Button
+              key={ns}
+              size="sm"
+              className="flex-1"
+              disabled={loading}
+              onClick={() => handleStatusChange(ns)}
+            >
+              {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+              {TRANSITION_LABELS[ns]}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
-          )}
+          ))}
         </div>
       </div>
     </>
