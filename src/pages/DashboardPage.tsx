@@ -4,7 +4,9 @@ import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportDashboardExcel } from "@/lib/exportExcel";
 
 export default function DashboardPage() {
   const [origem, setOrigem] = useState("todos");
