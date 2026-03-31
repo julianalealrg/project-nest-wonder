@@ -6,6 +6,7 @@ import { mockOSList, MockOS } from "@/data/mockProducao";
 import { OSFilters } from "@/components/producao/OSFilters";
 import { OSTable } from "@/components/producao/OSTable";
 import { OSPanel } from "@/components/producao/OSPanel";
+import { NovaOSDialog } from "@/components/producao/NovaOSDialog";
 
 export default function Producao() {
   const [search, setSearch] = useState("");
@@ -16,6 +17,7 @@ export default function Producao() {
   const [cortador, setCortador] = useState("todos");
   const [acabador, setAcabador] = useState("todos");
   const [selectedOS, setSelectedOS] = useState<MockOS | null>(null);
+  const [novaOSOpen, setNovaOSOpen] = useState(false);
 
   const clientes = useMemo(() => [...new Set(mockOSList.map((o) => o.cliente))], []);
   const materiais = useMemo(() => [...new Set(mockOSList.map((o) => o.material))], []);
