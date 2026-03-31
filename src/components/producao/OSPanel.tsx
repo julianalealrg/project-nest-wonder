@@ -9,6 +9,7 @@ import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statu
 import { changeOSStatus } from "@/lib/changeOSStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { StatusChangeDialog } from "./StatusChangeDialog";
 
 interface OSPanelProps {
   os: MockOS | null;
@@ -63,13 +64,20 @@ function ProgressBar({ status }: { status: string }) {
 
 export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState("");
   const { profile } = useAuth();
 
   if (!os) return null;
 
   const nextStatuses = getNextStatuses(os.status);
 
-  async function handleStatusChange(newStatus: string) {
+  function handleSelect(newStatus: string) {
+    setPendingStatus(newStatus);
+    setDialogOpen(true);
+  }
+
+  async function handleConfirm(extraFields: Record<string, string>) {
     if (!os) return;
     setLoading(true);
     try {
@@ -77,10 +85,12 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         osId: os.id,
         osCodigo: os.codigo,
         fromStatus: os.status,
-        toStatus: newStatus,
+        toStatus: pendingStatus,
         userName: profile?.nome || "Sistema",
+        extraFields,
       });
-      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[newStatus]}` });
+      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[pendingStatus]}` });
+      setDialogOpen(false);
       onStatusChanged?.();
     } catch (err: any) {
       toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
@@ -250,7 +260,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
               size="sm"
               className="flex-1"
               disabled={loading}
-              onClick={() => handleStatusChange(ns)}
+              onClick={() => handleSelect(ns)}
             >
               {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
               {TRANSITION_LABELS[ns]}
@@ -259,6 +269,16 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           ))}
         </div>
       </div>
+
+      <StatusChangeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        osCodigo={os.codigo}
+        fromStatus={os.status}
+        toStatus={pendingStatus}
+        loading={loading}
+        onConfirm={handleConfirm}
+      />
     </>
   );
 }
