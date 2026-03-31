@@ -1,5 +1,13 @@
+import { useState } from "react";
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, Loader2 } from "lucide-react";
+import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
+import { changeOSStatus } from "@/lib/changeOSStatus";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 function renderEntrega(dataEntrega: string | null, status: string) {
   if (status === "entregue" || !dataEntrega) {
@@ -26,6 +34,7 @@ function renderEntrega(dataEntrega: string | null, status: string) {
 interface OSTableProps {
   data: MockOS[];
   onSelect: (os: MockOS) => void;
+  onStatusChanged?: () => void;
 }
 
 function getOrigemTag(origem: string) {
@@ -51,7 +60,69 @@ function getRowBg(days: number, status: string): string {
   return "";
 }
 
-export function OSTable({ data, onSelect }: OSTableProps) {
+function StatusDropdown({ os, onStatusChanged }: { os: MockOS; onStatusChanged?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { profile } = useAuth();
+  const nextStatuses = getNextStatuses(os.status);
+
+  if (nextStatuses.length === 0) {
+    return (
+      <Badge variant="outline" className="text-xs font-medium">
+        {STATUS_LABELS[os.status] || os.status}
+      </Badge>
+    );
+  }
+
+  async function handleChange(newStatus: string) {
+    setLoading(true);
+    try {
+      await changeOSStatus({
+        osId: os.id,
+        osCodigo: os.codigo,
+        fromStatus: os.status,
+        toStatus: newStatus,
+        userName: profile?.nome || "Sistema",
+      });
+      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[newStatus]}` });
+      setOpen(false);
+      onStatusChanged?.();
+    } catch (err: any) {
+      toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <button className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium text-foreground hover:bg-muted/50 transition-colors">
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+          {STATUS_LABELS[os.status] || os.status}
+          <ChevronDown className="h-3 w-3 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+        <p className="text-[10px] text-muted-foreground px-2 py-1 uppercase tracking-wider">Avançar para</p>
+        {nextStatuses.map((ns) => (
+          <Button
+            key={ns}
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-xs h-8"
+            disabled={loading}
+            onClick={() => handleChange(ns)}
+          >
+            {TRANSITION_LABELS[ns] || ns}
+          </Button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function OSTable({ data, onSelect, onStatusChanged }: OSTableProps) {
   return (
     <div className="bg-card rounded-lg border overflow-hidden">
       <div className="overflow-x-auto">
@@ -109,9 +180,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                       <span className="text-muted-foreground">/{totalPecas}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className="text-xs font-medium">
-                        {STATUS_LABELS[os.status] || os.status}
-                      </Badge>
+                      <StatusDropdown os={os} onStatusChanged={onStatusChanged} />
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                       {os.localizacao}
