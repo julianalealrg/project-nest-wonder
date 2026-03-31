@@ -127,7 +127,7 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                <td colSpan={8} className="text-center py-12 text-muted-foreground">
                   Nenhum registro encontrado.
                 </td>
               </tr>
