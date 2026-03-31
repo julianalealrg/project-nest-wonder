@@ -449,12 +449,13 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b text-muted-foreground">
-                          <th className="text-left py-1.5 px-1 w-12">#</th>
+                         <tr className="border-b text-muted-foreground">
+                          <th className="text-left py-1.5 px-1 w-16">Item</th>
                           <th className="text-left py-1.5 px-1">Descrição</th>
                           <th className="text-left py-1.5 px-1 w-14">Qtd</th>
-                          <th className="text-left py-1.5 px-1 w-20">Comp.</th>
-                          <th className="text-left py-1.5 px-1 w-20">Larg.</th>
+                          <th className="text-left py-1.5 px-1 w-24">Comp. (m)</th>
+                          <th className="text-left py-1.5 px-1 w-24">Larg. (m)</th>
+                          <th className="text-right py-1.5 px-1 w-20">M²</th>
                           <th className="text-center py-1.5 px-1 w-10">45°</th>
                           <th className="text-center py-1.5 px-1 w-10">PB</th>
                           <th className="text-center py-1.5 px-1 w-10">US</th>
