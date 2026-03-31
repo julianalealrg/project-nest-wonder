@@ -141,7 +141,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
   function addPeca(osIdx: number) {
     setOsList((prev) =>
       prev.map((os, i) =>
-        i === osIdx ? { ...os, pecas: [...os.pecas, emptyPeca(os.pecas.length + 1)] } : os
+        i === osIdx ? { ...os, pecas: [...os.pecas, emptyPeca()] } : os
       )
     );
   }
