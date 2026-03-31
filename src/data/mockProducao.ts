@@ -200,7 +200,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-008", codigo: "OC-2025-0003", cliente: "Res. Beira Mar", cliente_id: "c3",
     ambiente: "Piscina", material: "Granito Preto São Gabriel", projetista: "Arq. Renata Dias",
-    supervisor: "Roberto Lima", area_m2: 22.0, data_emissao: daysAgo(12), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 22.0, data_emissao: daysAgo(12), data_entrega: daysAgo(-15),
     status: "cortando", localizacao: "Base 1", origem: "oc", terceiro: null, pdf_url: null,
     updated_at: daysAgo(0),
     pecas: makePecas(7, "em_andamento", "pendente", "Kelson", null, 4),
