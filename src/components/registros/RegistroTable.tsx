@@ -159,8 +159,25 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                   <td className="px-4 py-3">
                     <StatusDropdown registro={reg} onStatusChanged={onStatusChanged} />
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
+                   <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
                     {new Date(reg.created_at).toLocaleDateString("pt-BR")}
+                  </td>
+                  <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => gerarPDFRegistroCompleto(reg)}>
+                          PDF Completo
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => gerarPDFRegistroProducao(reg)}>
+                          PDF Produção
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))
