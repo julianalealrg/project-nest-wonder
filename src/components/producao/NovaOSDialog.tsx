@@ -465,7 +465,14 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                       <tbody>
                         {os.pecas.map((peca, pecaIdx) => (
                           <tr key={pecaIdx} className="border-b last:border-0">
-                            <td className="py-1 px-1 text-muted-foreground">{pecaIdx + 1}</td>
+                            <td className="py-1 px-1">
+                              <Input
+                                value={peca.item}
+                                onChange={(e) => updatePeca(osIdx, pecaIdx, { item: e.target.value })}
+                                placeholder="1.1"
+                                className="h-8 text-xs"
+                              />
+                            </td>
                             <td className="py-1 px-1">
                               <AutocompleteInput
                                 value={peca.descricao}
