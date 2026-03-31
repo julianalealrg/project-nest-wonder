@@ -26,7 +26,7 @@ const TIPOS_SOLICITACAO = [
 
 const SUPERVISORES = ["Gino", "Maurício", "Gustavo"];
 const PROJETISTAS = ["Letícia", "Lucas", "Rebeca", "Izabeli"];
-const PAPEIS_ERRO = ["Medidor", "Montador", "Fornecedor", "Marmoraria", "Projetos", "Cliente"];
+const PAPEIS_ERRO = ["Medidor", "Montador", "Fornecedor", "Produção", "Projetos", "Cliente"];
 
 interface PecaReg {
   item: string;
