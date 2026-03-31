@@ -260,7 +260,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
               size="sm"
               className="flex-1"
               disabled={loading}
-              onClick={() => handleStatusChange(ns)}
+              onClick={() => handleSelect(ns)}
             >
               {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
               {TRANSITION_LABELS[ns]}
@@ -269,6 +269,16 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           ))}
         </div>
       </div>
+
+      <StatusChangeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        osCodigo={os.codigo}
+        fromStatus={os.status}
+        toStatus={pendingStatus}
+        loading={loading}
+        onConfirm={handleConfirm}
+      />
     </>
   );
 }
