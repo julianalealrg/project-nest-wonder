@@ -9,6 +9,7 @@ import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statu
 import { changeOSStatus } from "@/lib/changeOSStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { StatusChangeDialog } from "./StatusChangeDialog";
 
 interface OSPanelProps {
   os: MockOS | null;
