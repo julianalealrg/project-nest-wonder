@@ -191,7 +191,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-007", codigo: "OS-2025-0396", cliente: "Casa Forte Empreendimentos", cliente_id: "c5",
     ambiente: "Sala Jantar", material: "Nanoglass", projetista: "Arq. Juliana Maia",
-    supervisor: "Roberto Lima", area_m2: 6.8, data_emissao: daysAgo(25), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 6.8, data_emissao: daysAgo(25), data_entrega: daysAgo(-3),
     status: "expedicao", localizacao: "Base 2", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(1),
     pecas: makePecas(5, "concluido", "concluido", "Luiz", "Marcelo", 5),
