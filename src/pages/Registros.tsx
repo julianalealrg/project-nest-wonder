@@ -6,6 +6,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { RegistroFilters } from "@/components/registros/RegistroFilters";
 import { RegistroTable } from "@/components/registros/RegistroTable";
 import { RegistroPanel } from "@/components/registros/RegistroPanel";
+import { NovoRegistroDialog } from "@/components/registros/NovoRegistroDialog";
 import { useRegistros, Registro } from "@/hooks/useRegistros";
 
 export default function Registros() {
@@ -19,6 +20,7 @@ export default function Registros() {
   const [projetos, setProjetos] = useState("todos");
   const [recolha, setRecolha] = useState("todos");
   const [selectedRegistro, setSelectedRegistro] = useState<Registro | null>(null);
+  const [novoOpen, setNovoOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: registros = [], isLoading } = useRegistros();
@@ -55,7 +57,7 @@ export default function Registros() {
   return (
     <AppLayout
       title="Registros"
-      action={<Button size="sm"><Plus className="h-4 w-4 mr-1" />Novo Registro</Button>}
+      action={<Button size="sm" onClick={() => setNovoOpen(true)}><Plus className="h-4 w-4 mr-1" />Novo Registro</Button>}
     >
       <div className="space-y-4">
         <RegistroFilters
@@ -83,6 +85,7 @@ export default function Registros() {
       </div>
 
       <RegistroPanel registro={currentSelected} onClose={() => setSelectedRegistro(null)} onStatusChanged={handleRefresh} />
+      <NovoRegistroDialog open={novoOpen} onOpenChange={setNovoOpen} onSuccess={handleRefresh} />
     </AppLayout>
   );
 }
