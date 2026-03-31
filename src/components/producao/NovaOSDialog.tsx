@@ -568,6 +568,19 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                       </tbody>
                     </table>
                   </div>
+                  {(() => {
+                    const totalM2 = os.pecas.reduce((sum, p) => {
+                      if (p.comprimento !== "" && p.largura !== "") {
+                        return sum + Number(p.comprimento) * Number(p.largura) * p.quantidade;
+                      }
+                      return sum;
+                    }, 0);
+                    return totalM2 > 0 ? (
+                      <div className="text-xs font-medium text-right text-foreground">
+                        M² total: {totalM2.toFixed(4)}
+                      </div>
+                    ) : null;
+                  })()}
                   <Button
                     variant="outline"
                     size="sm"
