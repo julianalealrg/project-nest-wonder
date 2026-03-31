@@ -58,9 +58,9 @@ const DEFAULT_AMBIENTES = [
   "Escritório", "Hall", "Garagem", "Piscina", "Adega", "Fachada",
 ];
 
-function emptyPeca(itemNum: number): PecaForm {
+function emptyPeca(): PecaForm {
   return {
-    item: String(itemNum),
+    item: "",
     descricao: "",
     quantidade: 1,
     comprimento: "",
@@ -80,7 +80,7 @@ function emptyOS(): OSForm {
     projetista_outro: "",
     data_entrega: "",
     area_m2: "",
-    pecas: [emptyPeca(1)],
+    pecas: [emptyPeca()],
   };
 }
 
@@ -141,7 +141,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
   function addPeca(osIdx: number) {
     setOsList((prev) =>
       prev.map((os, i) =>
-        i === osIdx ? { ...os, pecas: [...os.pecas, emptyPeca(os.pecas.length + 1)] } : os
+        i === osIdx ? { ...os, pecas: [...os.pecas, emptyPeca()] } : os
       )
     );
   }
@@ -449,12 +449,13 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b text-muted-foreground">
-                          <th className="text-left py-1.5 px-1 w-12">#</th>
+                         <tr className="border-b text-muted-foreground">
+                          <th className="text-left py-1.5 px-1 w-16">Item</th>
                           <th className="text-left py-1.5 px-1">Descrição</th>
                           <th className="text-left py-1.5 px-1 w-14">Qtd</th>
-                          <th className="text-left py-1.5 px-1 w-20">Comp.</th>
-                          <th className="text-left py-1.5 px-1 w-20">Larg.</th>
+                          <th className="text-left py-1.5 px-1 w-24">Comp. (m)</th>
+                          <th className="text-left py-1.5 px-1 w-24">Larg. (m)</th>
+                          <th className="text-right py-1.5 px-1 w-20">M²</th>
                           <th className="text-center py-1.5 px-1 w-10">45°</th>
                           <th className="text-center py-1.5 px-1 w-10">PB</th>
                           <th className="text-center py-1.5 px-1 w-10">US</th>
@@ -464,7 +465,14 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                       <tbody>
                         {os.pecas.map((peca, pecaIdx) => (
                           <tr key={pecaIdx} className="border-b last:border-0">
-                            <td className="py-1 px-1 text-muted-foreground">{pecaIdx + 1}</td>
+                            <td className="py-1 px-1">
+                              <Input
+                                value={peca.item}
+                                onChange={(e) => updatePeca(osIdx, pecaIdx, { item: e.target.value })}
+                                placeholder="1.1"
+                                className="h-8 text-xs"
+                              />
+                            </td>
                             <td className="py-1 px-1">
                               <AutocompleteInput
                                 value={peca.descricao}
@@ -489,28 +497,35 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                             <td className="py-1 px-1">
                               <Input
                                 type="number"
+                                step="0.0001"
                                 value={peca.comprimento}
                                 onChange={(e) =>
                                   updatePeca(osIdx, pecaIdx, {
                                     comprimento: e.target.value === "" ? "" : Number(e.target.value),
                                   })
                                 }
-                                placeholder="mm"
+                                placeholder="1.9400"
                                 className="h-8 text-xs"
                               />
                             </td>
                             <td className="py-1 px-1">
                               <Input
                                 type="number"
+                                step="0.0001"
                                 value={peca.largura}
                                 onChange={(e) =>
                                   updatePeca(osIdx, pecaIdx, {
                                     largura: e.target.value === "" ? "" : Number(e.target.value),
                                   })
                                 }
-                                placeholder="mm"
+                                placeholder="0.3700"
                                 className="h-8 text-xs"
                               />
+                            </td>
+                            <td className="py-1 px-1 text-right text-xs text-muted-foreground">
+                              {peca.comprimento !== "" && peca.largura !== "" 
+                                ? (Number(peca.comprimento) * Number(peca.largura) * peca.quantidade).toFixed(4)
+                                : "—"}
                             </td>
                             <td className="py-1 px-1 text-center">
                               <Checkbox
@@ -553,6 +568,19 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                       </tbody>
                     </table>
                   </div>
+                  {(() => {
+                    const totalM2 = os.pecas.reduce((sum, p) => {
+                      if (p.comprimento !== "" && p.largura !== "") {
+                        return sum + Number(p.comprimento) * Number(p.largura) * p.quantidade;
+                      }
+                      return sum;
+                    }, 0);
+                    return totalM2 > 0 ? (
+                      <div className="text-xs font-medium text-right text-foreground">
+                        M² total: {totalM2.toFixed(4)}
+                      </div>
+                    ) : null;
+                  })()}
                   <Button
                     variant="outline"
                     size="sm"
