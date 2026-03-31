@@ -68,10 +68,10 @@ export default function Producao() {
           {filtered.length} ordem{filtered.length !== 1 ? "ns" : ""} encontrada{filtered.length !== 1 ? "s" : ""}
         </div>
 
-        <OSTable data={filtered} onSelect={setSelectedOS} />
+        <OSTable data={filtered} onSelect={setSelectedOS} onStatusChanged={() => {}} />
       </div>
 
-      <OSPanel os={selectedOS} onClose={() => setSelectedOS(null)} />
+      <OSPanel os={selectedOS} onClose={() => setSelectedOS(null)} onStatusChanged={() => setSelectedOS(null)} />
       <NovaOSDialog open={novaOSOpen} onOpenChange={setNovaOSOpen} />
     </AppLayout>
   );
