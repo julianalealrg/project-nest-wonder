@@ -235,7 +235,7 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
 
         {/* Footer */}
         <div className="border-t px-5 py-3 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => gerarPDFRomaneio(romaneio)}>
             <FileText className="h-4 w-4 mr-1" /> Gerar PDF
           </Button>
           {canDepart && (

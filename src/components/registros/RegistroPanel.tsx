@@ -253,10 +253,22 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
 
         {/* Footer */}
         <div className="border-t px-5 py-3 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
-            <FileText className="h-4 w-4 mr-1" />
-            Gerar PDF
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex-1">
+                <FileText className="h-4 w-4 mr-1" />
+                Gerar PDF
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => gerarPDFRegistroCompleto(registro)}>
+                PDF Completo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => gerarPDFRegistroProducao(registro)}>
+                PDF Produção
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {nextStatuses.map((ns) => (
             <Button
               key={ns}

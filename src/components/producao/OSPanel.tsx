@@ -251,7 +251,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
 
         {/* Footer actions */}
         <div className="border-t px-5 py-3 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => gerarPDFOS(os)}>
             <FileText className="h-4 w-4 mr-1" />
             Gerar PDF
           </Button>
