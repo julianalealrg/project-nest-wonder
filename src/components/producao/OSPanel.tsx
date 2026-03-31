@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, FileText, ChevronRight, Loader2 } from "lucide-react";
+import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -250,7 +251,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
 
         {/* Footer actions */}
         <div className="border-t px-5 py-3 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => gerarPDFOS(os)}>
             <FileText className="h-4 w-4 mr-1" />
             Gerar PDF
           </Button>

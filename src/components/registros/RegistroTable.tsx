@@ -3,7 +3,9 @@ import { Registro } from "@/hooks/useRegistros";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
 import {
   getNextRegistroStatuses,
   REGISTRO_STATUS_LABELS,
@@ -119,12 +121,13 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
               <th className="text-center px-4 py-3 font-medium text-muted-foreground">Urgência</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Data</th>
+              <th className="w-10 px-2 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                <td colSpan={8} className="text-center py-12 text-muted-foreground">
                   Nenhum registro encontrado.
                 </td>
               </tr>
@@ -156,8 +159,25 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                   <td className="px-4 py-3">
                     <StatusDropdown registro={reg} onStatusChanged={onStatusChanged} />
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
+                   <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
                     {new Date(reg.created_at).toLocaleDateString("pt-BR")}
+                  </td>
+                  <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => gerarPDFRegistroCompleto(reg)}>
+                          PDF Completo
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => gerarPDFRegistroProducao(reg)}>
+                          PDF Produção
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))

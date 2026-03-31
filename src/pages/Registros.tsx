@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Download } from "lucide-react";
+import { exportRegistrosExcel } from "@/lib/exportExcel";
 import { RegistroFilters } from "@/components/registros/RegistroFilters";
 import { RegistroTable } from "@/components/registros/RegistroTable";
 import { RegistroPanel } from "@/components/registros/RegistroPanel";
@@ -57,7 +58,12 @@ export default function Registros() {
   return (
     <AppLayout
       title="Registros"
-      action={<Button size="sm" onClick={() => setNovoOpen(true)}><Plus className="h-4 w-4 mr-1" />Novo Registro</Button>}
+      action={
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportRegistrosExcel(filtered)}><Download className="h-4 w-4 mr-1" />Exportar</Button>
+          <Button size="sm" onClick={() => setNovoOpen(true)}><Plus className="h-4 w-4 mr-1" />Novo Registro</Button>
+        </div>
+      }
     >
       <div className="space-y-4">
         <RegistroFilters

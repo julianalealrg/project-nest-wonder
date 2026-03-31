@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Download } from "lucide-react";
+import { exportProducaoExcel } from "@/lib/exportExcel";
 import { MockOS } from "@/data/mockProducao";
 import { OSFilters } from "@/components/producao/OSFilters";
 import { OSTable } from "@/components/producao/OSTable";
@@ -64,7 +65,12 @@ export default function Producao() {
   return (
     <AppLayout
       title="Produção"
-      action={<Button size="sm" onClick={() => setNovaOSOpen(true)}><Plus className="h-4 w-4 mr-1" />Nova OS</Button>}
+      action={
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportProducaoExcel(filtered)}><Download className="h-4 w-4 mr-1" />Exportar</Button>
+          <Button size="sm" onClick={() => setNovaOSOpen(true)}><Plus className="h-4 w-4 mr-1" />Nova OS</Button>
+        </div>
+      }
     >
       <div className="space-y-4">
         <OSFilters

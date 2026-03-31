@@ -4,7 +4,9 @@ import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportDashboardExcel } from "@/lib/exportExcel";
 
 export default function DashboardPage() {
   const [origem, setOrigem] = useState("todos");
@@ -17,7 +19,14 @@ export default function DashboardPage() {
   const { isLoading, kpis, charts } = useDashboardData(filters);
 
   return (
-    <AppLayout title="Dashboard">
+    <AppLayout
+      title="Dashboard"
+      action={
+        <Button size="sm" variant="outline" onClick={() => exportDashboardExcel(charts)} disabled={isLoading}>
+          <Download className="h-4 w-4 mr-1" />Exportar
+        </Button>
+      }
+    >
       <div className="space-y-6">
         <DashboardFilters
           origem={origem} onOrigemChange={setOrigem}
