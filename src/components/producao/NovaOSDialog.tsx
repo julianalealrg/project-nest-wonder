@@ -58,9 +58,9 @@ const DEFAULT_AMBIENTES = [
   "Escritório", "Hall", "Garagem", "Piscina", "Adega", "Fachada",
 ];
 
-function emptyPeca(itemNum: number): PecaForm {
+function emptyPeca(): PecaForm {
   return {
-    item: String(itemNum),
+    item: "",
     descricao: "",
     quantidade: 1,
     comprimento: "",
