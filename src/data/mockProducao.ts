@@ -218,7 +218,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-010", codigo: "OS-2025-0400", cliente: "Cond. Reserva do Paiva", cliente_id: "c6",
     ambiente: "Closet", material: "Quartzo Stellar Branco", projetista: "Arq. Mariana Lins",
-    supervisor: "Roberto Lima", area_m2: 4.5, data_emissao: daysAgo(10), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 4.5, data_emissao: daysAgo(10), data_entrega: daysAgo(-12),
     status: "enviado_base2", localizacao: "Trânsito", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(5),
     pecas: makePecas(4, "concluido", "pendente", "Luiz", null, 4),
