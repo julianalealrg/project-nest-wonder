@@ -80,7 +80,7 @@ function emptyOS(): OSForm {
     projetista_outro: "",
     data_entrega: "",
     area_m2: "",
-    pecas: [emptyPeca(1)],
+    pecas: [emptyPeca()],
   };
 }
 
