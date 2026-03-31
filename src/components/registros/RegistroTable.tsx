@@ -121,6 +121,7 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
               <th className="text-center px-4 py-3 font-medium text-muted-foreground">Urgência</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Data</th>
+              <th className="w-10 px-2 py-3"></th>
             </tr>
           </thead>
           <tbody>
