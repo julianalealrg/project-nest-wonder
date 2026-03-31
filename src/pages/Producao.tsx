@@ -49,7 +49,7 @@ export default function Producao() {
   return (
     <AppLayout
       title="Produção"
-      action={<Button size="sm"><Plus className="h-4 w-4 mr-1" />Nova OS</Button>}
+      action={<Button size="sm" onClick={() => setNovaOSOpen(true)}><Plus className="h-4 w-4 mr-1" />Nova OS</Button>}
     >
       <div className="space-y-4">
         <OSFilters
