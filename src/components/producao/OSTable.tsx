@@ -94,6 +94,9 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                       {os.localizacao}
                     </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      {renderEntrega(os.data_entrega, os.status)}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       {days >= 5 ? (
                         <span className="text-destructive font-semibold">{days}d</span>
