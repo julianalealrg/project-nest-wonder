@@ -72,6 +72,7 @@ export default function Producao() {
       </div>
 
       <OSPanel os={selectedOS} onClose={() => setSelectedOS(null)} />
+      <NovaOSDialog open={novaOSOpen} onOpenChange={setNovaOSOpen} />
     </AppLayout>
   );
 }
