@@ -43,6 +43,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
               <th className="text-center px-4 py-3 font-medium text-muted-foreground">Peças</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Local</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Entrega</th>
               <th className="text-center px-4 py-3 font-medium text-muted-foreground">Dias</th>
             </tr>
           </thead>
