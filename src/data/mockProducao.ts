@@ -181,7 +181,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-006", codigo: "REP-2025-0015", cliente: "Edifício Paço do Frevo", cliente_id: "c2",
     ambiente: "BWC Social", material: "Mármore Branco Paraná", projetista: "Arq. Felipe Torres",
-    supervisor: "Ana Souza", area_m2: 1.2, data_emissao: daysAgo(5), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 1.2, data_emissao: daysAgo(5), data_entrega: daysAgo(-1),
     status: "fila_corte", localizacao: "Base 1", origem: "rep", terceiro: null, pdf_url: null,
     updated_at: daysAgo(3),
     pecas: makePecas(2, "pendente", "pendente", null, null, 0),
