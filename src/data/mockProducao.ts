@@ -171,7 +171,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-005", codigo: "OS-2025-0399", cliente: "Shopping RioMar", cliente_id: "c4",
     ambiente: "Fachada", material: "Granito Cinza Andorinha", projetista: "Arq. Lucas Barros",
-    supervisor: "Ana Souza", area_m2: 45.0, data_emissao: daysAgo(18), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 45.0, data_emissao: daysAgo(18), data_entrega: daysAgo(-2),
     status: "cq", localizacao: "Base 2", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(4),
     pecas: makePecas(12, "concluido", "concluido", "Kelson", "Marcelo", 10),
