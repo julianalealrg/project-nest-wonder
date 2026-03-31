@@ -1,6 +1,28 @@
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 
+function renderEntrega(dataEntrega: string | null, status: string) {
+  if (status === "entregue" || !dataEntrega) {
+    return dataEntrega
+      ? <span className="text-muted-foreground text-xs">{new Date(dataEntrega).toLocaleDateString("pt-BR")}</span>
+      : <span className="text-muted-foreground text-xs">—</span>;
+  }
+  const diff = Math.ceil((new Date(dataEntrega).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  const formatted = new Date(dataEntrega).toLocaleDateString("pt-BR");
+  if (diff < 0) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">{formatted}</span>
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-destructive text-destructive-foreground">Atrasado</span>
+      </div>
+    );
+  }
+  if (diff <= 10) {
+    return <span className="text-xs text-destructive font-medium">{formatted}</span>;
+  }
+  return <span className="text-xs text-muted-foreground">{formatted}</span>;
+}
+
 interface OSTableProps {
   data: MockOS[];
   onSelect: (os: MockOS) => void;
