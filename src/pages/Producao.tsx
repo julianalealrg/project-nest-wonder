@@ -65,7 +65,12 @@ export default function Producao() {
   return (
     <AppLayout
       title="Produção"
-      action={<Button size="sm" onClick={() => setNovaOSOpen(true)}><Plus className="h-4 w-4 mr-1" />Nova OS</Button>}
+      action={
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportProducaoExcel(filtered)}><Download className="h-4 w-4 mr-1" />Exportar</Button>
+          <Button size="sm" onClick={() => setNovaOSOpen(true)}><Plus className="h-4 w-4 mr-1" />Nova OS</Button>
+        </div>
+      }
     >
       <div className="space-y-4">
         <OSFilters

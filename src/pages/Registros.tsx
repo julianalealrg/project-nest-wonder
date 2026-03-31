@@ -58,7 +58,12 @@ export default function Registros() {
   return (
     <AppLayout
       title="Registros"
-      action={<Button size="sm" onClick={() => setNovoOpen(true)}><Plus className="h-4 w-4 mr-1" />Novo Registro</Button>}
+      action={
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportRegistrosExcel(filtered)}><Download className="h-4 w-4 mr-1" />Exportar</Button>
+          <Button size="sm" onClick={() => setNovoOpen(true)}><Plus className="h-4 w-4 mr-1" />Novo Registro</Button>
+        </div>
+      }
     >
       <div className="space-y-4">
         <RegistroFilters

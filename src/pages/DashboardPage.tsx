@@ -19,7 +19,14 @@ export default function DashboardPage() {
   const { isLoading, kpis, charts } = useDashboardData(filters);
 
   return (
-    <AppLayout title="Dashboard">
+    <AppLayout
+      title="Dashboard"
+      action={
+        <Button size="sm" variant="outline" onClick={() => exportDashboardExcel(charts)} disabled={isLoading}>
+          <Download className="h-4 w-4 mr-1" />Exportar
+        </Button>
+      }
+    >
       <div className="space-y-6">
         <DashboardFilters
           origem={origem} onOrigemChange={setOrigem}
