@@ -497,28 +497,35 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                             <td className="py-1 px-1">
                               <Input
                                 type="number"
+                                step="0.0001"
                                 value={peca.comprimento}
                                 onChange={(e) =>
                                   updatePeca(osIdx, pecaIdx, {
                                     comprimento: e.target.value === "" ? "" : Number(e.target.value),
                                   })
                                 }
-                                placeholder="mm"
+                                placeholder="1.9400"
                                 className="h-8 text-xs"
                               />
                             </td>
                             <td className="py-1 px-1">
                               <Input
                                 type="number"
+                                step="0.0001"
                                 value={peca.largura}
                                 onChange={(e) =>
                                   updatePeca(osIdx, pecaIdx, {
                                     largura: e.target.value === "" ? "" : Number(e.target.value),
                                   })
                                 }
-                                placeholder="mm"
+                                placeholder="0.3700"
                                 className="h-8 text-xs"
                               />
+                            </td>
+                            <td className="py-1 px-1 text-right text-xs text-muted-foreground">
+                              {peca.comprimento !== "" && peca.largura !== "" 
+                                ? (Number(peca.comprimento) * Number(peca.largura) * peca.quantidade).toFixed(4)
+                                : "—"}
                             </td>
                             <td className="py-1 px-1 text-center">
                               <Checkbox
