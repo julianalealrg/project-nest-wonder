@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
+import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
 import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
