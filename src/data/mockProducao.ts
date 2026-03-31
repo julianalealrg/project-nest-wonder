@@ -130,7 +130,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-001", codigo: "OS-2025-0401", cliente: "Construtora Moura Dubeux", cliente_id: "c1",
     ambiente: "Cozinha", material: "Quartzito Taj Mahal", projetista: "Arq. Carla Mendes",
-    supervisor: "Roberto Lima", area_m2: 12.5, data_emissao: daysAgo(15), data_entrega: null,
+    supervisor: "Roberto Lima", area_m2: 12.5, data_emissao: daysAgo(15), data_entrega: daysAgo(-8),
     status: "cortando", localizacao: "Base 1", origem: "os", terceiro: null, pdf_url: null,
     updated_at: daysAgo(1),
     pecas: makePecas(6, "concluido", "pendente", "Kelson", null, 3),
