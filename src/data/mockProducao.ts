@@ -209,7 +209,7 @@ export const mockOSList: MockOS[] = [
   {
     id: "os-009", codigo: "OF-2025-0002", cliente: "Shopping RioMar", cliente_id: "c4",
     ambiente: "Hall", material: "Mármore Travertino", projetista: "Arq. Lucas Barros",
-    supervisor: "Ana Souza", area_m2: 15.0, data_emissao: daysAgo(20), data_entrega: null,
+    supervisor: "Ana Souza", area_m2: 15.0, data_emissao: daysAgo(20), data_entrega: daysAgo(2),
     status: "terceiros", localizacao: "Trânsito", origem: "of", terceiro: "Marmoraria Aliança", pdf_url: null,
     updated_at: daysAgo(7),
     pecas: makePecas(5, "pendente", "pendente", null, null, 0),
