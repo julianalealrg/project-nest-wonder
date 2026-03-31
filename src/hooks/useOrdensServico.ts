@@ -1,0 +1,130 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { MockOS, MockPeca } from "@/data/mockProducao";
+
+async function fetchOrdensServico(): Promise<MockOS[]> {
+  // Fetch OS with client join
+  const { data: osList, error: osError } = await supabase
+    .from("ordens_servico")
+    .select(`
+      *,
+      clientes ( nome, supervisor, contato, endereco )
+    `)
+    .order("created_at", { ascending: false });
+
+  if (osError) throw osError;
+  if (!osList || osList.length === 0) return [];
+
+  const osIds = osList.map((os) => os.id);
+
+  // Fetch pecas, romaneios, registros in parallel
+  const [pecasRes, romaneiosRes, registrosRes] = await Promise.all([
+    supabase.from("pecas").select("*").in("os_id", osIds),
+    supabase
+      .from("romaneio_pecas")
+      .select("romaneio_id, os_id, romaneios ( codigo, tipo_rota, status, data_saida )")
+      .in("os_id", osIds),
+    supabase.from("registros").select("codigo, tipo, status, urgencia, os_id").in("os_id", osIds),
+  ]);
+
+  // Group pecas by os_id
+  const pecasByOs = new Map<string, MockPeca[]>();
+  for (const p of pecasRes.data || []) {
+    const list = pecasByOs.get(p.os_id) || [];
+    list.push({
+      id: p.id,
+      item: p.item || "",
+      descricao: p.descricao || "",
+      quantidade: p.quantidade,
+      comprimento: p.comprimento ?? 0,
+      largura: p.largura ?? 0,
+      precisa_45: p.precisa_45 ?? false,
+      precisa_poliborda: p.precisa_poliborda ?? false,
+      precisa_usinagem: p.precisa_usinagem ?? false,
+      status_corte: p.status_corte || "pendente",
+      cortador: p.cortador,
+      status_45: p.status_45 || "pendente",
+      operador_45: p.operador_45,
+      status_poliborda: p.status_poliborda || "pendente",
+      operador_poliborda: p.operador_poliborda,
+      status_usinagem: p.status_usinagem || "pendente",
+      operador_usinagem: p.operador_usinagem,
+      status_acabamento: p.status_acabamento || "pendente",
+      acabador: p.acabador,
+      cabine: p.cabine,
+      status_cq: p.status_cq || "pendente",
+      cq_aprovado: p.cq_aprovado,
+      cq_responsavel: p.cq_responsavel,
+      cq_observacao: p.cq_observacao,
+    });
+    pecasByOs.set(p.os_id, list);
+  }
+
+  // Group romaneios by os_id (deduplicate by romaneio_id)
+  const romaneiosByOs = new Map<string, { codigo: string; tipo_rota: string; status: string; data_saida: string | null }[]>();
+  const seenRomaneios = new Set<string>();
+  for (const rp of romaneiosRes.data || []) {
+    if (!rp.os_id || !rp.romaneios || seenRomaneios.has(`${rp.os_id}-${rp.romaneio_id}`)) continue;
+    seenRomaneios.add(`${rp.os_id}-${rp.romaneio_id}`);
+    const rom = rp.romaneios as any;
+    const list = romaneiosByOs.get(rp.os_id) || [];
+    list.push({
+      codigo: rom.codigo,
+      tipo_rota: rom.tipo_rota,
+      status: rom.status,
+      data_saida: rom.data_saida,
+    });
+    romaneiosByOs.set(rp.os_id, list);
+  }
+
+  // Group registros by os_id
+  const registrosByOs = new Map<string, { codigo: string; tipo: string; status: string; urgencia: string }[]>();
+  for (const r of registrosRes.data || []) {
+    if (!r.os_id) continue;
+    const list = registrosByOs.get(r.os_id) || [];
+    list.push({ codigo: r.codigo, tipo: r.tipo || "", status: r.status, urgencia: r.urgencia });
+    registrosByOs.set(r.os_id, list);
+  }
+
+  // Detect origem from codigo prefix
+  function detectOrigem(codigo: string): "os" | "rep" | "oc" | "of" {
+    const upper = codigo.toUpperCase();
+    if (upper.startsWith("REP")) return "rep";
+    if (upper.startsWith("OC")) return "oc";
+    if (upper.startsWith("OF")) return "of";
+    return "os";
+  }
+
+  return osList.map((os) => {
+    const cliente = os.clientes as any;
+    return {
+      id: os.id,
+      codigo: os.codigo,
+      cliente: cliente?.nome || "—",
+      cliente_id: os.cliente_id || "",
+      ambiente: os.ambiente || "",
+      material: os.material || "",
+      projetista: os.projetista || "",
+      supervisor: cliente?.supervisor || "",
+      area_m2: Number(os.area_m2) || 0,
+      data_emissao: os.data_emissao || os.created_at,
+      data_entrega: os.data_entrega,
+      status: os.status,
+      localizacao: os.localizacao || "",
+      origem: detectOrigem(os.codigo),
+      terceiro: null,
+      pdf_url: os.pdf_url,
+      updated_at: os.updated_at,
+      pecas: pecasByOs.get(os.id) || [],
+      romaneios: romaneiosByOs.get(os.id) || [],
+      registros: registrosByOs.get(os.id) || [],
+    } as MockOS;
+  });
+}
+
+export function useOrdensServico() {
+  return useQuery({
+    queryKey: ["ordens_servico"],
+    queryFn: fetchOrdensServico,
+  });
+}

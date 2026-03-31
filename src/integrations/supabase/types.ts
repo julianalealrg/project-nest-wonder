@@ -118,6 +118,7 @@ export type Database = {
           id: string
           localizacao: string | null
           material: string | null
+          origem: string
           pdf_url: string | null
           projetista: string | null
           status: string
@@ -135,6 +136,7 @@ export type Database = {
           id?: string
           localizacao?: string | null
           material?: string | null
+          origem?: string
           pdf_url?: string | null
           projetista?: string | null
           status?: string
@@ -152,6 +154,7 @@ export type Database = {
           id?: string
           localizacao?: string | null
           material?: string | null
+          origem?: string
           pdf_url?: string | null
           projetista?: string | null
           status?: string

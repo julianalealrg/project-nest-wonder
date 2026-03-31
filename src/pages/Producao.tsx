@@ -1,12 +1,14 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { mockOSList, MockOS } from "@/data/mockProducao";
+import { Plus, Loader2 } from "lucide-react";
+import { MockOS } from "@/data/mockProducao";
 import { OSFilters } from "@/components/producao/OSFilters";
 import { OSTable } from "@/components/producao/OSTable";
 import { OSPanel } from "@/components/producao/OSPanel";
 import { NovaOSDialog } from "@/components/producao/NovaOSDialog";
+import { useOrdensServico } from "@/hooks/useOrdensServico";
 
 export default function Producao() {
   const [search, setSearch] = useState("");
@@ -19,21 +21,30 @@ export default function Producao() {
   const [selectedOS, setSelectedOS] = useState<MockOS | null>(null);
   const [novaOSOpen, setNovaOSOpen] = useState(false);
 
-  const clientes = useMemo(() => [...new Set(mockOSList.map((o) => o.cliente))], []);
-  const materiais = useMemo(() => [...new Set(mockOSList.map((o) => o.material))], []);
+  const queryClient = useQueryClient();
+  const { data: osList = [], isLoading } = useOrdensServico();
+
+  const clientes = useMemo(() => [...new Set(osList.map((o) => o.cliente))], [osList]);
+  const materiais = useMemo(() => [...new Set(osList.map((o) => o.material).filter(Boolean))], [osList]);
   const cortadores = useMemo(() => {
     const set = new Set<string>();
-    mockOSList.forEach((o) => o.pecas.forEach((p) => p.cortador && set.add(p.cortador)));
+    osList.forEach((o) => o.pecas.forEach((p) => p.cortador && set.add(p.cortador)));
     return [...set];
-  }, []);
+  }, [osList]);
   const acabadores = useMemo(() => {
     const set = new Set<string>();
-    mockOSList.forEach((o) => o.pecas.forEach((p) => p.acabador && set.add(p.acabador)));
+    osList.forEach((o) => o.pecas.forEach((p) => p.acabador && set.add(p.acabador)));
     return [...set];
-  }, []);
+  }, [osList]);
+
+  // Keep selectedOS in sync with fresh data
+  const currentSelectedOS = useMemo(() => {
+    if (!selectedOS) return null;
+    return osList.find((os) => os.id === selectedOS.id) || null;
+  }, [selectedOS, osList]);
 
   const filtered = useMemo(() => {
-    return mockOSList.filter((os) => {
+    return osList.filter((os) => {
       const q = search.toLowerCase();
       if (q && !os.codigo.toLowerCase().includes(q) && !os.cliente.toLowerCase().includes(q)) return false;
       if (localizacao !== "todos" && os.localizacao !== localizacao) return false;
@@ -44,7 +55,11 @@ export default function Producao() {
       if (acabador !== "todos" && !os.pecas.some((p) => p.acabador === acabador)) return false;
       return true;
     });
-  }, [search, localizacao, status, cliente, material, cortador, acabador]);
+  }, [osList, search, localizacao, status, cliente, material, cortador, acabador]);
+
+  function handleRefresh() {
+    queryClient.invalidateQueries({ queryKey: ["ordens_servico"] });
+  }
 
   return (
     <AppLayout
@@ -65,14 +80,18 @@ export default function Producao() {
         />
 
         <div className="text-xs text-muted-foreground">
-          {filtered.length} ordem{filtered.length !== 1 ? "ns" : ""} encontrada{filtered.length !== 1 ? "s" : ""}
+          {isLoading ? (
+            <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</span>
+          ) : (
+            `${filtered.length} ordem${filtered.length !== 1 ? "ns" : ""} encontrada${filtered.length !== 1 ? "s" : ""}`
+          )}
         </div>
 
-        <OSTable data={filtered} onSelect={setSelectedOS} onStatusChanged={() => {}} />
+        <OSTable data={filtered} onSelect={setSelectedOS} onStatusChanged={handleRefresh} />
       </div>
 
-      <OSPanel os={selectedOS} onClose={() => setSelectedOS(null)} onStatusChanged={() => setSelectedOS(null)} />
-      <NovaOSDialog open={novaOSOpen} onOpenChange={setNovaOSOpen} />
+      <OSPanel os={currentSelectedOS} onClose={() => setSelectedOS(null)} onStatusChanged={handleRefresh} />
+      <NovaOSDialog open={novaOSOpen} onOpenChange={setNovaOSOpen} onSuccess={handleRefresh} />
     </AppLayout>
   );
 }
