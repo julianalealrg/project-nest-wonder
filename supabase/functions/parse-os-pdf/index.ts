@@ -21,37 +21,31 @@ serve(async (req) => {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
     const systemPrompt = `You are a data extraction assistant for a marble/stone fabrication company (NUE Projetos, Recife, Brazil).
-You receive PDF images of work orders (Ordem de Serviço / OS).
+You receive PDF images of work orders (Ordem de Serviço / OS) with a standardized layout.
 
-Extract the following structured data from the PDF:
+CABEÇALHO (fixed position fields at the top of the page):
+- "Cód:" → codigo: the OS code (e.g. "0229/26-8/R00")
+- "Cliente:" → cliente: client name
+- "Material:" → material: material type and thickness
+- "Ambiente:" → ambiente: room/environment
+- "Supervisor:" → supervisor: supervisor name
+- "Projetista:" → projetista: designer name
+- "Data de Emissão:" → data_emissao: issue date in DD/MM/AAAA format, convert to YYYY-MM-DD
+- "Data de Entrega:" → data_entrega: delivery date in DD/MM/AAAA format, convert to YYYY-MM-DD. If "IMEDIATO", set to null
+- "Área (m²):" → area_m2: total area in m² (number)
 
-HEADER fields:
-- codigo: the OS code/number (e.g. "OS-2025-0042", "42", etc.)
-- cliente: client name
-- material: stone/material type (e.g. "Quartzito Taj Mahal", "Granito Preto São Gabriel")
-- ambiente: room/environment (e.g. "Cozinha", "BWC Suíte")
-- supervisor: supervisor name
-- projetista: designer name
-- data_emissao: issue date (format YYYY-MM-DD)
-- data_entrega: delivery date (format YYYY-MM-DD)
-- area_m2: total area in m² (number)
+LISTA DE PEÇAS (usually in the lower part of the page):
+Standard format: "NÚMERO — [QUANTIDADE X] DESCRIÇÃO COMPRIMENTO X LARGURA"
 
-PIECES list (array of objects):
-Each piece has:
-- item: item number (e.g. "1.1", "1.2", "2.1")
-- descricao: description (e.g. "Bancada", "Testeira", "Soleira")
-- quantidade: quantity (default 1, look for "2X", "3X" etc.)
-- comprimento: length in meters (e.g. 1.9400)
-- largura: width in meters (e.g. 0.3700)
-
-The piece list format is typically:
-"1.1 — BANCADA 1.9400 X 0.3700"
-"1.2 — 2X TESTEIRA 0.3700 X 0.0300"
+Examples:
+- "1.1 — BALCÃO 1,446 X 0,608" → item "1.1", quantidade 1, descricao "Balcão", comprimento 1.446, largura 0.608
+- "1.2 — 2X ENCABEÇAMENTO 1,47 X 0,03" → item "1.2", quantidade 2, descricao "Encabeçamento", comprimento 1.47, largura 0.03
 
 Rules:
+- Convert commas to dots for decimal numbers (1,446 → 1.446)
+- If quantity is not specified, assume 1
 - If you can't read a field, set it to null
-- Quantities like "2X" mean 2 pieces
-- Dimensions are in meters with up to 4 decimal places
+- Capitalize descriptions properly (BALCÃO → Balcão)
 - Return ONLY valid JSON, no markdown`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
