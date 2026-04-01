@@ -34,11 +34,11 @@ export interface Romaneio {
 }
 
 export const ROTA_LABELS: Record<string, string> = {
-  base1_base2: "B1 → B2",
-  base2_cliente: "B2 → Cliente",
-  base1_cliente: "B1 → Cliente",
-  base2_base1: "B2 → B1",
-  recolha: "Recolha",
+  base1_base2: "Base 1 → Base 2",
+  base2_cliente: "Base 2 → Cliente",
+  base1_cliente: "Base 1 → Cliente",
+  base2_base1: "Base 2 → Base 1",
+  recolha: "Recolha — Obra → Base 1",
 };
 
 export const ROMANEIO_STATUS_LABELS: Record<string, string> = {

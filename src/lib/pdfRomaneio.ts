@@ -112,23 +112,40 @@ export function gerarPDFRomaneio(romaneio: Romaneio) {
 
   // Signatures
   const pageH = doc.internal.pageSize.getHeight();
-  const sigY = Math.max(y + 15, pageH - 50);
+  const sigY = Math.max(y + 15, pageH - 70);
 
   doc.setDrawColor(180);
-  doc.line(14, sigY, 95, sigY);
   doc.setFontSize(8);
   doc.setTextColor(100);
   doc.setFont("Montserrat", "normal");
-  doc.text("Assinatura — Entregou", 54, sigY + 5, { align: "center" });
 
+  // Entregou
+  doc.line(14, sigY, 95, sigY);
+  doc.text("Assinatura — Entregou", 54, sigY + 5, { align: "center" });
+  doc.line(14, sigY + 14, 95, sigY + 14);
+  doc.text("Nome", 54, sigY + 19, { align: "center" });
+  doc.line(14, sigY + 28, 95, sigY + 28);
+  doc.text("Documento", 54, sigY + 33, { align: "center" });
+
+  // Recebeu
   doc.line(115, sigY, 196, sigY);
   doc.text("Assinatura — Recebeu", 155, sigY + 5, { align: "center" });
+  doc.line(115, sigY + 14, 196, sigY + 14);
+  doc.text("Nome", 155, sigY + 19, { align: "center" });
+  doc.line(115, sigY + 28, 196, sigY + 28);
+  doc.text("Documento", 155, sigY + 33, { align: "center" });
 
-  const sigY2 = sigY + 16;
-  doc.line(14, sigY2, 95, sigY2);
-  doc.text("Nome", 54, sigY2 + 5, { align: "center" });
-  doc.line(115, sigY2, 196, sigY2);
-  doc.text("Documento", 155, sigY2 + 5, { align: "center" });
+  // Cláusula de perfeito estado (apenas rotas para cliente)
+  if (isToCliente) {
+    const clauseY = sigY + 42;
+    doc.setDrawColor(200);
+    doc.line(14, clauseY, 196, clauseY);
+    doc.setFontSize(8);
+    doc.setFont("Montserrat", "italic");
+    const clause = "Declaro que recebi os materiais acima em perfeito estado de conservação, sem avarias, lascas, trincas ou danos aparentes. Conferi os itens e estão de acordo com o contratado.";
+    const lines = doc.splitTextToSize(clause, 180);
+    doc.text(lines, 14, clauseY + 5);
+  }
 
   doc.save(`${romaneio.codigo}.pdf`);
 }
