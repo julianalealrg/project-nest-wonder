@@ -53,15 +53,15 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-4">
-        <div className="text-sm font-medium text-sidebar-foreground truncate">
+        <div className="text-sm font-medium text-[#F0EDE8] truncate">
           {profile?.nome || "Usuário"}
         </div>
-        <div className="text-xs text-sidebar-muted mt-0.5 capitalize">
+        <div className="text-xs text-[#F0EDE8]/50 mt-0.5 capitalize">
           {profile?.perfil || "—"} • {profile?.base || "—"}
         </div>
         <button
           onClick={signOut}
-          className="flex items-center gap-2 mt-3 text-xs text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+          className="flex items-center gap-2 mt-3 text-xs text-[#F0EDE8]/60 hover:text-white transition-colors"
         >
           <LogOut className="h-3.5 w-3.5" />
           Sair
