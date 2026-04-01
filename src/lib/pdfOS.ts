@@ -1,27 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { MockOS } from "@/data/mockProducao";
+import { setupPdfDoc, addPdfHeader } from "@/lib/pdfSetup";
 
 export function gerarPDFOS(os: MockOS) {
   const doc = new jsPDF();
+  setupPdfDoc(doc);
+  addPdfHeader(doc, os.codigo);
 
-  // Header
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("NUE PROJETOS", 14, 18);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(100);
-  doc.text("Marmoraria Premium — Recife/PE", 14, 24);
-  doc.setTextColor(0);
-
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(os.codigo, 196, 18, { align: "right" });
-  doc.setDrawColor(200);
-  doc.line(14, 28, 196, 28);
-
-  let y = 36;
+  let y = 40;
 
   // Info
   const items: [string, string][] = [
@@ -41,7 +28,7 @@ export function gerarPDFOS(os: MockOS) {
     const cy = y + row * 12;
     doc.setFontSize(8);
     doc.setTextColor(120);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.text(label, x, cy);
     doc.setFontSize(10);
     doc.setTextColor(0);
@@ -54,7 +41,7 @@ export function gerarPDFOS(os: MockOS) {
   doc.line(14, y, 196, y);
   y += 6;
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Montserrat", "bold");
   doc.text(`Peças (${os.pecas.length})`, 14, y);
   y += 4;
 
@@ -71,7 +58,7 @@ export function gerarPDFOS(os: MockOS) {
       p.precisa_poliborda ? "Sim" : "—",
       p.precisa_usinagem ? "Sim" : "—",
     ]),
-    styles: { fontSize: 8, cellPadding: 2 },
+    styles: { fontSize: 8, cellPadding: 2, font: "Montserrat" },
     headStyles: { fillColor: [240, 237, 232], textColor: [13, 13, 13], fontStyle: "bold" },
     theme: "grid",
     margin: { left: 14, right: 14 },
