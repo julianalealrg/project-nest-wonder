@@ -83,7 +83,7 @@ export default function Index() {
             className="bg-card rounded-lg border p-5 hover:shadow-md transition-shadow group animate-fade-in"
           >
             <div className="flex items-center gap-3 mb-2">
-              <mod.icon className="h-5 w-5 text-secondary group-hover:text-foreground transition-colors" />
+              <mod.icon className="h-5 w-5" style={{ color: mod.color }} />
               <span className="font-medium text-foreground">{mod.title}</span>
             </div>
             <p className="text-sm text-muted-foreground">{mod.description}</p>
