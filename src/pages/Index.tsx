@@ -1,14 +1,38 @@
-import { Factory, Truck, FileText, BarChart3, Settings, Wrench, AlertTriangle, CheckCircle2, ClipboardList } from "lucide-react";
+import { Factory, Truck, FileText, BarChart3, Settings, Wrench, AlertTriangle, CheckCircle2, ClipboardList, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { differenceInDays, startOfMonth } from "date-fns";
 
-const kpis = [
-  { label: "OS em Produção", value: "—", icon: Factory, color: "text-foreground" },
-  { label: "Registros Abertos", value: "—", icon: ClipboardList, color: "text-foreground" },
-  { label: "Alertas Inatividade", value: "—", icon: AlertTriangle, color: "text-destructive" },
-  { label: "OS Entregues (mês)", value: "—", icon: CheckCircle2, color: "text-foreground" },
-];
+function useHomeKPIs() {
+  return useQuery({
+    queryKey: ["home-kpis"],
+    queryFn: async () => {
+      const [osRes, regRes] = await Promise.all([
+        supabase.from("ordens_servico").select("id, status, updated_at"),
+        supabase.from("registros").select("id, status"),
+      ]);
+
+      const ordens = osRes.data || [];
+      const registros = regRes.data || [];
+      const now = new Date();
+      const mesInicio = startOfMonth(now);
+
+      const osEmProducao = ordens.filter((o) => o.status !== "Entregue").length;
+      const registrosAbertos = registros.filter((r) => r.status === "aberto").length;
+      const alertasInatividade = ordens.filter(
+        (o) => o.status !== "Entregue" && differenceInDays(now, new Date(o.updated_at)) >= 3
+      ).length;
+      const osEntreguesMes = ordens.filter(
+        (o) => o.status === "Entregue" && new Date(o.updated_at) >= mesInicio
+      ).length;
+
+      return { osEmProducao, registrosAbertos, alertasInatividade, osEntreguesMes };
+    },
+  });
+}
 
 const modules = [
   { title: "Produção", description: "OS, peças e estações", url: "/producao", icon: Factory },
@@ -23,6 +47,14 @@ export default function Index() {
   const { profile } = useAuth();
   const isAdmin = profile?.perfil === "admin";
   const visibleModules = modules.filter((m) => !m.adminOnly || isAdmin);
+  const { data: kpiData, isLoading } = useHomeKPIs();
+
+  const kpis = [
+    { label: "OS em Produção", value: isLoading ? "…" : kpiData?.osEmProducao ?? 0, icon: Factory, color: "text-foreground" },
+    { label: "Registros Abertos", value: isLoading ? "…" : kpiData?.registrosAbertos ?? 0, icon: ClipboardList, color: "text-foreground" },
+    { label: "Alertas Inatividade", value: isLoading ? "…" : kpiData?.alertasInatividade ?? 0, icon: AlertTriangle, color: "text-destructive" },
+    { label: "OS Entregues (mês)", value: isLoading ? "…" : kpiData?.osEntreguesMes ?? 0, icon: CheckCircle2, color: "text-foreground" },
+  ];
 
   return (
     <AppLayout title="Início">

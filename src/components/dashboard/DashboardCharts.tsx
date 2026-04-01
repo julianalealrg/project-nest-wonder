@@ -4,7 +4,31 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 
-const COLORS = ["#0D0D0D", "#3D3D38", "#8B8680", "#CCC8C2", "#A59D94", "#6B6560"];
+const URGENCIA_COLORS: Record<string, string> = {
+  alta: "#C0392B",
+  Alta: "#C0392B",
+  media: "#D4A017",
+  Média: "#D4A017",
+  média: "#D4A017",
+  baixa: "#27AE60",
+  Baixa: "#27AE60",
+  critica: "#8B0000",
+  Crítica: "#8B0000",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  "Aguardando Chapa": "#95A5A6",
+  "Fila de Corte": "#D4A017",
+  "Cortando": "#E67E22",
+  "Enviado Base 2": "#2980B9",
+  "Em Acabamento": "#8E44AD",
+  "CQ": "#1ABC9C",
+  "Expedição": "#27AE60",
+  "Entregue": "#2ECC71",
+  "Terceiros": "#7F8C8D",
+};
+
+const FALLBACK_COLORS = ["#3D3D38", "#2980B9", "#8E44AD", "#C0392B", "#27AE60", "#D4A017"];
 
 interface Props {
   rankingTipo: { name: string; value: number }[];
@@ -52,8 +76,8 @@ export function DashboardCharts({ rankingTipo, tendenciaSemanal, porSupervisor, 
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="criados" stroke="#0D0D0D" strokeWidth={2} dot={{ r: 3 }} />
-            <Line type="monotone" dataKey="resolvidos" stroke="#8B8680" strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="criados" stroke="#C0392B" strokeWidth={2} dot={{ r: 3 }} name="Criados" />
+            <Line type="monotone" dataKey="resolvidos" stroke="#27AE60" strokeWidth={2} dot={{ r: 3 }} name="Resolvidos" />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -66,7 +90,7 @@ export function DashboardCharts({ rankingTipo, tendenciaSemanal, porSupervisor, 
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="#3D3D38" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="value" fill="#2980B9" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -79,7 +103,7 @@ export function DashboardCharts({ rankingTipo, tendenciaSemanal, porSupervisor, 
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="#0D0D0D" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="value" fill="#8E44AD" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -93,8 +117,8 @@ export function DashboardCharts({ rankingTipo, tendenciaSemanal, porSupervisor, 
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend />
-            <Bar dataKey="finalizadas" fill="#3D3D38" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="quebras" fill="#CCC8C2" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="finalizadas" fill="#27AE60" radius={[4, 4, 0, 0]} name="Finalizadas" />
+            <Bar dataKey="quebras" fill="#C0392B" radius={[4, 4, 0, 0]} name="Quebras" />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -104,7 +128,9 @@ export function DashboardCharts({ rankingTipo, tendenciaSemanal, porSupervisor, 
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={porUrgencia} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-              {porUrgencia.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              {porUrgencia.map((entry, i) => (
+                <Cell key={i} fill={URGENCIA_COLORS[entry.name] || FALLBACK_COLORS[i % FALLBACK_COLORS.length]} />
+              ))}
             </Pie>
             <Tooltip />
           </PieChart>
@@ -116,7 +142,9 @@ export function DashboardCharts({ rankingTipo, tendenciaSemanal, porSupervisor, 
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={osPorStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-              {osPorStatus.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              {osPorStatus.map((entry, i) => (
+                <Cell key={i} fill={STATUS_COLORS[entry.name] || FALLBACK_COLORS[i % FALLBACK_COLORS.length]} />
+              ))}
             </Pie>
             <Tooltip />
           </PieChart>
