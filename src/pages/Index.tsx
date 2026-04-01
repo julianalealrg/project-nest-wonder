@@ -63,7 +63,7 @@ export default function Index() {
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-card rounded-lg border p-4 animate-fade-in">
             <div className="flex items-center gap-3">
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+              <kpi.icon className="h-5 w-5" style={{ color: kpi.color }} />
               <span className="text-sm text-muted-foreground">{kpi.label}</span>
             </div>
             <div className="text-2xl font-semibold text-foreground mt-2">{kpi.value}</div>
