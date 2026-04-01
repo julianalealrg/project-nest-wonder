@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logoNue from "@/assets/logo-nue.png";
+import logoNue from "@/assets/logo-nue-v1.svg";
 
 export default function Login() {
   const { signIn } = useAuth();

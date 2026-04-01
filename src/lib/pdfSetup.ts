@@ -20,7 +20,7 @@ export function setupPdfDoc(doc: jsPDF) {
 }
 
 export function addPdfHeader(doc: jsPDF, rightText?: string) {
-  // Logo
+  // Logo image
   doc.addImage(NUE_LOGO, "PNG", 14, 8, 40, 16);
 
   // Subtitle

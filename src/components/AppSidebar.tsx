@@ -1,7 +1,7 @@
 import { Home, Factory, Truck, FileText, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import logoNue from "@/assets/logo-nue.png";
+import logoNue from "@/assets/logo-nue-v1.svg";
 import { useState } from "react";
 
 const menuItems = [
