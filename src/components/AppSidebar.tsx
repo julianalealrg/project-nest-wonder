@@ -40,8 +40,8 @@ export function AppSidebar() {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  ? "bg-[#F0EDE8] text-[#0D0D0D]"
+                  : "text-[#F0EDE8]/70 hover:bg-sidebar-accent/50 hover:text-white"
               }`}
             >
               <item.icon className="h-4 w-4" />
