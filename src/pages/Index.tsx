@@ -50,10 +50,10 @@ export default function Index() {
   const { data: kpiData, isLoading } = useHomeKPIs();
 
   const kpis = [
-    { label: "OS em Produção", value: isLoading ? "…" : kpiData?.osEmProducao ?? 0, icon: Factory, color: "text-foreground" },
-    { label: "Registros Abertos", value: isLoading ? "…" : kpiData?.registrosAbertos ?? 0, icon: ClipboardList, color: "text-foreground" },
-    { label: "Alertas Inatividade", value: isLoading ? "…" : kpiData?.alertasInatividade ?? 0, icon: AlertTriangle, color: "text-destructive" },
-    { label: "OS Entregues (mês)", value: isLoading ? "…" : kpiData?.osEntreguesMes ?? 0, icon: CheckCircle2, color: "text-foreground" },
+    { label: "OS em Produção", value: isLoading ? "…" : kpiData?.osEmProducao ?? 0, icon: Factory, color: "#2980B9" },
+    { label: "Registros Abertos", value: isLoading ? "…" : kpiData?.registrosAbertos ?? 0, icon: ClipboardList, color: "#C0392B" },
+    { label: "Alertas Inatividade", value: isLoading ? "…" : kpiData?.alertasInatividade ?? 0, icon: AlertTriangle, color: "#D4A017" },
+    { label: "OS Entregues (mês)", value: isLoading ? "…" : kpiData?.osEntreguesMes ?? 0, icon: CheckCircle2, color: "#27AE60" },
   ];
 
   return (
