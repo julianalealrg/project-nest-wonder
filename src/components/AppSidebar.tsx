@@ -40,8 +40,8 @@ export function AppSidebar() {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  ? "bg-[#F0EDE8] text-[#0D0D0D]"
+                  : "text-[#F0EDE8]/70 hover:bg-sidebar-accent/50 hover:text-white"
               }`}
             >
               <item.icon className="h-4 w-4" />
@@ -53,15 +53,15 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-4">
-        <div className="text-sm font-medium text-sidebar-foreground truncate">
+        <div className="text-sm font-medium text-[#F0EDE8] truncate">
           {profile?.nome || "Usuário"}
         </div>
-        <div className="text-xs text-sidebar-muted mt-0.5 capitalize">
+        <div className="text-xs text-[#F0EDE8]/50 mt-0.5 capitalize">
           {profile?.perfil || "—"} • {profile?.base || "—"}
         </div>
         <button
           onClick={signOut}
-          className="flex items-center gap-2 mt-3 text-xs text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+          className="flex items-center gap-2 mt-3 text-xs text-[#F0EDE8]/60 hover:text-white transition-colors"
         >
           <LogOut className="h-3.5 w-3.5" />
           Sair
