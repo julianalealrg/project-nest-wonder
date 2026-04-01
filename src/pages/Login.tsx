@@ -28,7 +28,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-10">
-          <img src={logoNue} alt="NUE Projetos" className="h-16 w-auto" />
+          <img src={logoNue} alt="NUE Projetos" className="h-12 w-auto" />
         </div>
 
         <div className="bg-card rounded-lg border p-6 shadow-sm">
