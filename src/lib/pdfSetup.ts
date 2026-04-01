@@ -21,7 +21,10 @@ export function setupPdfDoc(doc: jsPDF) {
 
 export function addPdfHeader(doc: jsPDF, rightText?: string) {
   // Logo image
-  doc.addImage(NUE_LOGO, "PNG", 14, 8, 40, 16);
+  // Logo with correct aspect ratio (1920x1080 = 16:9)
+  const logoH = 12; // mm
+  const logoW = logoH * (1920 / 1080); // keep aspect ratio
+  doc.addImage(NUE_LOGO, "PNG", 14, 8, logoW, logoH);
 
   // Subtitle
   doc.setFontSize(9);

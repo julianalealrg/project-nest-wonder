@@ -26,7 +26,7 @@ export function AppSidebar() {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="flex items-center justify-center py-8 px-4">
-        <img src={logoNue} alt="NUE Projetos" className="h-12 w-auto invert" />
+        <img src={logoNue} alt="NUE Projetos" className="h-10 w-auto invert" />
       </div>
 
       {/* Nav */}
