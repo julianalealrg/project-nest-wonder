@@ -35,12 +35,12 @@ function useHomeKPIs() {
 }
 
 const modules = [
-  { title: "Produção", description: "OS, peças e estações", url: "/producao", icon: Factory },
-  { title: "Logística", description: "Romaneios e expedições", url: "/logistica", icon: Truck },
-  { title: "Registros", description: "Ocorrências e reposições", url: "/registros", icon: FileText },
-  { title: "Dashboard", description: "Indicadores e analytics", url: "/dashboard", icon: BarChart3 },
-  { title: "Admin", description: "Relatórios e configurações", url: "/admin", icon: Settings, adminOnly: true },
-  { title: "Configurações", description: "Listas e parâmetros", url: "/admin/configuracoes", icon: Wrench, adminOnly: true },
+  { title: "Produção", description: "OS, peças e estações", url: "/producao", icon: Factory, color: "#2980B9" },
+  { title: "Logística", description: "Romaneios e expedições", url: "/logistica", icon: Truck, color: "#27AE60" },
+  { title: "Registros", description: "Ocorrências e reposições", url: "/registros", icon: FileText, color: "#C0392B" },
+  { title: "Dashboard", description: "Indicadores e analytics", url: "/dashboard", icon: BarChart3, color: "#8E44AD" },
+  { title: "Admin", description: "Relatórios e configurações", url: "/admin", icon: Settings, adminOnly: true, color: "#3D3D38" },
+  { title: "Configurações", description: "Listas e parâmetros", url: "/admin/configuracoes", icon: Wrench, adminOnly: true, color: "#D4A017" },
 ];
 
 export default function Index() {
@@ -50,10 +50,10 @@ export default function Index() {
   const { data: kpiData, isLoading } = useHomeKPIs();
 
   const kpis = [
-    { label: "OS em Produção", value: isLoading ? "…" : kpiData?.osEmProducao ?? 0, icon: Factory, color: "text-foreground" },
-    { label: "Registros Abertos", value: isLoading ? "…" : kpiData?.registrosAbertos ?? 0, icon: ClipboardList, color: "text-foreground" },
-    { label: "Alertas Inatividade", value: isLoading ? "…" : kpiData?.alertasInatividade ?? 0, icon: AlertTriangle, color: "text-destructive" },
-    { label: "OS Entregues (mês)", value: isLoading ? "…" : kpiData?.osEntreguesMes ?? 0, icon: CheckCircle2, color: "text-foreground" },
+    { label: "OS em Produção", value: isLoading ? "…" : kpiData?.osEmProducao ?? 0, icon: Factory, color: "#2980B9" },
+    { label: "Registros Abertos", value: isLoading ? "…" : kpiData?.registrosAbertos ?? 0, icon: ClipboardList, color: "#C0392B" },
+    { label: "Alertas Inatividade", value: isLoading ? "…" : kpiData?.alertasInatividade ?? 0, icon: AlertTriangle, color: "#D4A017" },
+    { label: "OS Entregues (mês)", value: isLoading ? "…" : kpiData?.osEntreguesMes ?? 0, icon: CheckCircle2, color: "#27AE60" },
   ];
 
   return (
@@ -63,7 +63,7 @@ export default function Index() {
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-card rounded-lg border p-4 animate-fade-in">
             <div className="flex items-center gap-3">
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+              <kpi.icon className="h-5 w-5" style={{ color: kpi.color }} />
               <span className="text-sm text-muted-foreground">{kpi.label}</span>
             </div>
             <div className="text-2xl font-semibold text-foreground mt-2">{kpi.value}</div>
@@ -83,7 +83,7 @@ export default function Index() {
             className="bg-card rounded-lg border p-5 hover:shadow-md transition-shadow group animate-fade-in"
           >
             <div className="flex items-center gap-3 mb-2">
-              <mod.icon className="h-5 w-5 text-secondary group-hover:text-foreground transition-colors" />
+              <mod.icon className="h-5 w-5" style={{ color: mod.color }} />
               <span className="font-medium text-foreground">{mod.title}</span>
             </div>
             <p className="text-sm text-muted-foreground">{mod.description}</p>
