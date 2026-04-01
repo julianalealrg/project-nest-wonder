@@ -35,12 +35,12 @@ function useHomeKPIs() {
 }
 
 const modules = [
-  { title: "Produção", description: "OS, peças e estações", url: "/producao", icon: Factory },
-  { title: "Logística", description: "Romaneios e expedições", url: "/logistica", icon: Truck },
-  { title: "Registros", description: "Ocorrências e reposições", url: "/registros", icon: FileText },
-  { title: "Dashboard", description: "Indicadores e analytics", url: "/dashboard", icon: BarChart3 },
-  { title: "Admin", description: "Relatórios e configurações", url: "/admin", icon: Settings, adminOnly: true },
-  { title: "Configurações", description: "Listas e parâmetros", url: "/admin/configuracoes", icon: Wrench, adminOnly: true },
+  { title: "Produção", description: "OS, peças e estações", url: "/producao", icon: Factory, color: "#2980B9" },
+  { title: "Logística", description: "Romaneios e expedições", url: "/logistica", icon: Truck, color: "#27AE60" },
+  { title: "Registros", description: "Ocorrências e reposições", url: "/registros", icon: FileText, color: "#C0392B" },
+  { title: "Dashboard", description: "Indicadores e analytics", url: "/dashboard", icon: BarChart3, color: "#8E44AD" },
+  { title: "Admin", description: "Relatórios e configurações", url: "/admin", icon: Settings, adminOnly: true, color: "#3D3D38" },
+  { title: "Configurações", description: "Listas e parâmetros", url: "/admin/configuracoes", icon: Wrench, adminOnly: true, color: "#D4A017" },
 ];
 
 export default function Index() {
