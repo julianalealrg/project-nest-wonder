@@ -13,8 +13,8 @@ export function AppLayout({ children, title, action }: AppLayoutProps) {
       <AppSidebar />
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Topbar */}
-        <header className="flex items-center justify-between px-6 lg:px-8 py-4 border-b bg-card">
-          <h1 className="text-lg font-semibold text-foreground pl-12 lg:pl-0">{title}</h1>
+        <header className="flex items-center justify-between px-6 lg:px-8 py-4 border-b border-[#CCC8C2] bg-[#F0EDE8]">
+          <h1 className="text-lg font-bold text-[#0D0D0D] pl-12 lg:pl-0">{title}</h1>
           {action && <div>{action}</div>}
         </header>
 
