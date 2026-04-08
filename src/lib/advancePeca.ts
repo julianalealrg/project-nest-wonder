@@ -52,7 +52,7 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
       break;
   }
 
-  const { error } = await supabase.from("pecas").update(update).eq("id", pecaId);
+  const { error } = await supabase.from("pecas").update(update as any).eq("id", pecaId);
   if (error) throw error;
 
   const stationLabels: Record<string, string> = {

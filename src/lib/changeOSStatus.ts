@@ -27,7 +27,7 @@ export async function changeOSStatus({ osId, osCodigo, fromStatus, toStatus, use
 
   const { error } = await supabase
     .from("ordens_servico")
-    .update(osUpdate)
+    .update(osUpdate as any)
     .eq("id", osId);
 
   if (error) throw error;
@@ -45,7 +45,7 @@ export async function changeOSStatus({ osId, osCodigo, fromStatus, toStatus, use
   if (Object.keys(pecaUpdate).length > 0) {
     const { error: pecaError } = await supabase
       .from("pecas")
-      .update(pecaUpdate)
+      .update(pecaUpdate as any)
       .eq("os_id", osId);
     if (pecaError) throw pecaError;
   }
