@@ -294,18 +294,18 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                     </a>
                   </div>
                   <div className="rounded-md border border-border overflow-hidden bg-muted/30">
-                    <object
-                      data={`${os.pdf_url}#toolbar=0&navpanes=0`}
-                      type="application/pdf"
-                      className="w-full h-[480px]"
-                    >
-                      <div className="p-4 text-[13px] text-muted-foreground text-center">
-                        Não foi possível exibir o PDF.{" "}
-                        <a href={os.pdf_url} target="_blank" rel="noopener noreferrer" className="text-foreground underline">
-                          Clique aqui para abrir
-                        </a>
-                      </div>
-                    </object>
+                    <iframe
+                      src={`${os.pdf_url}#toolbar=0&navpanes=0`}
+                      title="PDF da OS"
+                      className="w-full h-[480px] block"
+                    />
+                  </div>
+                  <div className="mt-2 text-[11px] text-muted-foreground">
+                    Se o PDF não aparecer acima,{" "}
+                    <a href={os.pdf_url} target="_blank" rel="noopener noreferrer" className="text-foreground underline">
+                      clique aqui para abrir em nova aba
+                    </a>
+                    .
                   </div>
                 </div>
               </>

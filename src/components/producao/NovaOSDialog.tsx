@@ -324,8 +324,12 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
   );
 
   async function uploadPdfToStorage(osId: string, file: File): Promise<string | null> {
-    const path = `os-pdfs/${osId}/${file.name}`;
-    const { error } = await supabase.storage.from("evidencias").upload(path, file, { upsert: true });
+    const safeName = file.name.replace(/[^\w.\-]/g, "_");
+    const path = `os-pdfs/${osId}/${safeName}`;
+    const { error } = await supabase.storage.from("evidencias").upload(path, file, {
+      upsert: true,
+      contentType: "application/pdf",
+    });
     if (error) {
       console.error("PDF upload error:", error);
       return null;
