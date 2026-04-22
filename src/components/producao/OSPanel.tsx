@@ -123,7 +123,7 @@ function PdfPreview({ pdfUrl, codigo }: { pdfUrl: string; codigo: string }) {
         canvas.style.width = "100%";
         canvas.style.height = "auto";
 
-        const renderTask = page.render({ canvasContext: context, viewport });
+        const renderTask = page.render({ canvas, canvasContext: context, viewport });
         renderTaskRef.current = renderTask as unknown as { cancel: () => void; promise?: Promise<unknown> };
         await renderTask.promise;
         await pdf.destroy();
