@@ -20,6 +20,17 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Fetch the PDF and convert to base64 data URL (Gemini requires data URL for PDFs)
+    const pdfResp = await fetch(pdfUrl);
+    if (!pdfResp.ok) throw new Error(`Failed to fetch PDF: ${pdfResp.status}`);
+    const pdfBytes = new Uint8Array(await pdfResp.arrayBuffer());
+    const CHUNK = 8192;
+    let binary = "";
+    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length)));
+    }
+    const pdfDataUrl = `data:application/pdf;base64,${btoa(binary)}`;
+
     const systemPrompt = `You are a data extraction assistant for a marble/stone fabrication company (NUE Projetos, Recife, Brazil).
 You receive PDFs of work orders (Ordem de Serviço / OS) with a standardized layout.
 
