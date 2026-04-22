@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, FileText, ChevronRight, Loader2, Play } from "lucide-react";
+import { X, FileText, ChevronRight, Loader2, Play, ExternalLink } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
@@ -274,6 +274,42 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                 <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-full bg-muted" /> N/A</span>
               </div>
             </div>
+
+            {/* PDF Importado */}
+            {os.pdf_url && (
+              <>
+                <Separator />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                      PDF da OS
+                    </h3>
+                    <a
+                      href={os.pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-foreground hover:underline flex items-center gap-1"
+                    >
+                      Abrir em nova aba <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div className="rounded-md border border-border overflow-hidden bg-muted/30">
+                    <object
+                      data={`${os.pdf_url}#toolbar=0&navpanes=0`}
+                      type="application/pdf"
+                      className="w-full h-[480px]"
+                    >
+                      <div className="p-4 text-[13px] text-muted-foreground text-center">
+                        Não foi possível exibir o PDF.{" "}
+                        <a href={os.pdf_url} target="_blank" rel="noopener noreferrer" className="text-foreground underline">
+                          Clique aqui para abrir
+                        </a>
+                      </div>
+                    </object>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Romaneios */}
             {os.romaneios.length > 0 && (
