@@ -93,27 +93,24 @@ interface NovaOSDialogProps {
 }
 
 async function parseSinglePdf(file: File): Promise<any> {
-  const formData = new FormData();
-  formData.append("file", file);
+  // Upload to public bucket so the AI gateway can fetch it directly (avoids edge memory limit)
+  const safeName = file.name.replace(/[^\w.\-]/g, "_");
+  const path = `imports/${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
+  const { error: upErr } = await supabase.storage.from("os-pdfs").upload(path, file, {
+    contentType: "application/pdf",
+    upsert: false,
+  });
+  if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
 
-  const response = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-os-pdf`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: formData,
-    }
-  );
+  const { data: pub } = supabase.storage.from("os-pdfs").getPublicUrl(path);
+  const pdfUrl = pub.publicUrl;
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: "Erro ao processar PDF" }));
-    throw new Error(err.error || `Erro ao processar ${file.name}`);
-  }
-
-  const result = await response.json();
-  return result.data;
+  const { data, error } = await supabase.functions.invoke("parse-os-pdf", {
+    body: { pdfUrl },
+  });
+  if (error) throw new Error(error.message || `Erro ao processar ${file.name}`);
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return (data as any)?.data;
 }
 
 function mapExtractedToOS(d: any, file: File): OSForm {
