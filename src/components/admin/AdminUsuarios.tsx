@@ -350,15 +350,17 @@ function NovoUserDialog({ onClose, onSaved }: { onClose: () => void; onSaved: ()
   const [base, setBase] = useState("Gestão");
   const [funcao, setFuncao] = useState("");
   const [perfil, setPerfil] = useState("operador");
+  const [senhaInicial, setSenhaInicial] = useState("Nue@2026!");
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
     if (!email || !nome) return;
+    const senha = senhaInicial.trim() || "Nue@2026!";
     setSaving(true);
 
     const { data, error } = await supabase.auth.signUp({
       email,
-      password: "Nue@2026!",
+      password: senha,
       options: { data: { nome, status_aprovacao: "aprovado" } },
     });
 
@@ -371,12 +373,22 @@ function NovoUserDialog({ onClose, onSaved }: { onClose: () => void; onSaved: ()
     if (data.user) {
       await supabase
         .from("profiles")
-        .update({ base, funcao: funcao || null, perfil: perfil as any, status_aprovacao: "aprovado" })
+        .update({
+          base,
+          funcao: funcao || null,
+          perfil: perfil as any,
+          status_aprovacao: "aprovado",
+          deve_trocar_senha: true,
+        } as any)
         .eq("user_id", data.user.id);
       await supabase.from("user_roles").insert({ user_id: data.user.id, role: perfil as any });
     }
 
-    toast({ title: `Usuário ${nome} criado. Senha padrão: Nue@2026!` });
+    toast({
+      title: `Usuário ${nome} criado`,
+      description: `Senha inicial: ${senha}. Informe ao usuário que deve trocá-la no primeiro acesso usando "Esqueceu a senha?".`,
+      duration: 12000,
+    });
     onSaved();
     setSaving(false);
   }
@@ -426,6 +438,17 @@ function NovoUserDialog({ onClose, onSaved }: { onClose: () => void; onSaved: ()
                 <SelectItem value="observador">Observador</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label>Senha inicial</Label>
+            <Input
+              value={senhaInicial}
+              onChange={(e) => setSenhaInicial(e.target.value)}
+              placeholder="Nue@2026!"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              O usuário será obrigado a redefinir no primeiro acesso.
+            </p>
           </div>
           <Button onClick={handleSave} disabled={saving || !email || !nome} className="w-full">
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}

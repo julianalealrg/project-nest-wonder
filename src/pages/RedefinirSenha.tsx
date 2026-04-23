@@ -41,12 +41,21 @@ export default function RedefinirSenha() {
     }
 
     setLoading(true);
+    const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase.auth.updateUser({ password: senha });
 
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
+    }
+
+    // Limpa flag de troca obrigatória, se existir
+    if (userData?.user) {
+      await supabase
+        .from("profiles")
+        .update({ deve_trocar_senha: false } as any)
+        .eq("user_id", userData.user.id);
     }
 
     toast({ title: "Senha redefinida com sucesso!" });

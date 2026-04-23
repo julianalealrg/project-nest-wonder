@@ -11,6 +11,7 @@ interface Profile {
   funcao: string;
   perfil: "admin" | "operador" | "observador";
   status_aprovacao?: string;
+  deve_trocar_senha?: boolean;
 }
 
 interface AuthContextType {
@@ -18,7 +19,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any; blocked?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; blocked?: string; mustChangePassword?: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -80,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data.user) {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("status_aprovacao")
+        .select("status_aprovacao, deve_trocar_senha")
         .eq("user_id", data.user.id)
         .single();
 
@@ -98,6 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: null,
           blocked: "Seu cadastro não foi aprovado. Entre em contato com o administrador.",
         };
+      }
+      if ((prof as any)?.deve_trocar_senha) {
+        return { error: null, mustChangePassword: true };
       }
     }
     return { error: null };
