@@ -20,6 +20,8 @@ import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
 import { TerceiroSelectDialog } from "./TerceiroSelectDialog";
 import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
+import { RomaneioPanel } from "@/components/logistica/RomaneioPanel";
+import { useRomaneios } from "@/hooks/useRomaneios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OSPanelProps {
