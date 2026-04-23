@@ -75,6 +75,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
   const [recolhaDestino, setRecolhaDestino] = useState("");
   const [encaminharProjetos, setEncaminharProjetos] = useState(false);
   const [instrucaoProjetos, setInstrucaoProjetos] = useState("");
+  const [acaoProdutiva, setAcaoProdutiva] = useState<string>("");
+  const [materialDisponivel, setMaterialDisponivel] = useState<string>("");
   const [pecas, setPecas] = useState<PecaReg[]>([emptyPeca()]);
   const [fotos, setFotos] = useState<File[]>([]);
   const [osId, setOsId] = useState<string | null>(null);
@@ -102,6 +104,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     setRecolhaDestino("");
     setEncaminharProjetos(false);
     setInstrucaoProjetos("");
+    setAcaoProdutiva("");
+    setMaterialDisponivel("");
     setPecas([emptyPeca()]);
     setFotos([]);
     setOsId(null);
