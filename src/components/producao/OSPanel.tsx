@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, FileText, ChevronRight, Loader2, Play, ExternalLink } from "lucide-react";
+import { X, FileText, ChevronRight, Loader2, Play, ExternalLink, Check, Clock, Minus } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
@@ -38,20 +38,86 @@ interface OSPanelProps {
   onStatusChanged?: () => void;
 }
 
-function StationBadge({ status }: { status: string }) {
+type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
+
+const STATION_CHIP_LABELS: Record<StationKey, string> = {
+  corte: "Corte",
+  "45": "45°",
+  poliborda: "Poli",
+  usinagem: "Usi",
+  acabamento: "Acab",
+  cq: "CQ",
+};
+
+const STATION_FULL_LABELS: Record<StationKey, string> = {
+  corte: "Corte",
+  "45": "45°",
+  poliborda: "Poliborda",
+  usinagem: "Usinagem",
+  acabamento: "Acabamento",
+  cq: "CQ",
+};
+
+function statusLabel(status: string): string {
+  if (status === "concluido" || status === "aprovado") return "Concluído";
+  if (status === "em_andamento") return "Em andamento";
+  if (status === "reprovado") return "Reprovado";
+  if (status === "nao_aplicavel") return "Não aplicável";
+  return "Pendente";
+}
+
+function StationChip({
+  station,
+  status,
+  operador,
+}: {
+  station: StationKey;
+  status: string;
+  operador?: string | null;
+}) {
+  const label = STATION_CHIP_LABELS[station];
+  const fullLabel = STATION_FULL_LABELS[station];
+  const sLabel = statusLabel(status);
+
+  let cls = "";
+  let icon: React.ReactNode = <Minus className="h-2.5 w-2.5" />;
+
   if (status === "concluido" || status === "aprovado") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-foreground" title="Concluído" />;
+    cls = "bg-[#DCFCE7] text-[#166534]";
+    icon = <Check className="h-2.5 w-2.5" strokeWidth={3} />;
+  } else if (status === "em_andamento") {
+    cls = "bg-[#FEF9C3] text-[#854D0E]";
+    icon = <Clock className="h-2.5 w-2.5" />;
+  } else if (status === "reprovado") {
+    cls = "bg-[#FEE2E2] text-[#991B1B]";
+    icon = <X className="h-2.5 w-2.5" strokeWidth={3} />;
+  } else if (status === "nao_aplicavel") {
+    cls = "bg-muted text-muted-foreground opacity-40";
+    icon = <span className="text-[10px] leading-none">—</span>;
+  } else {
+    cls = "bg-muted/60 text-[#6B7280]";
+    icon = <Minus className="h-2.5 w-2.5" />;
   }
-  if (status === "em_andamento") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-warning animate-pulse" title="Em andamento" />;
-  }
-  if (status === "reprovado") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" title="Reprovado" />;
-  }
-  if (status === "nao_aplicavel") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted" title="N/A" />;
-  }
-  return <span className="inline-block h-2.5 w-2.5 rounded-full border border-border" title="Pendente" />;
+
+  const tooltipText = operador && (status === "concluido" || status === "aprovado")
+    ? `${fullLabel} — ${sLabel} por ${operador}`
+    : `${fullLabel} — ${sLabel}`;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium leading-none ${cls}`}
+        >
+          {icon}
+          {status === "nao_aplicavel" ? "—" : label}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {tooltipText}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function ProgressBar({ status }: { status: string }) {
@@ -529,14 +595,16 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                       />
                       <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
                       <span className="flex-1 truncate text-[13px] text-foreground">{peca.descricao}</span>
-                      <div className="flex items-center gap-1.5" title="Corte | 45° | Poliborda | Usinagem | Acabamento | CQ">
-                        <StationBadge status={peca.status_corte} />
-                        <StationBadge status={peca.status_45} />
-                        <StationBadge status={peca.status_poliborda} />
-                        <StationBadge status={peca.status_usinagem} />
-                        <StationBadge status={peca.status_acabamento} />
-                        <StationBadge status={peca.status_cq} />
-                      </div>
+                      <TooltipProvider delayDuration={150}>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <StationChip station="corte" status={peca.status_corte} operador={peca.cortador} />
+                          <StationChip station="45" status={peca.status_45} operador={peca.operador_45} />
+                          <StationChip station="poliborda" status={peca.status_poliborda} operador={peca.operador_poliborda} />
+                          <StationChip station="usinagem" status={peca.status_usinagem} operador={peca.operador_usinagem} />
+                          <StationChip station="acabamento" status={peca.status_acabamento} operador={peca.acabador} />
+                          <StationChip station="cq" status={peca.status_cq} operador={peca.cq_responsavel} />
+                        </div>
+                      </TooltipProvider>
                       {peca.cortador && <span className="text-[10px] text-muted-foreground">{peca.cortador}</span>}
                       {nextStation && (
                         <TooltipProvider delayDuration={200}>
@@ -566,23 +634,6 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                     </div>
                   );
                 })}
-              </div>
-              <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-foreground" /> Concl.
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-warning" /> Andamento
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" /> Reprovado
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full border border-border" /> Pendente
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted" /> N/A
-                </span>
               </div>
             </div>
 
