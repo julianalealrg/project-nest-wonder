@@ -809,6 +809,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
       {selectedRomaneio && (
         <RomaneioPanel
           romaneio={selectedRomaneio}
+          asDialog
           onClose={() => setSelectedRomaneioCodigo(null)}
           onChanged={() => {
             refetchRomaneios();
