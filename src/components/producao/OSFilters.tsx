@@ -61,7 +61,7 @@ export function OSFilters(props: OSFiltersProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
-            <SelectItem value="aguardando_chapa">Ag. Chapa</SelectItem>
+            <SelectItem value="aguardando_material">Ag. Material</SelectItem>
             <SelectItem value="fila_corte">Fila Corte</SelectItem>
             <SelectItem value="cortando">Cortando</SelectItem>
             <SelectItem value="enviado_base2">Env. B2</SelectItem>

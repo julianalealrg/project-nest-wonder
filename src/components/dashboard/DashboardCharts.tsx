@@ -17,7 +17,8 @@ const URGENCIA_COLORS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  "Aguardando Chapa": "#95A5A6",
+  "Aguardando Material": "#95A5A6",
+  "Ag. Material": "#95A5A6",
   "Fila de Corte": "#D4A017",
   "Cortando": "#E67E22",
   "Enviado Base 2": "#2980B9",

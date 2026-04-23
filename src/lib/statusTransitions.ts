@@ -1,7 +1,7 @@
 // Status transitions and location mapping for OS workflow
 
 export const STATUS_TRANSITIONS: Record<string, string[]> = {
-  aguardando_chapa: ["fila_corte"],
+  aguardando_material: ["fila_corte"],
   fila_corte: ["cortando"],
   cortando: ["enviado_base2", "terceiros"],
   enviado_base2: ["acabamento"],
@@ -12,7 +12,7 @@ export const STATUS_TRANSITIONS: Record<string, string[]> = {
 };
 
 export const STATUS_LOCATION: Record<string, string> = {
-  aguardando_chapa: "CD",
+  aguardando_material: "CD",
   fila_corte: "Base 1",
   cortando: "Base 1",
   enviado_base2: "Trânsito",
@@ -24,7 +24,7 @@ export const STATUS_LOCATION: Record<string, string> = {
 };
 
 export const STATUS_LABELS: Record<string, string> = {
-  aguardando_chapa: "Ag. Chapa",
+  aguardando_material: "Ag. Material",
   fila_corte: "Fila Corte",
   cortando: "Cortando",
   enviado_base2: "Env. B2",
