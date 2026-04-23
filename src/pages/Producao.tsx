@@ -10,6 +10,7 @@ import { OSTable } from "@/components/producao/OSTable";
 import { OSPanel } from "@/components/producao/OSPanel";
 import { NovaOSDialog } from "@/components/producao/NovaOSDialog";
 import { useOrdensServico } from "@/hooks/useOrdensServico";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 
 export default function Producao() {
   const [search, setSearch] = useState("");
@@ -24,6 +25,12 @@ export default function Producao() {
 
   const queryClient = useQueryClient();
   const { data: osList = [], isLoading } = useOrdensServico();
+
+  // Realtime: refresh OS list when DB changes
+  useRealtimeInvalidate([
+    { table: "ordens_servico", queryKeys: [["ordens_servico"], ["home-kpis"]] },
+    { table: "pecas", queryKeys: [["ordens_servico"]] },
+  ]);
 
   const clientes = useMemo(() => [...new Set(osList.map((o) => o.cliente))], [osList]);
   const materiais = useMemo(() => [...new Set(osList.map((o) => o.material).filter(Boolean))], [osList]);
