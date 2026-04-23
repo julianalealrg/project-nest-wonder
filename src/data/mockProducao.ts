@@ -58,7 +58,7 @@ const daysAgo = (d: number) => {
 };
 
 export const STATUS_STEPS = [
-  "Ag. Chapa",
+  "Ag. Material",
   "Fila Corte",
   "Cortando",
   "Env. B2",
@@ -69,7 +69,7 @@ export const STATUS_STEPS = [
 ] as const;
 
 export const STATUS_MAP: Record<string, number> = {
-  aguardando_chapa: 0,
+  aguardando_material: 0,
   fila_corte: 1,
   cortando: 2,
   enviado_base2: 3,
@@ -80,7 +80,7 @@ export const STATUS_MAP: Record<string, number> = {
 };
 
 export const STATUS_LABELS: Record<string, string> = {
-  aguardando_chapa: "Ag. Chapa",
+  aguardando_material: "Ag. Material",
   fila_corte: "Fila Corte",
   cortando: "Cortando",
   enviado_base2: "Env. B2",
