@@ -202,14 +202,23 @@ export type Database = {
           created_at: string
           data_emissao: string | null
           data_entrega: string | null
+          entregue_bypass_por: string | null
+          entregue_confirmado_em: string | null
+          entregue_confirmado_por: string | null
+          entregue_sem_foto_justificativa: string | null
+          foto_entrega_url: string | null
           id: string
           localizacao: string | null
           material: string | null
+          material_disponivel: boolean | null
+          material_solicitado_cd: boolean | null
           origem: string
           pdf_url: string | null
           projetista: string | null
+          registro_origem_id: string | null
           status: string
           terceiro_id: string | null
+          terceiro_nome: string | null
           updated_at: string
         }
         Insert: {
@@ -220,14 +229,23 @@ export type Database = {
           created_at?: string
           data_emissao?: string | null
           data_entrega?: string | null
+          entregue_bypass_por?: string | null
+          entregue_confirmado_em?: string | null
+          entregue_confirmado_por?: string | null
+          entregue_sem_foto_justificativa?: string | null
+          foto_entrega_url?: string | null
           id?: string
           localizacao?: string | null
           material?: string | null
+          material_disponivel?: boolean | null
+          material_solicitado_cd?: boolean | null
           origem?: string
           pdf_url?: string | null
           projetista?: string | null
+          registro_origem_id?: string | null
           status?: string
           terceiro_id?: string | null
+          terceiro_nome?: string | null
           updated_at?: string
         }
         Update: {
@@ -238,14 +256,23 @@ export type Database = {
           created_at?: string
           data_emissao?: string | null
           data_entrega?: string | null
+          entregue_bypass_por?: string | null
+          entregue_confirmado_em?: string | null
+          entregue_confirmado_por?: string | null
+          entregue_sem_foto_justificativa?: string | null
+          foto_entrega_url?: string | null
           id?: string
           localizacao?: string | null
           material?: string | null
+          material_disponivel?: boolean | null
+          material_solicitado_cd?: boolean | null
           origem?: string
           pdf_url?: string | null
           projetista?: string | null
+          registro_origem_id?: string | null
           status?: string
           terceiro_id?: string | null
+          terceiro_nome?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -254,6 +281,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_servico_registro_origem_id_fkey"
+            columns: ["registro_origem_id"]
+            isOneToOne: false
+            referencedRelation: "registros"
             referencedColumns: ["id"]
           },
           {
@@ -456,6 +490,7 @@ export type Database = {
         Row: {
           aberto_por: string | null
           acabador_responsavel: string | null
+          acao_produtiva: string | null
           ambiente: string | null
           cliente: string | null
           codigo: string
@@ -465,8 +500,10 @@ export type Database = {
           instrucao_projetos: string | null
           justificativa: string | null
           material: string | null
+          material_disponivel: boolean | null
           numero_os: string | null
           origem: string
+          os_gerada_id: string | null
           os_id: string | null
           projetista: string | null
           recolha_destino: string | null
@@ -484,6 +521,7 @@ export type Database = {
         Insert: {
           aberto_por?: string | null
           acabador_responsavel?: string | null
+          acao_produtiva?: string | null
           ambiente?: string | null
           cliente?: string | null
           codigo: string
@@ -493,8 +531,10 @@ export type Database = {
           instrucao_projetos?: string | null
           justificativa?: string | null
           material?: string | null
+          material_disponivel?: boolean | null
           numero_os?: string | null
           origem: string
+          os_gerada_id?: string | null
           os_id?: string | null
           projetista?: string | null
           recolha_destino?: string | null
@@ -512,6 +552,7 @@ export type Database = {
         Update: {
           aberto_por?: string | null
           acabador_responsavel?: string | null
+          acao_produtiva?: string | null
           ambiente?: string | null
           cliente?: string | null
           codigo?: string
@@ -521,8 +562,10 @@ export type Database = {
           instrucao_projetos?: string | null
           justificativa?: string | null
           material?: string | null
+          material_disponivel?: boolean | null
           numero_os?: string | null
           origem?: string
+          os_gerada_id?: string | null
           os_id?: string | null
           projetista?: string | null
           recolha_destino?: string | null
@@ -538,6 +581,13 @@ export type Database = {
           urgencia?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "registros_os_gerada_id_fkey"
+            columns: ["os_gerada_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_servico"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "registros_os_id_fkey"
             columns: ["os_id"]
@@ -600,10 +650,15 @@ export type Database = {
         Row: {
           ajudante: string | null
           codigo: string
+          conferido_entrada_em: string | null
+          conferido_entrada_por: string | null
+          conferido_saida_em: string | null
+          conferido_saida_por: string | null
           created_at: string
           data_recebimento: string | null
           data_saida: string | null
           endereco_destino: string | null
+          foto_romaneio_assinado_url: string | null
           id: string
           motorista: string | null
           observacoes: string | null
@@ -615,10 +670,15 @@ export type Database = {
         Insert: {
           ajudante?: string | null
           codigo: string
+          conferido_entrada_em?: string | null
+          conferido_entrada_por?: string | null
+          conferido_saida_em?: string | null
+          conferido_saida_por?: string | null
           created_at?: string
           data_recebimento?: string | null
           data_saida?: string | null
           endereco_destino?: string | null
+          foto_romaneio_assinado_url?: string | null
           id?: string
           motorista?: string | null
           observacoes?: string | null
@@ -630,10 +690,15 @@ export type Database = {
         Update: {
           ajudante?: string | null
           codigo?: string
+          conferido_entrada_em?: string | null
+          conferido_entrada_por?: string | null
+          conferido_saida_em?: string | null
+          conferido_saida_por?: string | null
           created_at?: string
           data_recebimento?: string | null
           data_saida?: string | null
           endereco_destino?: string | null
+          foto_romaneio_assinado_url?: string | null
           id?: string
           motorista?: string | null
           observacoes?: string | null
