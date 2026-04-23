@@ -721,6 +721,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         onConfirm={handleBatchConfirm}
       />
 
+      <CqReprovaDialog
+        open={cqReprovaOpen}
+        onOpenChange={setCqReprovaOpen}
+        pecas={os.pecas}
+        loading={loading}
+        onConfirm={handleCqReprovaConfirm}
+      />
+
       <BlockedTransitionDialog
         open={blockedDialog.open}
         onOpenChange={(o) => setBlockedDialog((s) => ({ ...s, open: o }))}
