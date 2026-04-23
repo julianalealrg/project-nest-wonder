@@ -315,8 +315,11 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
     if (guard.kind === "open_romaneio") {
       setRomaneioPreset({ tipoRota: guard.tipoRota, osId: guard.presetOsId });
       setRomaneioOpen(true);
-      // Avança o status da OS automaticamente; o usuário continua criando o romaneio
-      doChangeStatus(newStatus, {});
+      // Para cortando → enviado_base2, avança o status junto. Para entregas (expedicao/terceiros → entregue),
+      // NÃO avança automaticamente: a entrega só é confirmada quando o cliente recebe o romaneio.
+      if (os.status === "cortando" && newStatus === "enviado_base2") {
+        doChangeStatus(newStatus, {});
+      }
       return;
     }
     if (guard.kind === "select_terceiro") {
