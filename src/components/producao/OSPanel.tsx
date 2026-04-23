@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, FileText, ChevronRight, Loader2, Play, ExternalLink } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
@@ -7,12 +8,16 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
+import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
 import { changeOSStatus } from "@/lib/changeOSStatus";
 import { advancePecaStation } from "@/lib/advancePeca";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
+import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
+import { TerceiroSelectDialog } from "./TerceiroSelectDialog";
+import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
 
 interface OSPanelProps {
   os: MockOS | null;
