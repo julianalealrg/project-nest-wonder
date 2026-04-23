@@ -34,6 +34,23 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
     return { kind: "select_terceiro" };
   }
 
+  // Enviado Base 2 -> Acabamento : exige conferência do romaneio B1->B2 na Base 2
+  if (os.status === "enviado_base2" && toStatus === "acabamento") {
+    const romaneios = (os as any).romaneios || [];
+    const romB1B2 = romaneios.find((r: any) => r.tipo_rota === "base1_base2");
+    const recebido =
+      romB1B2 && (romB1B2.status === "entregue" || romB1B2.status === "recebido");
+    if (!recebido) {
+      return {
+        kind: "blocked",
+        title: "Aguardando conferência na Base 2",
+        reason:
+          "Esta OS só pode ir para Acabamento depois que a Base 2 conferir e confirmar o recebimento do romaneio B1→B2. Vá para Logística e confirme o recebimento.",
+      };
+    }
+    return { kind: "allow" };
+  }
+
   // Acabamento -> CQ : todas as peças que precisam de acabamento devem estar concluídas
   if (os.status === "acabamento" && toStatus === "cq") {
     const pendentes = pecas.filter((p) => p.status_acabamento !== "concluido" && p.status_acabamento !== "nao_aplicavel");

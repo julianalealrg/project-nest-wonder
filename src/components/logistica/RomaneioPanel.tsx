@@ -100,6 +100,49 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         details: { conferencias },
       });
 
+      // Sincronizar OS vinculadas: se for romaneio B1->B2, avançar OS de "enviado_base2" para "acabamento"
+      if (romaneio!.tipo_rota === "base1_base2") {
+        const osIds = Array.from(
+          new Set(romaneio!.pecas.map((p: any) => p.os_id).filter(Boolean)),
+        ) as string[];
+        if (osIds.length > 0) {
+          // Buscar OS que estão em enviado_base2 para logar apenas as efetivamente atualizadas
+          const { data: osParaAtualizar } = await supabase
+            .from("ordens_servico")
+            .select("id, codigo")
+            .in("id", osIds)
+            .eq("status", "enviado_base2");
+
+          if (osParaAtualizar && osParaAtualizar.length > 0) {
+            const idsParaAtualizar = osParaAtualizar.map((o) => o.id);
+            await supabase
+              .from("ordens_servico")
+              .update({
+                status: "acabamento",
+                localizacao: "Base 2",
+                updated_at: new Date().toISOString(),
+              })
+              .in("id", idsParaAtualizar);
+
+            // Log por OS
+            const logs = osParaAtualizar.map((o) => ({
+              action: "avanco_automatico_pos_recebimento",
+              entity_type: "ordens_servico",
+              entity_id: o.id,
+              entity_description: o.codigo,
+              user_name: profile?.nome || "Sistema",
+              details: {
+                from_status: "enviado_base2",
+                to_status: "acabamento",
+                romaneio_id: romaneio!.id,
+                romaneio_codigo: romaneio!.codigo,
+              },
+            }));
+            await supabase.from("activity_logs").insert(logs);
+          }
+        }
+      }
+
       toast({ title: `${romaneio!.codigo} recebido com sucesso` });
       setConferindo(false);
       onChanged?.();

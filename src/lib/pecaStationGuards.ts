@@ -3,6 +3,7 @@ export type EtapaPeca = "corte" | "45" | "poliborda" | "usinagem" | "acabamento"
 export function podeAvancarPecaPara(
   etapa: EtapaPeca,
   osStatus: string,
+  romaneios?: { tipo_rota: string; status: string }[],
 ): { permitido: boolean; motivo?: string } {
   const base1 = [
     "cortando",
@@ -33,6 +34,22 @@ export function podeAvancarPecaPara(
         motivo:
           "A OS precisa ter sido recebida na Base 2 antes de avançar a peça para Acabamento.",
       };
+    }
+    // Validação extra: se há romaneios B1->B2 vinculados, exigir que pelo menos um tenha sido recebido
+    if (romaneios && romaneios.length > 0) {
+      const temB1B2 = romaneios.some((r) => r.tipo_rota === "base1_base2");
+      const recebido = romaneios.some(
+        (r) =>
+          r.tipo_rota === "base1_base2" &&
+          (r.status === "entregue" || r.status === "recebido"),
+      );
+      if (temB1B2 && !recebido) {
+        return {
+          permitido: false,
+          motivo:
+            "Base 2 ainda não confirmou o recebimento do romaneio B1→B2. Aguarde a conferência.",
+        };
+      }
     }
   }
   if (etapa === "cq") {
