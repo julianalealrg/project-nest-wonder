@@ -2,16 +2,14 @@ import { useState } from "react";
 import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
 import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
 import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { ConfirmarEntregaClienteDialog } from "./ConfirmarEntregaClienteDialog";
 
 interface RomaneioPanelProps {
   romaneio: Romaneio | null;
