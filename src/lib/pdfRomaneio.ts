@@ -2,63 +2,110 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Romaneio } from "@/hooks/useRomaneios";
 import { ROTA_LABELS } from "@/hooks/useRomaneios";
-import { setupPdfDoc, addPdfHeader } from "@/lib/pdfSetup";
+import { setupPdfDoc } from "@/lib/pdfSetup";
+import { addPdfHeader } from "@/lib/pdfHeader";
+import { finalizePdf } from "@/lib/pdfFooter";
+import { PDF_COLORS, PDF_FONT, PDF_SIZES, rotaColor } from "@/lib/pdfTheme";
 
-const ROTA_COLORS: Record<string, [number, number, number]> = {
-  base1_base2: [59, 130, 246],
-  base2_cliente: [16, 185, 129],
-  base1_cliente: [139, 92, 246],
-  base2_base1: [245, 158, 11],
-  recolha: [239, 68, 68],
-};
+interface RomaneioPdfExtras {
+  telefone_destinatario?: string | null;
+  userName?: string | null;
+}
 
-export function gerarPDFRomaneio(romaneio: Romaneio) {
+// Quebra um endereço concatenado em linhas (Rua / Bairro / Cidade-UF / CEP).
+// Aceita "Rua X, 123 - Bairro - Cidade/UF - CEP 50000-000" ou variações.
+function formatEndereco(endereco?: string | null): string[] {
+  if (!endereco) return ["—"];
+  const raw = endereco.trim();
+  // Tenta dividir por " - " (com espaços), depois por vírgulas se sobrar muito.
+  let parts = raw.split(/\s+-\s+/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1) {
+    parts = raw.split(/,\s*/).map((p) => p.trim()).filter(Boolean);
+  }
+  return parts.length ? parts : [raw];
+}
+
+export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras = {}) {
   const doc = new jsPDF();
   setupPdfDoc(doc);
-  addPdfHeader(doc, romaneio.codigo);
 
-  // Route banner
-  const bannerColor = ROTA_COLORS[romaneio.tipo_rota] || [100, 100, 100];
+  let y = addPdfHeader(doc, {
+    codigo: romaneio.codigo,
+    tipo: "Romaneio",
+  });
+
+  // Banner de rota colorido com seta
+  const bannerColor = rotaColor(romaneio.tipo_rota);
+  const bannerH = 11;
   doc.setFillColor(...bannerColor);
-  doc.rect(14, 34, 182, 12, "F");
-  doc.setFontSize(12);
-  doc.setFont("Montserrat", "bold");
-  doc.setTextColor(255);
-  doc.text(ROTA_LABELS[romaneio.tipo_rota] || romaneio.tipo_rota, 105, 42, { align: "center" });
-  doc.setTextColor(0);
+  doc.roundedRect(14, y, 182, bannerH, 2, 2, "F");
+  doc.setFont(PDF_FONT, "bold");
+  doc.setFontSize(PDF_SIZES.title);
+  doc.setTextColor(...PDF_COLORS.white);
+  // Substitui "→" por seta unicode robusta
+  const rotaLabel = (ROTA_LABELS[romaneio.tipo_rota] || romaneio.tipo_rota).replace(/→/g, "→");
+  doc.text(rotaLabel, 105, y + 7.5, { align: "center" });
+  doc.setTextColor(...PDF_COLORS.text);
+  y += bannerH + 5;
 
-  let y = 54;
-  doc.setFontSize(10);
-  doc.setFont("Montserrat", "normal");
+  // Data
+  doc.setFont(PDF_FONT, "normal");
+  doc.setFontSize(PDF_SIZES.body);
+  doc.setTextColor(...PDF_COLORS.text);
   doc.text(`Data: ${new Date(romaneio.created_at).toLocaleDateString("pt-BR")}`, 14, y);
-  y += 8;
+  y += 6;
 
-  // Info
-  const info: [string, string][] = [
-    ["Endereço destino", romaneio.endereco_destino || "—"],
+  // Bloco destinatário/transporte em 2 colunas
+  const enderecoLinhas = formatEndereco(romaneio.endereco_destino);
+  const leftBlock: Array<[string, string | string[]]> = [
+    ["Endereço destino", enderecoLinhas],
+    ["Telefone de contato", extras.telefone_destinatario || "—"],
+  ];
+  const rightBlock: Array<[string, string]> = [
     ["Motorista", romaneio.motorista || "—"],
     ["Ajudante", romaneio.ajudante || "—"],
   ];
-  info.forEach(([label, value]) => {
-    doc.setFontSize(8);
-    doc.setTextColor(120);
-    doc.text(label, 14, y);
-    doc.setFontSize(10);
-    doc.setTextColor(0);
-    doc.text(value, 55, y);
-    y += 7;
-  });
-  y += 4;
 
-  // Peças table
-  const isToCliente = romaneio.tipo_rota === "base2_cliente" || romaneio.tipo_rota === "base1_cliente";
+  const startY = y;
+  let leftY = y;
+  leftBlock.forEach(([label, value]) => {
+    doc.setFontSize(PDF_SIZES.small);
+    doc.setTextColor(...PDF_COLORS.muted);
+    doc.setFont(PDF_FONT, "normal");
+    doc.text(label, 14, leftY);
+    doc.setFontSize(PDF_SIZES.body);
+    doc.setTextColor(...PDF_COLORS.text);
+    if (Array.isArray(value)) {
+      value.forEach((line, i) => doc.text(line, 14, leftY + 4.5 + i * 4.2));
+      leftY += 4.5 + value.length * 4.2 + 2;
+    } else {
+      doc.text(value, 14, leftY + 4.5);
+      leftY += 10;
+    }
+  });
+
+  let rightY = startY;
+  rightBlock.forEach(([label, value]) => {
+    doc.setFontSize(PDF_SIZES.small);
+    doc.setTextColor(...PDF_COLORS.muted);
+    doc.text(label, 110, rightY);
+    doc.setFontSize(PDF_SIZES.body);
+    doc.setTextColor(...PDF_COLORS.text);
+    doc.text(value, 110, rightY + 4.5);
+    rightY += 10;
+  });
+
+  y = Math.max(leftY, rightY) + 4;
+
+  // Tabela de peças
   const isB2Cliente = romaneio.tipo_rota === "base2_cliente";
+  const isToCliente = romaneio.tipo_rota === "base2_cliente" || romaneio.tipo_rota === "base1_cliente";
 
   const fmtMedida = (c: number | null, l: number | null) => {
     if (c == null && l == null) return "—";
     const fmt = (v: number | null) =>
-      v == null ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-    return `${fmt(c)} × ${fmt(l)} m`;
+      v == null ? "—" : (v / 1000 < 100 ? (v / 1000).toFixed(3) : v.toFixed(0));
+    return `${fmt(c)} × ${fmt(l)}`;
   };
 
   if (isB2Cliente) {
@@ -71,33 +118,42 @@ export function gerarPDFRomaneio(romaneio: Romaneio) {
     });
 
     byOs.forEach((pecas, osCodigo) => {
-      doc.setFontSize(10);
-      doc.setFont("Montserrat", "bold");
+      doc.setFont(PDF_FONT, "bold");
+      doc.setFontSize(PDF_SIZES.label);
+      doc.setTextColor(...PDF_COLORS.text);
       const material = pecas[0]?.material ? ` — ${pecas[0].material}` : "";
       doc.text(`OS: ${osCodigo} — ${pecas[0]?.cliente_nome || ""}${material}`, 14, y);
-      y += 4;
+      y += 3;
 
       autoTable(doc, {
         startY: y,
-        head: [["#", "Descrição", "Medida", "Conferência"]],
+        head: [["#", "Descrição", "Medida (C × L) m", "Material", "OS", "Conferência"]],
         body: pecas.map((p) => [
           p.peca_item,
           p.peca_descricao,
           fmtMedida(p.comprimento, p.largura),
+          p.material || "—",
+          p.os_codigo,
           "",
         ]),
-        styles: { fontSize: 9, cellPadding: 3, font: "Montserrat" },
-        headStyles: { fillColor: [240, 237, 232], textColor: [13, 13, 13], fontStyle: "bold" },
-        columnStyles: { 0: { cellWidth: 16 }, 2: { cellWidth: 36 }, 3: { cellWidth: 30 } },
+        styles: { fontSize: PDF_SIZES.small + 0.5, cellPadding: 2.5, font: PDF_FONT, textColor: PDF_COLORS.text },
+        headStyles: { fillColor: PDF_COLORS.cinzaLight, textColor: PDF_COLORS.text, fontStyle: "bold" },
+        columnStyles: {
+          0: { cellWidth: 12 },
+          2: { cellWidth: 32, halign: "right" },
+          3: { cellWidth: 38 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 26 },
+        },
         theme: "grid",
         margin: { left: 14, right: 14 },
       });
-      y = (doc as any).lastAutoTable.finalY + 6;
+      y = (doc as any).lastAutoTable.finalY + 5;
     });
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["#", "Descrição", "Medida", "Material", "OS", "Conferência"]],
+      head: [["#", "Descrição", "Medida (C × L) m", "Material", "OS", "Conferência"]],
       body: romaneio.pecas.map((p) => [
         p.peca_item,
         p.peca_descricao,
@@ -106,66 +162,78 @@ export function gerarPDFRomaneio(romaneio: Romaneio) {
         p.os_codigo,
         "",
       ]),
-      styles: { fontSize: 9, cellPadding: 3, font: "Montserrat" },
-      headStyles: { fillColor: [240, 237, 232], textColor: [13, 13, 13], fontStyle: "bold" },
-      columnStyles: { 0: { cellWidth: 14 }, 2: { cellWidth: 32 }, 4: { cellWidth: 22 }, 5: { cellWidth: 26 } },
+      styles: { fontSize: PDF_SIZES.small + 0.5, cellPadding: 2.5, font: PDF_FONT, textColor: PDF_COLORS.text },
+      headStyles: { fillColor: PDF_COLORS.cinzaLight, textColor: PDF_COLORS.text, fontStyle: "bold" },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        2: { cellWidth: 32, halign: "right" },
+        3: { cellWidth: 38 },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 26 },
+      },
       theme: "grid",
       margin: { left: 14, right: 14 },
     });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    y = (doc as any).lastAutoTable.finalY + 5;
   }
 
-  // B2→B1 and recolha: motivo do retorno
-  if (romaneio.tipo_rota === "base2_base1" || romaneio.tipo_rota === "recolha") {
-    doc.setFontSize(10);
-    doc.setFont("Montserrat", "bold");
-    doc.text("Motivo do retorno:", 14, y);
+  // Observações / Motivo (se houver)
+  if (romaneio.observacoes && romaneio.observacoes.trim()) {
+    doc.setFont(PDF_FONT, "bold");
+    doc.setFontSize(PDF_SIZES.label);
+    doc.setTextColor(...PDF_COLORS.text);
+    doc.text("Observações / Motivo", 14, y);
     y += 4;
-    doc.setDrawColor(200);
-    doc.line(14, y, 196, y);
-    y += 12;
-    doc.line(14, y, 196, y);
-    y += 12;
-    doc.line(14, y, 196, y);
-    y += 10;
+    doc.setFont(PDF_FONT, "normal");
+    doc.setFontSize(PDF_SIZES.body);
+    const lines = doc.splitTextToSize(romaneio.observacoes, 180);
+    doc.text(lines, 14, y);
+    y += lines.length * 4.2 + 4;
   }
 
-  // Signatures
+  // Cláusula de recebimento em caixa destacada
   const pageH = doc.internal.pageSize.getHeight();
-  const sigY = Math.max(y + 15, pageH - 70);
+  const minClauseY = y + 2;
+  const clauseY = Math.max(minClauseY, pageH - 58);
+  const clauseW = 182;
+  const clauseH = 38;
 
-  doc.setDrawColor(180);
-  doc.setFontSize(8);
-  doc.setTextColor(100);
-  doc.setFont("Montserrat", "normal");
+  doc.setFillColor(...PDF_COLORS.cinzaLight);
+  doc.setDrawColor(...PDF_COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(14, clauseY, clauseW, clauseH, 2, 2, "FD");
+  // Borda lateral verde (4mm)
+  doc.setFillColor(...PDF_COLORS.verde);
+  doc.rect(14, clauseY, 1.6, clauseH, "F");
+  doc.setLineWidth(0.2);
 
-  // Entregou
-  doc.line(14, sigY, 95, sigY);
-  doc.text("Assinatura — Entregou", 54, sigY + 5, { align: "center" });
-  doc.line(14, sigY + 14, 95, sigY + 14);
-  doc.text("Nome", 54, sigY + 19, { align: "center" });
-  doc.line(14, sigY + 28, 95, sigY + 28);
-  doc.text("Documento", 54, sigY + 33, { align: "center" });
+  doc.setFont(PDF_FONT, "bold");
+  doc.setFontSize(PDF_SIZES.label);
+  doc.setTextColor(...PDF_COLORS.text);
+  doc.text("Recebimento", 19, clauseY + 6);
 
-  // Recebeu
-  doc.line(115, sigY, 196, sigY);
-  doc.text("Assinatura — Recebeu", 155, sigY + 5, { align: "center" });
-  doc.line(115, sigY + 14, 196, sigY + 14);
-  doc.text("Nome", 155, sigY + 19, { align: "center" });
-  doc.line(115, sigY + 28, 196, sigY + 28);
-  doc.text("Documento", 155, sigY + 33, { align: "center" });
+  doc.setFont(PDF_FONT, "normal");
+  doc.setFontSize(PDF_SIZES.small);
+  doc.setTextColor(...PDF_COLORS.chumbo);
+  const clauseTxt = isToCliente
+    ? "Declaro que recebi os itens descritos acima em perfeito estado de conservação, sem avarias, lascas, trincas ou danos aparentes, e em conformidade com o contratado."
+    : "Declaro que recebi os itens descritos acima conforme conferência realizada.";
+  const clauseLines = doc.splitTextToSize(clauseTxt, clauseW - 10);
+  doc.text(clauseLines, 19, clauseY + 11);
 
-  // Cláusula de perfeito estado (apenas rotas para cliente)
-  if (isToCliente) {
-    const clauseY = sigY + 42;
-    doc.setDrawColor(200);
-    doc.line(14, clauseY, 196, clauseY);
-    doc.setFontSize(8);
-    doc.setFont("Montserrat", "italic");
-    const clause = "Declaro que recebi os materiais acima em perfeito estado de conservação, sem avarias, lascas, trincas ou danos aparentes. Conferi os itens e estão de acordo com o contratado.";
-    const lines = doc.splitTextToSize(clause, 180);
-    doc.text(lines, 14, clauseY + 5);
-  }
+  // Linhas de preenchimento
+  const baseY = clauseY + clauseH - 8;
+  doc.setDrawColor(...PDF_COLORS.muted);
+  doc.line(19, baseY, 90, baseY);
+  doc.line(95, baseY, 145, baseY);
+  doc.line(150, baseY, 192, baseY);
+  doc.setFontSize(PDF_SIZES.small);
+  doc.setTextColor(...PDF_COLORS.muted);
+  doc.text("Responsável recebimento", 54, baseY + 4, { align: "center" });
+  doc.text("Assinatura", 120, baseY + 4, { align: "center" });
+  doc.text("Data", 171, baseY + 4, { align: "center" });
+  doc.setTextColor(...PDF_COLORS.text);
 
+  finalizePdf(doc, { userName: extras.userName });
   doc.save(`${romaneio.codigo}.pdf`);
 }
