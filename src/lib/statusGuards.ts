@@ -60,15 +60,36 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
     }
   }
 
-  // Expedição -> Entregue : abrir popup de confirmação com foto
+  // Expedição -> Entregue : exige romaneio Base 2 → Cliente vinculado
   if (os.status === "expedicao" && toStatus === "entregue") {
+    if (!hasRomaneio(os, "base2_cliente")) {
+      return {
+        kind: "blocked",
+        title: "Romaneio obrigatório",
+        reason: "Esta OS não possui um romaneio Base 2 → Cliente vinculado. Crie o romaneio em Logística antes de confirmar a entrega.",
+      };
+    }
     return { kind: "confirm_entrega" };
   }
 
-  // Terceiros -> Entregue : também precisa confirmar
+  // Terceiros -> Entregue : exige romaneio Base 1 → Cliente (envio externo) vinculado
   if (os.status === "terceiros" && toStatus === "entregue") {
+    if (!hasRomaneio(os, "base1_cliente")) {
+      return {
+        kind: "blocked",
+        title: "Romaneio obrigatório",
+        reason: "Esta OS não possui um romaneio Base 1 → Cliente vinculado ao terceiro. Crie o romaneio em Logística antes de confirmar a entrega.",
+      };
+    }
     return { kind: "confirm_entrega" };
   }
 
   return { kind: "allow" };
+}
+
+function hasRomaneio(os: MockOS, tipoRota: string, statusFilter?: string[]): boolean {
+  const romaneios = (os as any).romaneios || [];
+  return romaneios.some(
+    (r: any) => r.tipo_rota === tipoRota && (!statusFilter || statusFilter.includes(r.status))
+  );
 }
