@@ -253,6 +253,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
     () => (selectedRomaneioCodigo ? allRomaneios.find((r) => r.codigo === selectedRomaneioCodigo) ?? null : null),
@@ -801,23 +802,47 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           {nextStatuses.map((ns) => {
             const regressive = isRegressive(os.status, ns);
             const btn = regressive
-              ? { label: `Reprovar → ${TRANSITION_LABELS[ns]}`, disabled: false, tooltip: undefined as string | undefined }
+              ? {
+                  label: `Reprovar → ${TRANSITION_LABELS[ns]}`,
+                  disabled: false,
+                  tooltip: undefined as string | undefined,
+                  navigateRomaneioCodigo: undefined as string | undefined,
+                }
               : getBotaoProximoStatus(os, ns);
+
+            // Caso especial: ação delegada à Logística (romaneio existe mas ainda não foi recebido).
+            // Renderiza um botão âmbar clicável que navega direto para o romaneio em conferência.
+            const isNavigateAction = !!btn.navigateRomaneioCodigo;
+
+            const handleClick = () => {
+              if (isNavigateAction && btn.navigateRomaneioCodigo) {
+                navigate(`/logistica?abrir=${encodeURIComponent(btn.navigateRomaneioCodigo)}`);
+                return;
+              }
+              handleSelect(ns);
+            };
+
             const buttonNode = (
               <Button
                 key={ns}
-                variant={regressive ? "outline" : "default"}
+                variant={regressive ? "outline" : isNavigateAction ? "outline" : "default"}
                 className={
                   regressive
                     ? "flex-1 px-6 py-3 text-[13px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    : "flex-1 px-6 py-3 text-[13px]"
+                    : isNavigateAction
+                      ? "flex-1 px-6 py-3 text-[13px] bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100 hover:text-amber-900"
+                      : "flex-1 px-6 py-3 text-[13px]"
                 }
                 disabled={loading || btn.disabled}
-                onClick={() => handleSelect(ns)}
+                onClick={handleClick}
               >
                 {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                 {btn.label}
-                {!regressive && <ChevronRight className="ml-1 h-4 w-4" />}
+                {isNavigateAction ? (
+                  <ExternalLink className="ml-1 h-4 w-4" />
+                ) : (
+                  !regressive && <ChevronRight className="ml-1 h-4 w-4" />
+                )}
               </Button>
             );
 
