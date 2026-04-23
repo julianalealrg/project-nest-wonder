@@ -367,6 +367,7 @@ export type Database = {
         Row: {
           base: string
           created_at: string
+          deve_trocar_senha: boolean
           email: string
           funcao: string | null
           id: string
@@ -381,6 +382,7 @@ export type Database = {
         Insert: {
           base?: string
           created_at?: string
+          deve_trocar_senha?: boolean
           email: string
           funcao?: string | null
           id?: string
@@ -395,6 +397,7 @@ export type Database = {
         Update: {
           base?: string
           created_at?: string
+          deve_trocar_senha?: boolean
           email?: string
           funcao?: string | null
           id?: string
