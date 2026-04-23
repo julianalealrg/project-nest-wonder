@@ -668,6 +668,17 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         presetOsId={romaneioPreset?.osId}
         onSuccess={() => onStatusChanged?.()}
       />
+
+      {selectedRomaneio && (
+        <RomaneioPanel
+          romaneio={selectedRomaneio}
+          onClose={() => setSelectedRomaneioCodigo(null)}
+          onChanged={() => {
+            refetchRomaneios();
+            onStatusChanged?.();
+          }}
+        />
+      )}
     </>
   );
 }
