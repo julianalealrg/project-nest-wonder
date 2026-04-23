@@ -776,8 +776,10 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           </Button>
           {nextStatuses.map((ns) => {
             const regressive = isRegressive(os.status, ns);
-            const label = regressive ? `Reprovar → ${TRANSITION_LABELS[ns]}` : TRANSITION_LABELS[ns];
-            return (
+            const btn = regressive
+              ? { label: `Reprovar → ${TRANSITION_LABELS[ns]}`, disabled: false, tooltip: undefined as string | undefined }
+              : getBotaoProximoStatus(os, ns);
+            const buttonNode = (
               <Button
                 key={ns}
                 variant={regressive ? "outline" : "default"}
@@ -786,14 +788,28 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                     ? "flex-1 px-6 py-3 text-[13px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
                     : "flex-1 px-6 py-3 text-[13px]"
                 }
-                disabled={loading}
+                disabled={loading || btn.disabled}
                 onClick={() => handleSelect(ns)}
               >
                 {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-                {label}
+                {btn.label}
                 {!regressive && <ChevronRight className="ml-1 h-4 w-4" />}
               </Button>
             );
+
+            if (btn.tooltip) {
+              return (
+                <TooltipProvider key={ns}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex-1">{buttonNode}</span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs">{btn.tooltip}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            }
+            return buttonNode;
           })}
         </div>
       </div>
