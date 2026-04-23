@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import marmorariaImg from "@/assets/login-marmoraria.jpg";
 
 export default function Login() {
   const { signIn } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,11 +20,13 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    const { error: signInError, blocked } = await signIn(email, password);
+    const { error: signInError, blocked, mustChangePassword } = await signIn(email, password);
     if (blocked) {
       setError(blocked);
     } else if (signInError) {
       setError("Email ou senha incorretos.");
+    } else if (mustChangePassword) {
+      navigate("/redefinir-senha?first_login=1");
     }
     setLoading(false);
   };
