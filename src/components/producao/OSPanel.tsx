@@ -30,20 +30,86 @@ interface OSPanelProps {
   onStatusChanged?: () => void;
 }
 
-function StationBadge({ status }: { status: string }) {
+type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
+
+const STATION_CHIP_LABELS: Record<StationKey, string> = {
+  corte: "Corte",
+  "45": "45°",
+  poliborda: "Poli",
+  usinagem: "Usi",
+  acabamento: "Acab",
+  cq: "CQ",
+};
+
+const STATION_FULL_LABELS: Record<StationKey, string> = {
+  corte: "Corte",
+  "45": "45°",
+  poliborda: "Poliborda",
+  usinagem: "Usinagem",
+  acabamento: "Acabamento",
+  cq: "CQ",
+};
+
+function statusLabel(status: string): string {
+  if (status === "concluido" || status === "aprovado") return "Concluído";
+  if (status === "em_andamento") return "Em andamento";
+  if (status === "reprovado") return "Reprovado";
+  if (status === "nao_aplicavel") return "Não aplicável";
+  return "Pendente";
+}
+
+function StationChip({
+  station,
+  status,
+  operador,
+}: {
+  station: StationKey;
+  status: string;
+  operador?: string | null;
+}) {
+  const label = STATION_CHIP_LABELS[station];
+  const fullLabel = STATION_FULL_LABELS[station];
+  const sLabel = statusLabel(status);
+
+  let cls = "";
+  let icon: React.ReactNode = <Minus className="h-2.5 w-2.5" />;
+
   if (status === "concluido" || status === "aprovado") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-foreground" title="Concluído" />;
+    cls = "bg-[#DCFCE7] text-[#166534]";
+    icon = <Check className="h-2.5 w-2.5" strokeWidth={3} />;
+  } else if (status === "em_andamento") {
+    cls = "bg-[#FEF9C3] text-[#854D0E]";
+    icon = <Clock className="h-2.5 w-2.5" />;
+  } else if (status === "reprovado") {
+    cls = "bg-[#FEE2E2] text-[#991B1B]";
+    icon = <X className="h-2.5 w-2.5" strokeWidth={3} />;
+  } else if (status === "nao_aplicavel") {
+    cls = "bg-muted text-muted-foreground opacity-40";
+    icon = <span className="text-[10px] leading-none">—</span>;
+  } else {
+    cls = "bg-muted/60 text-[#6B7280]";
+    icon = <Minus className="h-2.5 w-2.5" />;
   }
-  if (status === "em_andamento") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-warning animate-pulse" title="Em andamento" />;
-  }
-  if (status === "reprovado") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" title="Reprovado" />;
-  }
-  if (status === "nao_aplicavel") {
-    return <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted" title="N/A" />;
-  }
-  return <span className="inline-block h-2.5 w-2.5 rounded-full border border-border" title="Pendente" />;
+
+  const tooltipText = operador && (status === "concluido" || status === "aprovado")
+    ? `${fullLabel} — ${sLabel} por ${operador}`
+    : `${fullLabel} — ${sLabel}`;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium leading-none ${cls}`}
+        >
+          {icon}
+          {status === "nao_aplicavel" ? "—" : label}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {tooltipText}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function ProgressBar({ status }: { status: string }) {
