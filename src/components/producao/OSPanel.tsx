@@ -429,6 +429,39 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         loading={loading}
         onConfirm={handlePecaConfirm}
       />
+
+      <BlockedTransitionDialog
+        open={blockedOpen}
+        onOpenChange={setBlockedOpen}
+        title={blockedInfo?.title || ""}
+        message={blockedInfo?.message || ""}
+        actionLabel={blockedInfo?.actionLabel}
+        onAction={blockedInfo?.action ? () => executeGuardAction(blockedInfo.action!) : undefined}
+      />
+
+      <NovoRomaneioDialog
+        open={romaneioOpen}
+        onOpenChange={setRomaneioOpen}
+        prefillOsId={romaneioPrefill?.osId}
+        prefillTipoRota={romaneioPrefill?.tipoRota}
+        onSuccess={() => {
+          setRomaneioPrefill(null);
+          onStatusChanged?.();
+          toast({
+            title: "Romaneio criado",
+            description: "Conclua o despacho na tela de Logística para liberar o próximo status.",
+          });
+        }}
+      />
+
+      <TerceiroSelectDialog
+        open={terceiroOpen}
+        onOpenChange={setTerceiroOpen}
+        osId={os.id}
+        osCodigo={os.codigo}
+        fromStatus={os.status}
+        onConfirmed={() => onStatusChanged?.()}
+      />
     </>
   );
 }
