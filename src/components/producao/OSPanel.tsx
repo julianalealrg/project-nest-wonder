@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, FileText, ChevronRight, Loader2, Play, ExternalLink } from "lucide-react";
+import { X, FileText, ChevronRight, Loader2, Play, ExternalLink, Check, Clock, Minus } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
