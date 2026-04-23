@@ -9,6 +9,15 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "API Key do serviço de IA não configurada. Contate o administrador." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { pdfUrl } = await req.json().catch(() => ({}));
     if (!pdfUrl || typeof pdfUrl !== "string") {
       return new Response(JSON.stringify({ error: "pdfUrl is required" }), {
@@ -16,9 +25,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // Fetch the PDF and convert to base64 data URL (Gemini requires data URL for PDFs)
     const pdfResp = await fetch(pdfUrl);
