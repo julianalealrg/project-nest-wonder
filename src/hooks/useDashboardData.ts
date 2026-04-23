@@ -71,13 +71,13 @@ export function useDashboardData(filters: DashboardFilters) {
 
   // KPIs
   const registrosAbertos = filteredRegistros.filter((r) => r.status !== "resolvido").length;
-  const osEmProducao = filteredOS.filter((o: any) => !["Entregue"].includes(o.status)).length;
+  const osEmProducao = filteredOS.filter((o: any) => !["entregue"].includes(o.status)).length;
   const totalRegistros = filteredRegistros.length;
   const resolvidos = filteredRegistros.filter((r) => r.status === "resolvido").length;
   const taxaResolucao = totalRegistros > 0 ? Math.round((resolvidos / totalRegistros) * 100) : 0;
 
   // Tempo médio de produção
-  const entregues = filteredOS.filter((o: any) => o.status === "Entregue");
+  const entregues = filteredOS.filter((o: any) => o.status === "entregue");
   const tempoMedio = entregues.length > 0
     ? Math.round(entregues.reduce((sum: number, o: any) => sum + differenceInDays(new Date(o.updated_at), new Date(o.created_at)), 0) / entregues.length)
     : 0;
@@ -130,7 +130,7 @@ export function useDashboardData(filters: DashboardFilters) {
     (o.pecas || []).forEach((p: any) => {
       if (p.acabador) {
         const entry = acabadorMap.get(p.acabador) || { finalizadas: 0, quebras: 0 };
-        if (o.status === "Entregue") entry.finalizadas++;
+        if (o.status === "entregue") entry.finalizadas++;
         acabadorMap.set(p.acabador, entry);
       }
     });
