@@ -36,14 +36,13 @@ export function LogisticaKPI({ romaneios, categoria = "todas" }: LogisticaKPIPro
         {cards.map((c) => (
           <div
             key={c.label}
-            className="rounded-lg border p-4"
-            style={{ backgroundColor: "#2980B915", borderColor: "#2980B940" }}
+            className="bg-card rounded-lg border border-l-4 border-l-nue-azul p-4"
           >
             <div className="flex items-center gap-2 mb-1">
-              <c.icon className="h-4 w-4" style={{ color: "#2980B9" }} />
+              <c.icon className="h-4 w-4 text-nue-azul" />
               <span className="text-xs text-muted-foreground">{c.label}</span>
             </div>
-            <p className="text-2xl font-bold" style={{ color: "#2980B9" }}>{c.value}</p>
+            <p className="text-2xl font-bold text-nue-azul">{c.value}</p>
           </div>
         ))}
       </div>
@@ -81,14 +80,13 @@ export function LogisticaKPI({ romaneios, categoria = "todas" }: LogisticaKPIPro
         {cards.map((c) => (
           <div
             key={c.label}
-            className="rounded-lg border p-4"
-            style={{ backgroundColor: "#27AE6015", borderColor: "#27AE6040" }}
+            className="bg-card rounded-lg border border-l-4 border-l-nue-verde p-4"
           >
             <div className="flex items-center gap-2 mb-1">
-              <c.icon className="h-4 w-4" style={{ color: "#27AE60" }} />
+              <c.icon className="h-4 w-4 text-nue-verde" />
               <span className="text-xs text-muted-foreground">{c.label}</span>
             </div>
-            <p className="text-2xl font-bold" style={{ color: "#27AE60" }}>{c.value}</p>
+            <p className="text-2xl font-bold text-nue-verde">{c.value}</p>
           </div>
         ))}
       </div>
@@ -106,16 +104,16 @@ export function LogisticaKPI({ romaneios, categoria = "todas" }: LogisticaKPIPro
   }).length;
 
   const cards = [
-    { label: "Em trânsito", value: emTransito, icon: Truck, color: "text-blue-600" },
-    { label: "Entregas pendentes", value: entregasPendentes, icon: Package, color: "text-foreground" },
-    { label: "Recolhas pendentes", value: recolhasPendentes, icon: RotateCcw, color: "text-foreground" },
-    { label: "Entregas do mês", value: entregasMes, icon: CalendarCheck, color: "text-green-600" },
+    { label: "Em trânsito", value: emTransito, icon: Truck, accent: "border-l-nue-azul", color: "text-nue-azul" },
+    { label: "Entregas pendentes", value: entregasPendentes, icon: Package, accent: "border-l-muted-foreground", color: "text-foreground" },
+    { label: "Recolhas pendentes", value: recolhasPendentes, icon: RotateCcw, accent: "border-l-nue-amarelo", color: "text-nue-amarelo" },
+    { label: "Entregas do mês", value: entregasMes, icon: CalendarCheck, accent: "border-l-nue-verde", color: "text-nue-verde" },
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {cards.map((c) => (
-        <div key={c.label} className="bg-card rounded-lg border p-4">
+        <div key={c.label} className={`bg-card rounded-lg border border-l-4 ${c.accent} p-4`}>
           <div className="flex items-center gap-2 mb-1">
             <c.icon className={`h-4 w-4 ${c.color}`} />
             <span className="text-xs text-muted-foreground">{c.label}</span>

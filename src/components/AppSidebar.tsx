@@ -5,14 +5,14 @@ import logoNue from "@/assets/logo-nue-v1.svg";
 import { useState } from "react";
 
 const menuItems = [
-  { title: "Início", url: "/", icon: Home },
-  { title: "Produção", url: "/producao", icon: Factory },
-  { title: "Logística", url: "/logistica", icon: Truck },
-  { title: "Registros", url: "/registros", icon: FileText },
-  { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
+  { title: "Início", url: "/", icon: Home, color: "" },
+  { title: "Produção", url: "/producao", icon: Factory, color: "text-nue-laranja" },
+  { title: "Logística", url: "/logistica", icon: Truck, color: "text-nue-azul" },
+  { title: "Registros", url: "/registros", icon: FileText, color: "text-nue-roxo" },
+  { title: "Dashboard", url: "/dashboard", icon: BarChart3, color: "" },
 ];
 
-const adminItem = { title: "Admin", url: "/admin", icon: Settings };
+const adminItem = { title: "Admin", url: "/admin", icon: Settings, color: "" };
 
 export function AppSidebar() {
   const location = useLocation();
@@ -44,7 +44,7 @@ export function AppSidebar() {
                   : "text-[#F0EDE8]/70 hover:bg-sidebar-accent/50 hover:text-white"
               }`}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className={`h-4 w-4 ${active ? "" : item.color}`} />
               <span>{item.title}</span>
             </Link>
           );

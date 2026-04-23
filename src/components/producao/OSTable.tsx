@@ -1,6 +1,7 @@
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 import { calcularSugestaoAvanco, calcularDependencia } from "@/lib/avancoSugerido";
+import { osBadgeClass } from "@/lib/statusColors";
 
 function renderEntrega(dataEntrega: string | null, status: string) {
   if (status === "entregue" || !dataEntrega) {
@@ -33,9 +34,9 @@ interface OSTableProps {
 function getOrigemTag(origem: string) {
   const map: Record<string, { label: string; className: string }> = {
     os: { label: "OS", className: "bg-muted text-muted-foreground" },
-    rep: { label: "REP", className: "bg-blue-100 text-blue-700" },
-    oc: { label: "OC", className: "bg-purple-100 text-purple-700" },
-    of: { label: "OF", className: "bg-stone-200 text-stone-600" },
+    rep: { label: "REP", className: "bg-nue-azul/10 text-nue-azul" },
+    oc: { label: "OC", className: "bg-nue-roxo/10 text-nue-roxo" },
+    of: { label: "OF", className: "bg-nue-chumbo/15 text-nue-chumbo" },
   };
   const tag = map[origem] || map.os;
   return <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${tag.className}`}>{tag.label}</span>;
@@ -112,14 +113,14 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1">
-                        <Badge variant="outline" className="text-xs font-medium">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${osBadgeClass(os.status)}`}>
                           {STATUS_LABELS[os.status] || os.status}
-                        </Badge>
+                        </span>
                         {(() => {
                           const sugestao = calcularSugestaoAvanco(os);
                           if (!sugestao) return null;
                           return (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-verde/15 text-nue-verde">
                               Pronta para {sugestao.label}
                             </span>
                           );
@@ -128,7 +129,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                           const dep = calcularDependencia(os);
                           if (!dep) return null;
                           return (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-amarelo/15 text-nue-amarelo">
                               {dep.label}
                             </span>
                           );
@@ -143,9 +144,9 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                     </td>
                     <td className="px-4 py-3 text-center">
                       {days >= 5 ? (
-                        <span className="text-destructive font-semibold">{days}d</span>
+                        <span className="text-nue-vermelho font-semibold">{days}d</span>
                       ) : days >= 3 ? (
-                        <span className="text-yellow-600 font-semibold">{days}d</span>
+                        <span className="text-nue-amarelo font-semibold">{days}d</span>
                       ) : (
                         <span className="text-muted-foreground">{days}d</span>
                       )}

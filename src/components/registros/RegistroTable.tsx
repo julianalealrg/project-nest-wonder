@@ -12,6 +12,7 @@ import {
   REGISTRO_ORIGEM_LABELS,
   REGISTRO_URGENCIA_LABELS,
 } from "@/lib/registroTransitions";
+import { registroBadgeClass, urgenciaBadgeClass } from "@/lib/statusColors";
 import { changeRegistroStatus } from "@/lib/changeRegistroStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -32,14 +33,8 @@ function OrigemBadge({ origem }: { origem: string }) {
 }
 
 function UrgenciaBadge({ urgencia }: { urgencia: string }) {
-  const colors: Record<string, string> = {
-    baixa: "bg-muted text-muted-foreground",
-    media: "bg-muted text-foreground",
-    alta: "bg-destructive/10 text-destructive",
-    critica: "bg-destructive text-destructive-foreground",
-  };
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${colors[urgencia] || colors.media}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${urgenciaBadgeClass(urgencia)}`}>
       {REGISTRO_URGENCIA_LABELS[urgencia] || urgencia}
     </span>
   );
@@ -53,9 +48,9 @@ function StatusDropdown({ registro, onStatusChanged }: { registro: Registro; onS
 
   if (nextStatuses.length === 0) {
     return (
-      <Badge variant="outline" className="text-xs font-medium">
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${registroBadgeClass(registro.status)}`}>
         {REGISTRO_STATUS_LABELS[registro.status] || registro.status}
-      </Badge>
+      </span>
     );
   }
 
@@ -82,7 +77,7 @@ function StatusDropdown({ registro, onStatusChanged }: { registro: Registro; onS
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-        <button className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium text-foreground hover:bg-muted/50 transition-colors">
+        <button className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium hover:opacity-80 transition-opacity ${registroBadgeClass(registro.status)}`}>
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
           {REGISTRO_STATUS_LABELS[registro.status] || registro.status}
           <ChevronDown className="h-3 w-3 opacity-50" />
@@ -143,7 +138,7 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                       <OrigemBadge origem={reg.origem} />
                       <span className="font-medium text-foreground">{reg.codigo}</span>
                       {reg.encaminhar_projetos && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-purple-100 text-purple-700">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-nue-roxo/15 text-nue-roxo">
                           PROJETOS
                         </span>
                       )}

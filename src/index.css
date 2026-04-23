@@ -48,6 +48,15 @@
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 100%;
     --sidebar-muted: 30 14% 93%; /* #F0EDE8 at opacity via classes */
+
+    /* NUE expanded palette (HSL) */
+    --nue-azul: 204 64% 44%;       /* #2980B9 */
+    --nue-verde: 145 63% 42%;      /* #27AE60 */
+    --nue-roxo: 283 39% 47%;       /* #8E44AD */
+    --nue-laranja: 28 80% 52%;     /* #E67E22 */
+    --nue-vermelho: 6 63% 46%;     /* #C0392B */
+    --nue-amarelo: 43 78% 47%;     /* #D4A017 */
+    --nue-chumbo: 60 3% 23%;       /* #3D3D38 */
   }
 }
 
