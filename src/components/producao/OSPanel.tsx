@@ -107,7 +107,13 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
   const [selectedPecaIds, setSelectedPecaIds] = useState<Set<string>>(new Set());
   const [batchOpen, setBatchOpen] = useState(false);
+  const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const { profile } = useAuth();
+  const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
+  const selectedRomaneio = useMemo(
+    () => (selectedRomaneioCodigo ? allRomaneios.find((r) => r.codigo === selectedRomaneioCodigo) ?? null : null),
+    [allRomaneios, selectedRomaneioCodigo],
+  );
 
   // Reset seleção quando troca de OS
   useEffect(() => {
