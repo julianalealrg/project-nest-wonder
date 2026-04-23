@@ -13,6 +13,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
+import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
+import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
+import { TerceiroSelectDialog } from "./TerceiroSelectDialog";
+import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
 
 interface OSPanelProps {
   os: MockOS | null;
