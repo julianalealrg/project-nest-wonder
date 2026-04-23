@@ -25,9 +25,11 @@ interface NovoRomaneioDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  presetTipoRota?: string;
+  presetOsId?: string;
 }
 
-export function NovoRomaneioDialog({ open, onOpenChange, onSuccess }: NovoRomaneioDialogProps) {
+export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRota, presetOsId }: NovoRomaneioDialogProps) {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [tipoRota, setTipoRota] = useState("");
