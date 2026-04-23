@@ -217,15 +217,37 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
                           <SelectItem value="avariada">⚠ Avariada</SelectItem>
                         </SelectContent>
                       </Select>
-                    ) : p.conferencia ? (
-                      <span className={`text-[10px] font-semibold uppercase ${
-                        p.conferencia === "ok" ? "text-green-600" :
-                        p.conferencia === "faltou" ? "text-destructive" :
-                        "text-yellow-600"
-                      }`}>
-                        {p.conferencia === "ok" ? "OK" : p.conferencia === "faltou" ? "FALTOU" : "AVARIADA"}
-                      </span>
-                    ) : null}
+                    ) : (() => {
+                      // Só mostra badge de conferência quando o romaneio já chegou ao destino.
+                      const showConferencia =
+                        romaneio.status === "entregue" || romaneio.status === "recebido";
+                      const conf = p.conferencia;
+                      if (!showConferencia || !conf || conf === "pendente") {
+                        return <span className="text-[10px] text-muted-foreground">—</span>;
+                      }
+                      if (conf === "ok") {
+                        return (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 uppercase">
+                            OK
+                          </span>
+                        );
+                      }
+                      if (conf === "faltou" || conf === "faltante") {
+                        return (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 uppercase">
+                            Faltante
+                          </span>
+                        );
+                      }
+                      if (conf === "avariada") {
+                        return (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700 uppercase">
+                            Avariada
+                          </span>
+                        );
+                      }
+                      return <span className="text-[10px] text-muted-foreground">—</span>;
+                    })()}
                   </div>
                 ))}
               </div>
