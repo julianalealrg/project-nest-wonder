@@ -165,6 +165,51 @@ const STATION_LABELS_SHORT: Record<string, string> = {
   cq: "CQ",
 };
 
+/**
+ * Calcula o label, estado disabled e tooltip do botão de próximo status,
+ * baseado no resultado de `evaluateTransition` para refletir a ação real.
+ */
+function getBotaoProximoStatus(
+  os: MockOS,
+  nextStatus: string,
+): { label: string; disabled: boolean; tooltip?: string } {
+  const guard = evaluateTransition(os, nextStatus);
+
+  // expedicao / terceiros → entregue
+  if (
+    (os.status === "expedicao" && nextStatus === "entregue") ||
+    (os.status === "terceiros" && nextStatus === "entregue")
+  ) {
+    if (guard.kind === "open_romaneio") return { label: "Gerar romaneio", disabled: false };
+    if (guard.kind === "blocked")
+      return { label: "Aguardando cliente", disabled: true, tooltip: guard.reason };
+    if (guard.kind === "confirm_entrega") return { label: "Confirmar entrega", disabled: false };
+  }
+
+  // cortando → enviado_base2 (sempre passa por gerar romaneio B1→B2 quando peças OK)
+  if (os.status === "cortando" && nextStatus === "enviado_base2") {
+    if (guard.kind === "open_romaneio") return { label: "Gerar romaneio B1→B2", disabled: false };
+    if (guard.kind === "blocked")
+      return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: true, tooltip: guard.reason };
+  }
+
+  // cortando → terceiros
+  if (os.status === "cortando" && nextStatus === "terceiros") {
+    if (guard.kind === "select_terceiro") return { label: "Enviar para terceiro", disabled: false };
+  }
+
+  // Demais transições: respeita bloqueios genéricos (ex: Acabamento→CQ com peças pendentes)
+  if (guard.kind === "blocked") {
+    return {
+      label: TRANSITION_LABELS[nextStatus] || nextStatus,
+      disabled: true,
+      tooltip: guard.reason,
+    };
+  }
+
+  return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: false };
+}
+
 export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -731,8 +776,10 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           </Button>
           {nextStatuses.map((ns) => {
             const regressive = isRegressive(os.status, ns);
-            const label = regressive ? `Reprovar → ${TRANSITION_LABELS[ns]}` : TRANSITION_LABELS[ns];
-            return (
+            const btn = regressive
+              ? { label: `Reprovar → ${TRANSITION_LABELS[ns]}`, disabled: false, tooltip: undefined as string | undefined }
+              : getBotaoProximoStatus(os, ns);
+            const buttonNode = (
               <Button
                 key={ns}
                 variant={regressive ? "outline" : "default"}
@@ -741,14 +788,28 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                     ? "flex-1 px-6 py-3 text-[13px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
                     : "flex-1 px-6 py-3 text-[13px]"
                 }
-                disabled={loading}
+                disabled={loading || btn.disabled}
                 onClick={() => handleSelect(ns)}
               >
                 {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-                {label}
+                {btn.label}
                 {!regressive && <ChevronRight className="ml-1 h-4 w-4" />}
               </Button>
             );
+
+            if (btn.tooltip) {
+              return (
+                <TooltipProvider key={ns}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex-1">{buttonNode}</span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs">{btn.tooltip}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            }
+            return buttonNode;
           })}
         </div>
       </div>
