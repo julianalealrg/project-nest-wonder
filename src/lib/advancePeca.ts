@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
+import { calcularSugestaoAvanco } from "@/lib/avancoSugerido";
+import { toast } from "@/hooks/use-toast";
 
 type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
 
@@ -80,4 +82,23 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
       ...fields,
     },
   });
+
+  // Recarregar OS + peças e verificar se há sugestão de avanço
+  try {
+    const [{ data: osRow }, { data: pecasRows }] = await Promise.all([
+      supabase.from("ordens_servico").select("status").eq("id", osId).maybeSingle(),
+      supabase.from("pecas").select("*").eq("os_id", osId),
+    ]);
+    if (osRow && pecasRows) {
+      const sugestao = calcularSugestaoAvanco({ status: osRow.status, pecas: pecasRows as any });
+      if (sugestao) {
+        toast({
+          title: `Todas as peças de ${osCodigo} concluíram a etapa`,
+          description: `Avance a OS para ${sugestao.label} no painel lateral.`,
+        });
+      }
+    }
+  } catch {
+    // não bloqueia o avanço caso falhe
+  }
 }

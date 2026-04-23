@@ -1,5 +1,6 @@
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
+import { calcularSugestaoAvanco, calcularDependencia } from "@/lib/avancoSugerido";
 
 function renderEntrega(dataEntrega: string | null, status: string) {
   if (status === "entregue" || !dataEntrega) {
@@ -110,9 +111,29 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                       <span className="text-muted-foreground">/{totalPecas}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className="text-xs font-medium">
-                        {STATUS_LABELS[os.status] || os.status}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className="text-xs font-medium">
+                          {STATUS_LABELS[os.status] || os.status}
+                        </Badge>
+                        {(() => {
+                          const sugestao = calcularSugestaoAvanco(os);
+                          if (!sugestao) return null;
+                          return (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700">
+                              Pronta para {sugestao.label}
+                            </span>
+                          );
+                        })()}
+                        {(() => {
+                          const dep = calcularDependencia(os);
+                          if (!dep) return null;
+                          return (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">
+                              {dep.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                       {os.localizacao}
