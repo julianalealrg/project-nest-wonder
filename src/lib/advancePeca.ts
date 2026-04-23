@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 
 type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
 
@@ -10,9 +11,16 @@ interface AdvancePecaParams {
   station: StationKey;
   fields: Record<string, string>;
   userName: string;
+  osStatus?: string;
 }
 
-export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, station, fields, userName }: AdvancePecaParams) {
+export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, station, fields, userName, osStatus }: AdvancePecaParams) {
+  if (osStatus) {
+    const guard = podeAvancarPecaPara(station, osStatus);
+    if (!guard.permitido) {
+      throw new Error(guard.motivo || "Avanço bloqueado pelo status da OS.");
+    }
+  }
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   switch (station) {

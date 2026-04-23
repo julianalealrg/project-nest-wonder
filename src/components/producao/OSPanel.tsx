@@ -14,9 +14,11 @@ import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
 import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
+import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
 import { TerceiroSelectDialog } from "./TerceiroSelectDialog";
 import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OSPanelProps {
   os: MockOS | null;
@@ -188,6 +190,15 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   function handlePecaAdvance(peca: MockPeca) {
     const next = getNextStation(peca);
     if (!next) return;
+    const guard = podeAvancarPecaPara(next, os!.status);
+    if (!guard.permitido) {
+      setBlockedDialog({
+        open: true,
+        title: `Etapa ${STATION_LABELS_SHORT[next]} bloqueada`,
+        reason: guard.motivo || "Avanço bloqueado pelo status atual da OS.",
+      });
+      return;
+    }
     setSelectedPeca(peca);
     setPecaDialogOpen(true);
   }
@@ -207,6 +218,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         station,
         fields,
         userName: profile?.nome || "Sistema",
+        osStatus: os.status,
       });
       toast({ title: `Peça ${selectedPeca.item}: ${STATION_LABELS_SHORT[station]} concluído` });
       setPecaDialogOpen(false);
@@ -283,6 +295,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
               <div className="space-y-2">
                 {os.pecas.map((peca) => {
                   const nextStation = getNextStation(peca);
+                  const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status) : { permitido: true };
                   return (
                     <div key={peca.id} className="flex items-center gap-3 rounded-md bg-muted/30 p-3">
                       <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
@@ -297,15 +310,29 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                       </div>
                       {peca.cortador && <span className="text-[10px] text-muted-foreground">{peca.cortador}</span>}
                       {nextStation && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 text-[11px]"
-                          onClick={() => handlePecaAdvance(peca)}
-                        >
-                          <Play className="mr-1 h-3 w-3" />
-                          {STATION_LABELS_SHORT[nextStation]}
-                        </Button>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => handlePecaAdvance(peca)}
+                                  disabled={!guard.permitido}
+                                >
+                                  <Play className="mr-1 h-3 w-3" />
+                                  {STATION_LABELS_SHORT[nextStation]}
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            {!guard.permitido && guard.motivo && (
+                              <TooltipContent side="left" className="max-w-[260px] text-xs">
+                                {guard.motivo}
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                   );
