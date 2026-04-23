@@ -128,7 +128,7 @@ function mapExtractedToOS(d: any, file: File): OSForm {
     material: d?.material || "",
     projetista: "",
     projetista_outro: "",
-    data_entrega: d?.data_entrega || "",
+    data_entrega: sanitizeDate(d?.data_entrega) || "",
     area_m2: d?.area_m2 != null ? Number(d.area_m2) : "",
     pecas: [],
     _pdfFile: file,
