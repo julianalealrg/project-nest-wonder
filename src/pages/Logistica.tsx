@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Download, Truck, Home } from "lucide-react";
@@ -14,6 +15,8 @@ import {
   useRomaneios,
   Romaneio,
   getRotasPorCategoria,
+  ROTAS_INTERNAS,
+  ROTAS_CLIENTE,
   type CategoriaRota,
 } from "@/hooks/useRomaneios";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
@@ -37,8 +40,10 @@ export default function Logistica() {
   const [statusExp, setStatusExp] = useState("todos");
 
   const [selectedRomaneio, setSelectedRomaneio] = useState<Romaneio | null>(null);
+  const [autoStartConferencia, setAutoStartConferencia] = useState(false);
   const [novoOpen, setNovoOpen] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { data: romaneios = [], isLoading } = useRomaneios();
 
