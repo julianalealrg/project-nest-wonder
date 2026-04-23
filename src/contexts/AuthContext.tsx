@@ -10,6 +10,7 @@ interface Profile {
   base: string;
   funcao: string;
   perfil: "admin" | "operador" | "observador";
+  status_aprovacao?: string;
 }
 
 interface AuthContextType {
@@ -17,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; blocked?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -73,8 +74,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error };
+
+    if (data.user) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("status_aprovacao")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (prof?.status_aprovacao === "pendente") {
+        await supabase.auth.signOut();
+        return {
+          error: null,
+          blocked:
+            "Seu cadastro ainda não foi aprovado pelo administrador. Aguarde ou entre em contato.",
+        };
+      }
+      if (prof?.status_aprovacao === "rejeitado") {
+        await supabase.auth.signOut();
+        return {
+          error: null,
+          blocked: "Seu cadastro não foi aprovado. Entre em contato com o administrador.",
+        };
+      }
+    }
+    return { error: null };
   };
 
   const signOut = async () => {
