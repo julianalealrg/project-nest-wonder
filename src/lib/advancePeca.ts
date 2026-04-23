@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
+import { calcularSugestaoAvanco } from "@/lib/avancoSugerido";
+import { toast } from "@/hooks/use-toast";
 
 type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
 
