@@ -91,6 +91,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [pendingStatus, setPendingStatus] = useState("");
   const [pecaDialogOpen, setPecaDialogOpen] = useState(false);
   const [selectedPeca, setSelectedPeca] = useState<MockPeca | null>(null);
+  const [blockedDialog, setBlockedDialog] = useState<{ open: boolean; title: string; reason: string; details?: string[] }>({
+    open: false,
+    title: "",
+    reason: "",
+  });
+  const [terceiroOpen, setTerceiroOpen] = useState(false);
+  const [romaneioOpen, setRomaneioOpen] = useState(false);
+  const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
   const { profile } = useAuth();
 
   const allPiecesCompletedStation = useMemo(() => {
@@ -115,29 +123,66 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const nextStatuses = getNextStatuses(os.status);
 
   function handleSelect(newStatus: string) {
+    if (!os) return;
+    const guard: GuardAction = evaluateTransition(os, newStatus);
+
+    if (guard.kind === "blocked") {
+      setBlockedDialog({ open: true, title: guard.title, reason: guard.reason, details: guard.details });
+      return;
+    }
+    if (guard.kind === "open_romaneio") {
+      setRomaneioPreset({ tipoRota: guard.tipoRota, osId: guard.presetOsId });
+      setRomaneioOpen(true);
+      // Avança o status da OS automaticamente; o usuário continua criando o romaneio
+      doChangeStatus(newStatus, {});
+      return;
+    }
+    if (guard.kind === "select_terceiro") {
+      setPendingStatus(newStatus);
+      setTerceiroOpen(true);
+      return;
+    }
+
     setPendingStatus(newStatus);
     setDialogOpen(true);
   }
 
-  async function handleConfirm(extraFields: Record<string, string>) {
+  async function doChangeStatus(newStatus: string, extraFields: Record<string, string>) {
+    if (!os) return;
     setLoading(true);
     try {
       await changeOSStatus({
         osId: os.id,
         osCodigo: os.codigo,
         fromStatus: os.status,
-        toStatus: pendingStatus,
+        toStatus: newStatus,
         userName: profile?.nome || "Sistema",
         extraFields,
       });
-      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[pendingStatus]}` });
-      setDialogOpen(false);
+      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[newStatus]}` });
       onStatusChanged?.();
     } catch (err: any) {
       toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleConfirm(extraFields: Record<string, string>) {
+    await doChangeStatus(pendingStatus, extraFields);
+    setDialogOpen(false);
+  }
+
+  async function handleTerceiroConfirm(terceiroNome: string) {
+    await doChangeStatus(pendingStatus, { terceiro: terceiroNome });
+    // Persistir terceiro_nome na OS
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      await supabase.from("ordens_servico").update({ terceiro_nome: terceiroNome } as any).eq("id", os!.id);
+    } catch (e) {
+      // ignore - já logado
+    }
+    setTerceiroOpen(false);
   }
 
   function handlePecaAdvance(peca: MockPeca) {
