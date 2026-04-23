@@ -103,7 +103,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [terceiroOpen, setTerceiroOpen] = useState(false);
   const [romaneioOpen, setRomaneioOpen] = useState(false);
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
+  const [selectedPecaIds, setSelectedPecaIds] = useState<Set<string>>(new Set());
+  const [batchOpen, setBatchOpen] = useState(false);
   const { profile } = useAuth();
+
+  // Reset seleção quando troca de OS
+  useEffect(() => {
+    setSelectedPecaIds(new Set());
+  }, [os?.id]);
 
   const allPiecesCompletedStation = useMemo(() => {
     if (!os) return null;
