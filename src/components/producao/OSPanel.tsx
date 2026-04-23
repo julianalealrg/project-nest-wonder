@@ -547,15 +547,17 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                   </h3>
                   <div className="space-y-2">
                     {os.romaneios.map((rom) => (
-                      <div
+                      <button
                         key={rom.codigo}
-                        className="flex items-center justify-between rounded-md bg-muted/30 p-3 text-[13px]"
+                        type="button"
+                        onClick={() => setSelectedRomaneioCodigo(rom.codigo)}
+                        className="flex items-center justify-between w-full rounded-md bg-muted/30 p-3 text-[13px] text-left transition-colors hover:bg-muted/60"
                       >
                         <span className="font-medium text-foreground">{rom.codigo}</span>
                         <Badge variant="outline" className="text-xs">
                           {rom.status}
                         </Badge>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
