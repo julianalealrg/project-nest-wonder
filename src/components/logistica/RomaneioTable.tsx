@@ -49,8 +49,26 @@ export function RomaneioTable({ data, onSelect }: RomaneioTableProps) {
                         {ROTA_LABELS[rom.tipo_rota] || rom.tipo_rota}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-foreground hidden sm:table-cell">
-                      {rom.os_codigos.join(", ") || "—"}
+                    <td className="px-4 py-3 text-foreground text-xs hidden sm:table-cell max-w-[200px] truncate">
+                      {rom.os_codigos.length === 0 ? (
+                        "—"
+                      ) : rom.os_codigos.length <= 2 ? (
+                        rom.os_codigos.join(", ")
+                      ) : (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help" onClick={(e) => e.stopPropagation()}>
+                                {rom.os_codigos[0]}{" "}
+                                <span className="text-muted-foreground/70">+{rom.os_codigos.length - 1}</span>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div className="text-xs">{rom.os_codigos.join(", ")}</div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-foreground hidden md:table-cell truncate max-w-[200px]">
                       {rom.cliente_nome}
