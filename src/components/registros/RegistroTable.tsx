@@ -12,6 +12,7 @@ import {
   REGISTRO_ORIGEM_LABELS,
   REGISTRO_URGENCIA_LABELS,
 } from "@/lib/registroTransitions";
+import { registroBadgeClass, urgenciaBadgeClass } from "@/lib/statusColors";
 import { changeRegistroStatus } from "@/lib/changeRegistroStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -32,14 +33,8 @@ function OrigemBadge({ origem }: { origem: string }) {
 }
 
 function UrgenciaBadge({ urgencia }: { urgencia: string }) {
-  const colors: Record<string, string> = {
-    baixa: "bg-muted text-muted-foreground",
-    media: "bg-muted text-foreground",
-    alta: "bg-destructive/10 text-destructive",
-    critica: "bg-destructive text-destructive-foreground",
-  };
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${colors[urgencia] || colors.media}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${urgenciaBadgeClass(urgencia)}`}>
       {REGISTRO_URGENCIA_LABELS[urgencia] || urgencia}
     </span>
   );
@@ -143,7 +138,7 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                       <OrigemBadge origem={reg.origem} />
                       <span className="font-medium text-foreground">{reg.codigo}</span>
                       {reg.encaminhar_projetos && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-purple-100 text-purple-700">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-nue-roxo/15 text-nue-roxo">
                           PROJETOS
                         </span>
                       )}

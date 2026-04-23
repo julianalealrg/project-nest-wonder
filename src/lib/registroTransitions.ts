@@ -20,9 +20,9 @@ export const REGISTRO_STATUS_LABELS: Record<string, string> = {
 };
 
 export const REGISTRO_ORIGEM_LABELS: Record<string, { label: string; className: string }> = {
-  obra: { label: "OBRA", className: "bg-purple-100 text-purple-700" },
-  fabrica: { label: "FAB", className: "bg-stone-200 text-stone-600" },
-  solicitacao: { label: "SOL", className: "bg-blue-100 text-blue-700" },
+  obra: { label: "OBRA", className: "bg-nue-roxo/10 text-nue-roxo" },
+  fabrica: { label: "FAB", className: "bg-nue-chumbo/15 text-nue-chumbo" },
+  solicitacao: { label: "SOL", className: "bg-nue-azul/10 text-nue-azul" },
 };
 
 export const REGISTRO_URGENCIA_LABELS: Record<string, string> = {
