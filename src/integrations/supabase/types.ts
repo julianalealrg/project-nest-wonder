@@ -285,6 +285,8 @@ export type Database = {
           id: string
           nome: string
           perfil: Database["public"]["Enums"]["app_role"]
+          sobrenome: string | null
+          status_aprovacao: string
           ultimo_acesso: string | null
           updated_at: string
           user_id: string
@@ -297,6 +299,8 @@ export type Database = {
           id?: string
           nome: string
           perfil?: Database["public"]["Enums"]["app_role"]
+          sobrenome?: string | null
+          status_aprovacao?: string
           ultimo_acesso?: string | null
           updated_at?: string
           user_id: string
@@ -309,6 +313,8 @@ export type Database = {
           id?: string
           nome?: string
           perfil?: Database["public"]["Enums"]["app_role"]
+          sobrenome?: string | null
+          status_aprovacao?: string
           ultimo_acesso?: string | null
           updated_at?: string
           user_id?: string
