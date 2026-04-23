@@ -130,7 +130,7 @@ export function useDashboardData(filters: DashboardFilters) {
     (o.pecas || []).forEach((p: any) => {
       if (p.acabador) {
         const entry = acabadorMap.get(p.acabador) || { finalizadas: 0, quebras: 0 };
-        if (o.status === "Entregue") entry.finalizadas++;
+        if (o.status === "entregue") entry.finalizadas++;
         acabadorMap.set(p.acabador, entry);
       }
     });
