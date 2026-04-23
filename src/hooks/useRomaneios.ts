@@ -30,6 +30,7 @@ export interface Romaneio {
   data_recebimento: string | null;
   recebido_por: string | null;
   pdf_url: string | null;
+  foto_romaneio_assinado_url: string | null;
   created_at: string;
   pecas: RomaneioPeca[];
   os_codigos: string[];
