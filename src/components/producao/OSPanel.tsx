@@ -399,27 +399,26 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
               </div>
             </div>
 
-            {os.pdf_url && (
-              <>
-                <Separator />
-                <div>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      PDF da OS
-                    </h3>
-                    <a
-                      href={os.pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[11px] text-foreground hover:underline"
-                    >
-                      Abrir em nova aba <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <PdfPreview pdfUrl={os.pdf_url} codigo={os.codigo} />
-                </div>
-              </>
-            )}
+            <Separator />
+            <div>
+              <h3 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                PDF da OS
+              </h3>
+              {os.pdf_url ? (
+                <a
+                  href={os.pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[12px] text-foreground hover:bg-muted/40 transition-colors"
+                >
+                  <FileText className="h-4 w-4" />
+                  Ver PDF da OS
+                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                </a>
+              ) : (
+                <p className="text-[12px] text-muted-foreground">Nenhum PDF anexado</p>
+              )}
+            </div>
 
             {os.romaneios.length > 0 && (
               <>
