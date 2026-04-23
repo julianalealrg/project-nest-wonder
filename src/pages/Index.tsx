@@ -20,13 +20,13 @@ function useHomeKPIs() {
       const now = new Date();
       const mesInicio = startOfMonth(now);
 
-      const osEmProducao = ordens.filter((o) => o.status !== "Entregue").length;
+      const osEmProducao = ordens.filter((o) => o.status !== "entregue").length;
       const registrosAbertos = registros.filter((r) => r.status === "aberto").length;
       const alertasInatividade = ordens.filter(
-        (o) => o.status !== "Entregue" && differenceInDays(now, new Date(o.updated_at)) >= 3
+        (o) => o.status !== "entregue" && differenceInDays(now, new Date(o.updated_at)) >= 3
       ).length;
       const osEntreguesMes = ordens.filter(
-        (o) => o.status === "Entregue" && new Date(o.updated_at) >= mesInicio
+        (o) => o.status === "entregue" && new Date(o.updated_at) >= mesInicio
       ).length;
 
       return { osEmProducao, registrosAbertos, alertasInatividade, osEntreguesMes };
