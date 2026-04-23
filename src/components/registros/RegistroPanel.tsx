@@ -112,7 +112,9 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Status</span>
-                <Badge variant="outline">{REGISTRO_STATUS_LABELS[registro.status] || registro.status}</Badge>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${registroBadgeClass(registro.status)}`}>
+                  {REGISTRO_STATUS_LABELS[registro.status] || registro.status}
+                </span>
               </div>
             </div>
 

@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
+import { osBadgeClass } from "@/lib/statusColors";
 import { changeOSStatus } from "@/lib/changeOSStatus";
 import { advancePecaStation } from "@/lib/advancePeca";
 import { useAuth } from "@/contexts/AuthContext";
