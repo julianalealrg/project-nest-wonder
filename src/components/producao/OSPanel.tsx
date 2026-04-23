@@ -233,6 +233,13 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
 
   function handleSelect(newStatus: string) {
     if (!os) return;
+
+    // Transição regressiva CQ → Acabamento: abre dialog dedicado de reprovação
+    if (isRegressive(os.status, newStatus)) {
+      setCqReprovaOpen(true);
+      return;
+    }
+
     const guard: GuardAction = evaluateTransition(os, newStatus);
 
     if (guard.kind === "blocked") {
