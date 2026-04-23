@@ -2,14 +2,16 @@ import { useState } from "react";
 import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
 import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
 import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { ConfirmarEntregaClienteDialog } from "./ConfirmarEntregaClienteDialog";
 
 interface RomaneioPanelProps {
   romaneio: Romaneio | null;
@@ -21,12 +23,10 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
   const [loading, setLoading] = useState(false);
   const [conferindo, setConferindo] = useState(false);
   const [conferencias, setConferencias] = useState<Record<string, string>>({});
-  const [entregaClienteOpen, setEntregaClienteOpen] = useState(false);
   const { profile } = useAuth();
 
   if (!romaneio) return null;
 
-  const isClienteRoute = romaneio.tipo_rota === "base2_cliente";
   const canDepart = romaneio.status === "pendente";
   const canReceive = romaneio.status === "em_transito";
 
@@ -244,14 +244,9 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
               Despachar
             </Button>
           )}
-          {canReceive && !isClienteRoute && !conferindo && (
+          {canReceive && !conferindo && (
             <Button size="sm" className="flex-1" onClick={startConferencia}>
               <CheckCircle className="h-4 w-4 mr-1" /> Confirmar Recebimento
-            </Button>
-          )}
-          {canReceive && isClienteRoute && (
-            <Button size="sm" className="flex-1" onClick={() => setEntregaClienteOpen(true)}>
-              <CheckCircle className="h-4 w-4 mr-1" /> Confirmar Entrega ao Cliente
             </Button>
           )}
           {conferindo && (
@@ -262,15 +257,6 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
           )}
         </div>
       </div>
-
-      <ConfirmarEntregaClienteDialog
-        open={entregaClienteOpen}
-        onOpenChange={setEntregaClienteOpen}
-        romaneioId={romaneio.id}
-        romaneioCodigo={romaneio.codigo}
-        osIds={Array.from(new Set(romaneio.pecas.map((p) => p.os_id).filter((id): id is string => !!id)))}
-        onConfirmed={() => onChanged?.()}
-      />
     </>
   );
 }

@@ -24,14 +24,12 @@ interface OSOption {
 interface NovoRomaneioDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (romaneioId?: string) => void;
-  /** Pre-select an OS (and select all its peças) when opened */
-  prefillOsId?: string | null;
-  /** Pre-select the route type (e.g. "base1_base2") */
-  prefillTipoRota?: string | null;
+  onSuccess?: () => void;
+  presetTipoRota?: string;
+  presetOsId?: string;
 }
 
-export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, prefillOsId, prefillTipoRota }: NovoRomaneioDialogProps) {
+export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRota, presetOsId }: NovoRomaneioDialogProps) {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [tipoRota, setTipoRota] = useState("");
@@ -69,7 +67,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, prefillOsId,
           pecasMap.set(p.os_id, list);
         });
 
-        const mapped = data.map((d) => {
+        const list = data.map((d) => {
           const cli = d.clientes as any;
           return {
             id: d.id,
@@ -79,25 +77,26 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, prefillOsId,
             pecas: pecasMap.get(d.id) || [],
           };
         });
-        setOsList(mapped);
+        setOsList(list);
 
-        // Apply prefill once data is loaded
-        if (prefillTipoRota) setTipoRota(prefillTipoRota);
-        if (prefillOsId) {
-          const os = mapped.find((o) => o.id === prefillOsId);
-          if (os) {
-            setSelectedOsIds([prefillOsId]);
-            setSelectedPecaIds(new Set(os.pecas.map((p) => p.id)));
-            if (prefillTipoRota === "base2_cliente" && os.cliente_endereco) {
-              setEnderecoDestino(os.cliente_endereco);
-            }
+        // Aplicar preset (OS pré-selecionada vinda da Produção)
+        if (presetOsId) {
+          const presetOs = list.find((o) => o.id === presetOsId);
+          if (presetOs) {
+            setSelectedOsIds([presetOsId]);
+            setSelectedPecaIds(new Set(presetOs.pecas.map((p) => p.id)));
           }
         }
       }
       setLoadingOs(false);
     }
     load();
-  }, [open, prefillOsId, prefillTipoRota]);
+  }, [open, presetOsId]);
+
+  // Aplicar tipo de rota preset
+  useEffect(() => {
+    if (open && presetTipoRota) setTipoRota(presetTipoRota);
+  }, [open, presetTipoRota]);
 
   function reset() {
     setTipoRota("");
@@ -243,7 +242,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, prefillOsId,
       toast({ title: `Romaneio ${codigo} criado!` });
       reset();
       onOpenChange(false);
-      onSuccess?.(newRom.id);
+      onSuccess?.();
     } catch (err: any) {
       console.error(err);
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });

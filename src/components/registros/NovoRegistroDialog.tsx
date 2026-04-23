@@ -75,8 +75,6 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
   const [recolhaDestino, setRecolhaDestino] = useState("");
   const [encaminharProjetos, setEncaminharProjetos] = useState(false);
   const [instrucaoProjetos, setInstrucaoProjetos] = useState("");
-  const [acaoProdutiva, setAcaoProdutiva] = useState<string>("");
-  const [materialDisponivel, setMaterialDisponivel] = useState<string>("");
   const [pecas, setPecas] = useState<PecaReg[]>([emptyPeca()]);
   const [fotos, setFotos] = useState<File[]>([]);
   const [osId, setOsId] = useState<string | null>(null);
@@ -104,8 +102,6 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     setRecolhaDestino("");
     setEncaminharProjetos(false);
     setInstrucaoProjetos("");
-    setAcaoProdutiva("");
-    setMaterialDisponivel("");
     setPecas([emptyPeca()]);
     setFotos([]);
     setOsId(null);
@@ -183,8 +179,6 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     if (showAcabador && !acabadorResponsavel.trim()) { toast({ title: "Acabador responsável é obrigatório", variant: "destructive" }); return; }
     if (encaminharProjetos && !instrucaoProjetos.trim()) { toast({ title: "Instrução para Projetos é obrigatória", variant: "destructive" }); return; }
     if (requerRecolha && (!recolhaOrigem || !recolhaDestino)) { toast({ title: "Origem e destino da recolha são obrigatórios", variant: "destructive" }); return; }
-    if (!acaoProdutiva) { toast({ title: "Selecione a ação produtiva necessária", variant: "destructive" }); return; }
-    if (acaoProdutiva !== "nenhuma" && !materialDisponivel) { toast({ title: "Informe se o material já está disponível", variant: "destructive" }); return; }
 
     setSaving(true);
     try {
@@ -263,67 +257,6 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
         }
       }
 
-      // Auto-generate OS from registro based on acao_produtiva
-      let osGeradaId: string | null = null;
-      let osGeradaCodigo: string | null = null;
-      if (acaoProdutiva && acaoProdutiva !== "nenhuma") {
-        // Generate REP-XX-XXX code
-        const year = new Date().getFullYear().toString().slice(-2);
-        const repPrefix = `REP${year}-`;
-        const { data: lastRep } = await supabase
-          .from("ordens_servico")
-          .select("codigo")
-          .like("codigo", `${repPrefix}%`)
-          .order("codigo", { ascending: false })
-          .limit(1);
-        let nextRepNum = 1;
-        if (lastRep && lastRep.length > 0) {
-          const n = parseInt(lastRep[0].codigo.replace(repPrefix, ""), 10);
-          if (!isNaN(n)) nextRepNum = n + 1;
-        }
-        osGeradaCodigo = `${repPrefix}${String(nextRepNum).padStart(3, "0")}`;
-
-        const matDisp = materialDisponivel === "sim";
-        let osStatus = "fila_corte";
-        if (!matDisp) osStatus = "aguardando_material";
-        else if (acaoProdutiva === "retrabalho_acabamento") osStatus = "acabamento";
-
-        const { data: newOs, error: osErr } = await supabase
-          .from("ordens_servico")
-          .insert({
-            codigo: osGeradaCodigo,
-            origem: "rep",
-            material: material.trim(),
-            ambiente: ambiente.trim(),
-            projetista: projetistaFinal,
-            status: osStatus,
-            localizacao: osStatus === "acabamento" ? "Base 2" : osStatus === "aguardando_material" ? "CD" : "Base 1",
-            registro_origem_id: newReg.id,
-            material_disponivel: matDisp,
-          } as any)
-          .select("id")
-          .single();
-        if (osErr) throw osErr;
-        osGeradaId = newOs.id;
-
-        // Create peças in pecas table from the registro_pecas
-        if (pecasToInsert.length > 0) {
-          await supabase.from("pecas").insert(
-            pecasToInsert.map((p) => ({
-              os_id: osGeradaId!,
-              item: p.item || null,
-              descricao: p.descricao,
-              quantidade: p.quantidade,
-            }))
-          );
-        }
-
-        // Link back to registro
-        await supabase.from("registros").update({ os_gerada_id: osGeradaId, acao_produtiva: acaoProdutiva, material_disponivel: matDisp } as any).eq("id", newReg.id);
-      } else if (acaoProdutiva === "nenhuma") {
-        await supabase.from("registros").update({ acao_produtiva: acaoProdutiva } as any).eq("id", newReg.id);
-      }
-
       // Activity log
       await supabase.from("activity_logs").insert({
         action: "criacao_registro",
@@ -331,13 +264,10 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
         entity_id: newReg.id,
         entity_description: codigo,
         user_name: profile?.nome || "Sistema",
-        details: { origem, tipo, urgencia, acao_produtiva: acaoProdutiva, os_gerada: osGeradaCodigo },
+        details: { origem, tipo, urgencia },
       });
 
-      toast({
-        title: `Registro ${codigo} criado!`,
-        description: osGeradaCodigo ? `OS ${osGeradaCodigo} gerada automaticamente` : undefined,
-      });
+      toast({ title: `Registro ${codigo} criado com sucesso!` });
       reset();
       onOpenChange(false);
       onSuccess?.();
@@ -658,33 +588,6 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
                         rows={2}
                       />
                       <p className="text-[10px] text-muted-foreground">Status inicial será "Aguardando OS"</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Ação produtiva necessária */}
-                <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-4">
-                  <Label className="text-xs font-semibold">Ação produtiva necessária *</Label>
-                  <Select value={acaoProdutiva} onValueChange={setAcaoProdutiva}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cortar_nova">Cortar peça nova (Base 1 completo)</SelectItem>
-                      <SelectItem value="cortar_retrabalhar">Cortar + retrabalhar (Base 1 + Base 2)</SelectItem>
-                      <SelectItem value="retrabalho_acabamento">Apenas retrabalho de acabamento (só Base 2)</SelectItem>
-                      <SelectItem value="nenhuma">Nenhuma ação produtiva (só registrar)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {acaoProdutiva && acaoProdutiva !== "nenhuma" && (
-                    <div className="space-y-1 pt-2">
-                      <Label className="text-xs">Material já disponível na base? *</Label>
-                      <Select value={materialDisponivel} onValueChange={setMaterialDisponivel}>
-                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sim">Sim — entra direto na fila</SelectItem>
-                          <SelectItem value="nao">Não — entra como "Aguardando Material"</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-[10px] text-muted-foreground">Uma OS REP será gerada automaticamente.</p>
                     </div>
                   )}
                 </div>

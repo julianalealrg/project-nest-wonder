@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { X, FileText, ChevronRight, Loader2, Play, ExternalLink } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
@@ -8,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
-import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
 import { changeOSStatus } from "@/lib/changeOSStatus";
 import { advancePecaStation } from "@/lib/advancePeca";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
+import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
 import { TerceiroSelectDialog } from "./TerceiroSelectDialog";
 import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
@@ -87,18 +86,19 @@ const STATION_LABELS_SHORT: Record<string, string> = {
 };
 
 export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
   const [pecaDialogOpen, setPecaDialogOpen] = useState(false);
   const [selectedPeca, setSelectedPeca] = useState<MockPeca | null>(null);
-  // Guard popups
-  const [blockedOpen, setBlockedOpen] = useState(false);
-  const [blockedInfo, setBlockedInfo] = useState<{ title: string; message: string; actionLabel?: string; action?: GuardAction } | null>(null);
-  const [romaneioOpen, setRomaneioOpen] = useState(false);
-  const [romaneioPrefill, setRomaneioPrefill] = useState<{ osId: string; tipoRota: string } | null>(null);
+  const [blockedDialog, setBlockedDialog] = useState<{ open: boolean; title: string; reason: string; details?: string[] }>({
+    open: false,
+    title: "",
+    reason: "",
+  });
   const [terceiroOpen, setTerceiroOpen] = useState(false);
+  const [romaneioOpen, setRomaneioOpen] = useState(false);
+  const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
   const { profile } = useAuth();
 
   const allPiecesCompletedStation = useMemo(() => {
@@ -122,52 +122,67 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
 
   const nextStatuses = getNextStatuses(os.status);
 
-  function executeGuardAction(action: GuardAction) {
-    if (action.type === "open_romaneio") {
-      setRomaneioPrefill({ osId: action.osId, tipoRota: action.tipoRota });
-      setRomaneioOpen(true);
-    } else if (action.type === "open_terceiro") {
-      setTerceiroOpen(true);
-    } else if (action.type === "open_conferencia_entrada" || action.type === "open_entrega_cliente") {
-      navigate("/logistica");
-    }
-  }
-
   function handleSelect(newStatus: string) {
     if (!os) return;
-    const guard = evaluateTransition(os, newStatus);
+    const guard: GuardAction = evaluateTransition(os, newStatus);
+
     if (guard.kind === "blocked") {
-      setBlockedInfo({ title: guard.title, message: guard.message, actionLabel: guard.actionLabel, action: guard.action });
-      setBlockedOpen(true);
+      setBlockedDialog({ open: true, title: guard.title, reason: guard.reason, details: guard.details });
       return;
     }
-    if (guard.kind === "popup") {
-      executeGuardAction(guard.action);
+    if (guard.kind === "open_romaneio") {
+      setRomaneioPreset({ tipoRota: guard.tipoRota, osId: guard.presetOsId });
+      setRomaneioOpen(true);
+      // Avança o status da OS automaticamente; o usuário continua criando o romaneio
+      doChangeStatus(newStatus, {});
       return;
     }
+    if (guard.kind === "select_terceiro") {
+      setPendingStatus(newStatus);
+      setTerceiroOpen(true);
+      return;
+    }
+
     setPendingStatus(newStatus);
     setDialogOpen(true);
   }
 
-  async function handleConfirm(extraFields: Record<string, string>) {
+  async function doChangeStatus(newStatus: string, extraFields: Record<string, string>) {
+    if (!os) return;
     setLoading(true);
     try {
       await changeOSStatus({
         osId: os.id,
         osCodigo: os.codigo,
         fromStatus: os.status,
-        toStatus: pendingStatus,
+        toStatus: newStatus,
         userName: profile?.nome || "Sistema",
         extraFields,
       });
-      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[pendingStatus]}` });
-      setDialogOpen(false);
+      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[newStatus]}` });
       onStatusChanged?.();
     } catch (err: any) {
       toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleConfirm(extraFields: Record<string, string>) {
+    await doChangeStatus(pendingStatus, extraFields);
+    setDialogOpen(false);
+  }
+
+  async function handleTerceiroConfirm(terceiroNome: string) {
+    await doChangeStatus(pendingStatus, { terceiro: terceiroNome });
+    // Persistir terceiro_nome na OS
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      await supabase.from("ordens_servico").update({ terceiro_nome: terceiroNome } as any).eq("id", os!.id);
+    } catch (e) {
+      // ignore - já logado
+    }
+    setTerceiroOpen(false);
   }
 
   function handlePecaAdvance(peca: MockPeca) {
@@ -431,36 +446,29 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
       />
 
       <BlockedTransitionDialog
-        open={blockedOpen}
-        onOpenChange={setBlockedOpen}
-        title={blockedInfo?.title || ""}
-        message={blockedInfo?.message || ""}
-        actionLabel={blockedInfo?.actionLabel}
-        onAction={blockedInfo?.action ? () => executeGuardAction(blockedInfo.action!) : undefined}
-      />
-
-      <NovoRomaneioDialog
-        open={romaneioOpen}
-        onOpenChange={setRomaneioOpen}
-        prefillOsId={romaneioPrefill?.osId}
-        prefillTipoRota={romaneioPrefill?.tipoRota}
-        onSuccess={() => {
-          setRomaneioPrefill(null);
-          onStatusChanged?.();
-          toast({
-            title: "Romaneio criado",
-            description: "Conclua o despacho na tela de Logística para liberar o próximo status.",
-          });
-        }}
+        open={blockedDialog.open}
+        onOpenChange={(o) => setBlockedDialog((s) => ({ ...s, open: o }))}
+        title={blockedDialog.title}
+        reason={blockedDialog.reason}
+        details={blockedDialog.details}
       />
 
       <TerceiroSelectDialog
         open={terceiroOpen}
         onOpenChange={setTerceiroOpen}
-        osId={os.id}
-        osCodigo={os.codigo}
-        fromStatus={os.status}
-        onConfirmed={() => onStatusChanged?.()}
+        loading={loading}
+        onConfirm={handleTerceiroConfirm}
+      />
+
+      <NovoRomaneioDialog
+        open={romaneioOpen}
+        onOpenChange={(o) => {
+          setRomaneioOpen(o);
+          if (!o) setRomaneioPreset(null);
+        }}
+        presetTipoRota={romaneioPreset?.tipoRota}
+        presetOsId={romaneioPreset?.osId}
+        onSuccess={() => onStatusChanged?.()}
       />
     </>
   );
