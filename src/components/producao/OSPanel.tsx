@@ -20,6 +20,8 @@ import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
 import { TerceiroSelectDialog } from "./TerceiroSelectDialog";
 import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
+import { RomaneioPanel } from "@/components/logistica/RomaneioPanel";
+import { useRomaneios } from "@/hooks/useRomaneios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OSPanelProps {
@@ -105,7 +107,13 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
   const [selectedPecaIds, setSelectedPecaIds] = useState<Set<string>>(new Set());
   const [batchOpen, setBatchOpen] = useState(false);
+  const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const { profile } = useAuth();
+  const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
+  const selectedRomaneio = useMemo(
+    () => (selectedRomaneioCodigo ? allRomaneios.find((r) => r.codigo === selectedRomaneioCodigo) ?? null : null),
+    [allRomaneios, selectedRomaneioCodigo],
+  );
 
   // Reset seleção quando troca de OS
   useEffect(() => {
@@ -539,15 +547,17 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                   </h3>
                   <div className="space-y-2">
                     {os.romaneios.map((rom) => (
-                      <div
+                      <button
                         key={rom.codigo}
-                        className="flex items-center justify-between rounded-md bg-muted/30 p-3 text-[13px]"
+                        type="button"
+                        onClick={() => setSelectedRomaneioCodigo(rom.codigo)}
+                        className="flex items-center justify-between w-full rounded-md bg-muted/30 p-3 text-[13px] text-left transition-colors hover:bg-muted/60"
                       >
                         <span className="font-medium text-foreground">{rom.codigo}</span>
                         <Badge variant="outline" className="text-xs">
                           {rom.status}
                         </Badge>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -658,6 +668,17 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         presetOsId={romaneioPreset?.osId}
         onSuccess={() => onStatusChanged?.()}
       />
+
+      {selectedRomaneio && (
+        <RomaneioPanel
+          romaneio={selectedRomaneio}
+          onClose={() => setSelectedRomaneioCodigo(null)}
+          onChanged={() => {
+            refetchRomaneios();
+            onStatusChanged?.();
+          }}
+        />
+      )}
     </>
   );
 }
