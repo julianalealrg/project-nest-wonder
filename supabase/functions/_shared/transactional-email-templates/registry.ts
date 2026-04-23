@@ -12,9 +12,11 @@ export interface TemplateEntry {
 import { template as novoCadastroAdmin } from './novo-cadastro-admin.tsx'
 import { template as cadastroAprovado } from './cadastro-aprovado.tsx'
 import { template as cadastroRejeitado } from './cadastro-rejeitado.tsx'
+import { template as ocorrenciaParaProjetos } from './ocorrencia-para-projetos.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'novo-cadastro-admin': novoCadastroAdmin,
   'cadastro-aprovado': cadastroAprovado,
   'cadastro-rejeitado': cadastroRejeitado,
+  'ocorrencia-para-projetos': ocorrenciaParaProjetos,
 }

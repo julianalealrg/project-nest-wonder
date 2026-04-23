@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, FileText, ChevronRight, Loader2, Play, ExternalLink, Check, Clock, Minus } from "lucide-react";
+import { X, FileText, ChevronRight, Loader2, Play, ExternalLink, Check, Clock, Minus, Palette } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
@@ -519,7 +519,17 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
       <div className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-[700px] animate-slide-in-right flex-col border-l bg-card">
         <div className="flex items-center justify-between border-b px-6 py-5">
           <div>
-            <h2 className="text-base font-semibold text-foreground">{os.codigo}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-semibold text-foreground">{os.codigo}</h2>
+              {os.registro_origem_aguarda_projetos && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-purple-100 text-purple-700"
+                  title={os.registro_origem_codigo ? `Vinculada ao registro ${os.registro_origem_codigo}` : undefined}
+                >
+                  <Palette className="h-2.5 w-2.5" /> Aguardando Projetos
+                </span>
+              )}
+            </div>
             <p className="text-[13px] text-muted-foreground">{os.cliente}</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground transition-colors hover:text-foreground">
