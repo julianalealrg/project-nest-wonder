@@ -345,7 +345,59 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
     }
   }
 
-  return (
+  async function handleCqReprovaConfirm(motivo: string, pecaIds: string[]) {
+    if (!os || pecaIds.length === 0) return;
+    setLoading(true);
+    try {
+      // 1) Atualiza OS: volta para Acabamento na Base 2
+      const { error: osErr } = await supabase
+        .from("ordens_servico")
+        .update({ status: "acabamento", localizacao: "Base 2", updated_at: new Date().toISOString() } as any)
+        .eq("id", os.id);
+      if (osErr) throw osErr;
+
+      // 2) Marca peças reprovadas
+      const { error: pecasErr } = await supabase
+        .from("pecas")
+        .update({
+          status_cq: "reprovado",
+          cq_aprovado: false,
+          cq_observacao: motivo,
+          status_acabamento: "pendente",
+          updated_at: new Date().toISOString(),
+        } as any)
+        .in("id", pecaIds);
+      if (pecasErr) throw pecasErr;
+
+      // 3) Log
+      await supabase.from("activity_logs").insert({
+        action: "cq_reprovado",
+        entity_type: "ordens_servico",
+        entity_id: os.id,
+        entity_description: os.codigo,
+        user_name: profile?.nome || "Sistema",
+        details: {
+          motivo,
+          pecas_reprovadas: pecaIds.length,
+          peca_ids: pecaIds,
+          from_status: "cq",
+          to_status: "acabamento",
+        },
+      });
+
+      toast({
+        title: `${os.codigo} reprovada no CQ`,
+        description: `${pecaIds.length} peça${pecaIds.length > 1 ? "s" : ""} retornou para Acabamento.`,
+      });
+      setCqReprovaOpen(false);
+      onStatusChanged?.();
+    } catch (err: any) {
+      toast({ title: "Erro ao reprovar", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
     <>
       <div className="fixed inset-0 z-40 bg-foreground/20" onClick={onClose} />
 
