@@ -54,6 +54,13 @@ export function gerarPDFRomaneio(romaneio: Romaneio) {
   const isToCliente = romaneio.tipo_rota === "base2_cliente" || romaneio.tipo_rota === "base1_cliente";
   const isB2Cliente = romaneio.tipo_rota === "base2_cliente";
 
+  const fmtMedida = (c: number | null, l: number | null) => {
+    if (c == null && l == null) return "—";
+    const fmt = (v: number | null) =>
+      v == null ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    return `${fmt(c)} × ${fmt(l)} m`;
+  };
+
   if (isB2Cliente) {
     const byOs = new Map<string, typeof romaneio.pecas>();
     romaneio.pecas.forEach((p) => {
@@ -66,16 +73,22 @@ export function gerarPDFRomaneio(romaneio: Romaneio) {
     byOs.forEach((pecas, osCodigo) => {
       doc.setFontSize(10);
       doc.setFont("Montserrat", "bold");
-      doc.text(`OS: ${osCodigo} — ${pecas[0]?.cliente_nome || ""}`, 14, y);
+      const material = pecas[0]?.material ? ` — ${pecas[0].material}` : "";
+      doc.text(`OS: ${osCodigo} — ${pecas[0]?.cliente_nome || ""}${material}`, 14, y);
       y += 4;
 
       autoTable(doc, {
         startY: y,
-        head: [["#", "Descrição", "Conferência"]],
-        body: pecas.map((p) => [p.peca_item, p.peca_descricao, ""]),
+        head: [["#", "Descrição", "Medida", "Conferência"]],
+        body: pecas.map((p) => [
+          p.peca_item,
+          p.peca_descricao,
+          fmtMedida(p.comprimento, p.largura),
+          "",
+        ]),
         styles: { fontSize: 9, cellPadding: 3, font: "Montserrat" },
         headStyles: { fillColor: [240, 237, 232], textColor: [13, 13, 13], fontStyle: "bold" },
-        columnStyles: { 2: { cellWidth: 30 } },
+        columnStyles: { 0: { cellWidth: 16 }, 2: { cellWidth: 36 }, 3: { cellWidth: 30 } },
         theme: "grid",
         margin: { left: 14, right: 14 },
       });
@@ -84,11 +97,18 @@ export function gerarPDFRomaneio(romaneio: Romaneio) {
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["#", "Descrição", "OS", "Conferência"]],
-      body: romaneio.pecas.map((p) => [p.peca_item, p.peca_descricao, p.os_codigo, ""]),
+      head: [["#", "Descrição", "Medida", "Material", "OS", "Conferência"]],
+      body: romaneio.pecas.map((p) => [
+        p.peca_item,
+        p.peca_descricao,
+        fmtMedida(p.comprimento, p.largura),
+        p.material || "—",
+        p.os_codigo,
+        "",
+      ]),
       styles: { fontSize: 9, cellPadding: 3, font: "Montserrat" },
       headStyles: { fillColor: [240, 237, 232], textColor: [13, 13, 13], fontStyle: "bold" },
-      columnStyles: { 3: { cellWidth: 30 } },
+      columnStyles: { 0: { cellWidth: 14 }, 2: { cellWidth: 32 }, 4: { cellWidth: 22 }, 5: { cellWidth: 26 } },
       theme: "grid",
       margin: { left: 14, right: 14 },
     });
