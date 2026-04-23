@@ -244,9 +244,14 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
               Despachar
             </Button>
           )}
-          {canReceive && !conferindo && (
+          {canReceive && !isClienteRoute && !conferindo && (
             <Button size="sm" className="flex-1" onClick={startConferencia}>
               <CheckCircle className="h-4 w-4 mr-1" /> Confirmar Recebimento
+            </Button>
+          )}
+          {canReceive && isClienteRoute && (
+            <Button size="sm" className="flex-1" onClick={() => setEntregaClienteOpen(true)}>
+              <CheckCircle className="h-4 w-4 mr-1" /> Confirmar Entrega ao Cliente
             </Button>
           )}
           {conferindo && (
@@ -257,6 +262,15 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
           )}
         </div>
       </div>
+
+      <ConfirmarEntregaClienteDialog
+        open={entregaClienteOpen}
+        onOpenChange={setEntregaClienteOpen}
+        romaneioId={romaneio.id}
+        romaneioCodigo={romaneio.codigo}
+        osIds={Array.from(new Set(romaneio.pecas.map((p) => p.os_id).filter((id): id is string => !!id)))}
+        onConfirmed={() => onChanged?.()}
+      />
     </>
   );
 }
