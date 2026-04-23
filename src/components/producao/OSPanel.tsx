@@ -129,9 +129,90 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
     return null;
   }, [os]);
 
+  // === Seleção em lote ===
+  const selectablePecas = useMemo(
+    () => (os ? os.pecas.filter((p) => getNextStation(p) !== null) : []),
+    [os],
+  );
+  const selectedPecas = useMemo(
+    () => (os ? os.pecas.filter((p) => selectedPecaIds.has(p.id)) : []),
+    [os, selectedPecaIds],
+  );
+  const batchInfo = useMemo(() => {
+    if (!os || selectedPecas.length === 0) {
+      return { station: null as ReturnType<typeof getNextStation>, mismatch: false, guard: { permitido: true } as { permitido: boolean; motivo?: string } };
+    }
+    const stations = selectedPecas.map((p) => getNextStation(p));
+    const first = stations[0];
+    const mismatch = stations.some((s) => s !== first);
+    if (mismatch || !first) return { station: first, mismatch: true, guard: { permitido: true } };
+    const guard = podeAvancarPecaPara(first, os.status);
+    return { station: first, mismatch: false, guard };
+  }, [selectedPecas, os]);
+
   if (!os) return null;
 
   const nextStatuses = getNextStatuses(os.status);
+  const allSelected = selectablePecas.length > 0 && selectablePecas.every((p) => selectedPecaIds.has(p.id));
+
+  function togglePeca(pecaId: string) {
+    setSelectedPecaIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pecaId)) next.delete(pecaId);
+      else next.add(pecaId);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) setSelectedPecaIds(new Set());
+    else setSelectedPecaIds(new Set(selectablePecas.map((p) => p.id)));
+  }
+
+  function clearSelection() {
+    setSelectedPecaIds(new Set());
+  }
+
+  async function handleBatchConfirm(fields: Record<string, string>) {
+    if (!os || !batchInfo.station || selectedPecas.length === 0) return;
+    setLoading(true);
+    let success = 0;
+    let failed = 0;
+    try {
+      for (const peca of selectedPecas) {
+        try {
+          await advancePecaStation({
+            pecaId: peca.id,
+            osId: os.id,
+            osCodigo: os.codigo,
+            pecaItem: peca.item,
+            station: batchInfo.station!,
+            fields,
+            userName: profile?.nome || "Sistema",
+            osStatus: os.status,
+          });
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      const stationLabel = STATION_LABELS_SHORT[batchInfo.station] || batchInfo.station;
+      if (failed === 0) {
+        toast({ title: `${success} peça${success > 1 ? "s" : ""} avançada${success > 1 ? "s" : ""} para ${stationLabel}` });
+      } else {
+        toast({
+          title: "Avanço em lote concluído",
+          description: `${success} sucesso, ${failed} falha${failed > 1 ? "s" : ""}.`,
+          variant: failed === selectedPecas.length ? "destructive" : "default",
+        });
+      }
+      setBatchOpen(false);
+      clearSelection();
+      onStatusChanged?.();
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function handleSelect(newStatus: string) {
     if (!os) return;
