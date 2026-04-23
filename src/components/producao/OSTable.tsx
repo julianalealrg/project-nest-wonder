@@ -1,5 +1,6 @@
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
+import { calcularSugestaoAvanco, calcularDependencia } from "@/lib/avancoSugerido";
 
 function renderEntrega(dataEntrega: string | null, status: string) {
   if (status === "entregue" || !dataEntrega) {
