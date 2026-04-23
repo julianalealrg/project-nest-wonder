@@ -566,7 +566,9 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
-                <Badge variant="outline">{STATUS_LABELS[os.status] || os.status}</Badge>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${osBadgeClass(os.status)}`}>
+                  {STATUS_LABELS[os.status] || os.status}
+                </span>
               </div>
               <ProgressBar status={os.status} />
             </div>
