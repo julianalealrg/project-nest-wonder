@@ -81,6 +81,7 @@ export function useDashboardData(filters: DashboardFilters) {
   const totalRegistros = filteredRegistros.length;
   const resolvidos = filteredRegistros.filter((r) => r.status === "resolvido").length;
   const taxaResolucao = totalRegistros > 0 ? Math.round((resolvidos / totalRegistros) * 100) : 0;
+  const pendentesProjetos = filteredRegistros.filter((r: any) => r.encaminhar_projetos === true && r.status !== "resolvido").length;
 
   // Tempo médio de produção
   const entregues = filteredOS.filter((o: any) => o.status === "entregue");
@@ -165,7 +166,7 @@ export function useDashboardData(filters: DashboardFilters) {
 
   return {
     isLoading,
-    kpis: { registrosAbertos, osEmProducao, taxaResolucao, tempoMedio },
+    kpis: { registrosAbertos, osEmProducao, taxaResolucao, tempoMedio, pendentesProjetos },
     charts: { rankingTipo, tendenciaSemanal, porSupervisor, porProjetista, acabadores, porUrgencia, osPorStatus },
   };
 }

@@ -133,13 +133,13 @@ export function RegistroFilters({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Projetos</Label>
+              <Label className="text-xs text-muted-foreground">Demanda Projetos</Label>
               <Select value={projetos} onValueChange={onProjetosChange}>
-                <SelectTrigger className="w-[120px] h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="sim">Sim</SelectItem>
-                  <SelectItem value="nao">Não</SelectItem>
+                  <SelectItem value="sim">Com demanda</SelectItem>
+                  <SelectItem value="nao">Sem demanda</SelectItem>
                 </SelectContent>
               </Select>
             </div>
