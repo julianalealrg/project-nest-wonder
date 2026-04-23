@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -17,9 +18,11 @@ interface RomaneioPanelProps {
   romaneio: Romaneio | null;
   onClose: () => void;
   onChanged?: () => void;
+  /** Quando true, renderiza dentro de um Dialog centralizado em vez de side-panel. */
+  asDialog?: boolean;
 }
 
-export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelProps) {
+export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }: RomaneioPanelProps) {
   const [loading, setLoading] = useState(false);
   const [conferindo, setConferindo] = useState(false);
   const [conferencias, setConferencias] = useState<Record<string, string>>({});
