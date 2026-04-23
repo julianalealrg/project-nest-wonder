@@ -566,23 +566,6 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                   );
                 })}
               </div>
-              <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-foreground" /> Concl.
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-warning" /> Andamento
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" /> Reprovado
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full border border-border" /> Pendente
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted" /> N/A
-                </span>
-              </div>
             </div>
 
             <Separator />
