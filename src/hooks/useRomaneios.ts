@@ -30,6 +30,7 @@ export interface Romaneio {
   data_recebimento: string | null;
   recebido_por: string | null;
   pdf_url: string | null;
+  foto_romaneio_assinado_url: string | null;
   created_at: string;
   pecas: RomaneioPeca[];
   os_codigos: string[];
@@ -49,6 +50,17 @@ export const ROMANEIO_STATUS_LABELS: Record<string, string> = {
   em_transito: "Em Trânsito",
   entregue: "Entregue",
 };
+
+// Categorias de rota — para separar visão Interna vs Expedição Cliente
+export const ROTAS_INTERNAS = ["base1_base2", "base2_base1", "recolha"] as const;
+export const ROTAS_CLIENTE = ["base2_cliente", "base1_cliente"] as const;
+export type CategoriaRota = "interna" | "expedicao" | "todas";
+
+export function getRotasPorCategoria(cat: CategoriaRota): string[] {
+  if (cat === "interna") return [...ROTAS_INTERNAS];
+  if (cat === "expedicao") return [...ROTAS_CLIENTE];
+  return [...ROTAS_INTERNAS, ...ROTAS_CLIENTE];
+}
 
 export function useRomaneios() {
   return useQuery({
