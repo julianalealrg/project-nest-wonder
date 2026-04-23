@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
 import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
 import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
@@ -20,13 +20,29 @@ interface RomaneioPanelProps {
   onChanged?: () => void;
   /** Quando true, renderiza dentro de um Dialog centralizado em vez de side-panel. */
   asDialog?: boolean;
+  /** Inicia o fluxo de conferência automaticamente ao abrir (quando `em_transito`). */
+  autoStartConferencia?: boolean;
 }
 
-export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }: RomaneioPanelProps) {
+export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false, autoStartConferencia = false }: RomaneioPanelProps) {
   const [loading, setLoading] = useState(false);
   const [conferindo, setConferindo] = useState(false);
   const [conferencias, setConferencias] = useState<Record<string, string>>({});
   const { profile } = useAuth();
+
+  // Inicia conferência automaticamente quando solicitado e o romaneio está em trânsito.
+  useEffect(() => {
+    if (!romaneio || !autoStartConferencia) return;
+    if (romaneio.status !== "em_transito") return;
+    if (conferindo) return;
+    const initial: Record<string, string> = {};
+    romaneio.pecas.forEach((p) => {
+      initial[p.id] = p.conferencia || "ok";
+    });
+    setConferencias(initial);
+    setConferindo(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [romaneio?.id, autoStartConferencia]);
 
   if (!romaneio) return null;
 
