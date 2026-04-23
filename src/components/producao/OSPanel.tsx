@@ -669,18 +669,27 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
             <FileText className="mr-1 h-4 w-4" />
             Gerar PDF
           </Button>
-          {nextStatuses.map((ns) => (
-            <Button
-              key={ns}
-              className="flex-1 px-6 py-3 text-[13px]"
-              disabled={loading}
-              onClick={() => handleSelect(ns)}
-            >
-              {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-              {TRANSITION_LABELS[ns]}
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          ))}
+          {nextStatuses.map((ns) => {
+            const regressive = isRegressive(os.status, ns);
+            const label = regressive ? `Reprovar → ${TRANSITION_LABELS[ns]}` : TRANSITION_LABELS[ns];
+            return (
+              <Button
+                key={ns}
+                variant={regressive ? "outline" : "default"}
+                className={
+                  regressive
+                    ? "flex-1 px-6 py-3 text-[13px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    : "flex-1 px-6 py-3 text-[13px]"
+                }
+                disabled={loading}
+                onClick={() => handleSelect(ns)}
+              >
+                {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
+                {label}
+                {!regressive && <ChevronRight className="ml-1 h-4 w-4" />}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
