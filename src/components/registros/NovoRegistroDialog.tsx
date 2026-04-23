@@ -267,6 +267,44 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
         details: { origem, tipo, urgencia },
       });
 
+      // Email para Projetos quando encaminhar_projetos = true
+      if (encaminharProjetos && projetistaFinal) {
+        try {
+          // Localiza email do projetista por nome (case-insensitive)
+          const { data: projProfile } = await supabase
+            .from("profiles")
+            .select("email, nome")
+            .ilike("nome", projetistaFinal)
+            .maybeSingle();
+
+          if (projProfile?.email) {
+            await supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "ocorrencia-para-projetos",
+                recipientEmail: projProfile.email,
+                idempotencyKey: `proj-${newReg.id}`,
+                templateData: {
+                  codigo,
+                  cliente: cliente.trim(),
+                  numeroOs: numeroOs.trim(),
+                  ambiente: ambiente.trim(),
+                  urgencia,
+                  justificativa: justificativa.trim(),
+                  instrucao: instrucaoProjetos.trim(),
+                  abertoPor: profile?.nome || "Sistema",
+                  projetistaNome: projProfile.nome || projetistaFinal,
+                },
+              },
+            });
+          } else {
+            console.warn("Projetista sem email cadastrado:", projetistaFinal);
+          }
+        } catch (emailErr) {
+          console.error("Falha ao enviar email para Projetos:", emailErr);
+          // Não bloqueia a criação do registro
+        }
+      }
+
       toast({ title: `Registro ${codigo} criado com sucesso!` });
       reset();
       onOpenChange(false);
