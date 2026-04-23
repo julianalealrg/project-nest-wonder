@@ -661,6 +661,33 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
                     </div>
                   )}
                 </div>
+
+                {/* Ação produtiva necessária */}
+                <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-4">
+                  <Label className="text-xs font-semibold">Ação produtiva necessária *</Label>
+                  <Select value={acaoProdutiva} onValueChange={setAcaoProdutiva}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cortar_nova">Cortar peça nova (Base 1 completo)</SelectItem>
+                      <SelectItem value="cortar_retrabalhar">Cortar + retrabalhar (Base 1 + Base 2)</SelectItem>
+                      <SelectItem value="retrabalho_acabamento">Apenas retrabalho de acabamento (só Base 2)</SelectItem>
+                      <SelectItem value="nenhuma">Nenhuma ação produtiva (só registrar)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {acaoProdutiva && acaoProdutiva !== "nenhuma" && (
+                    <div className="space-y-1 pt-2">
+                      <Label className="text-xs">Material já disponível na base? *</Label>
+                      <Select value={materialDisponivel} onValueChange={setMaterialDisponivel}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sim">Sim — entra direto na fila</SelectItem>
+                          <SelectItem value="nao">Não — entra como "Aguardando Material"</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">Uma OS REP será gerada automaticamente.</p>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
