@@ -1,14 +1,5 @@
-import { useState } from "react";
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, Loader2 } from "lucide-react";
-import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
-import { changeOSStatus } from "@/lib/changeOSStatus";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
-import { StatusChangeDialog } from "./StatusChangeDialog";
 
 function renderEntrega(dataEntrega: string | null, status: string) {
   if (status === "entregue" || !dataEntrega) {
@@ -61,88 +52,7 @@ function getRowBg(days: number, status: string): string {
   return "";
 }
 
-function StatusDropdown({ os, onStatusChanged }: { os: MockOS; onStatusChanged?: () => void }) {
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { profile } = useAuth();
-  const nextStatuses = getNextStatuses(os.status);
-
-  if (nextStatuses.length === 0) {
-    return (
-      <Badge variant="outline" className="text-xs font-medium">
-        {STATUS_LABELS[os.status] || os.status}
-      </Badge>
-    );
-  }
-
-  function handleSelect(newStatus: string) {
-    setPendingStatus(newStatus);
-    setPopoverOpen(false);
-    setDialogOpen(true);
-  }
-
-  async function handleConfirm(extraFields: Record<string, string>) {
-    setLoading(true);
-    try {
-      await changeOSStatus({
-        osId: os.id,
-        osCodigo: os.codigo,
-        fromStatus: os.status,
-        toStatus: pendingStatus,
-        userName: profile?.nome || "Sistema",
-        extraFields,
-      });
-      toast({ title: `${os.codigo}: ${TRANSITION_LABELS[pendingStatus]}` });
-      setDialogOpen(false);
-      onStatusChanged?.();
-    } catch (err: any) {
-      toast({ title: "Erro ao mudar status", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <>
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-          <button className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium text-foreground hover:bg-muted/50 transition-colors">
-            {STATUS_LABELS[os.status] || os.status}
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
-          <p className="text-[10px] text-muted-foreground px-2 py-1 uppercase tracking-wider">Avançar para</p>
-          {nextStatuses.map((ns) => (
-            <Button
-              key={ns}
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-xs h-8"
-              onClick={() => handleSelect(ns)}
-            >
-              {TRANSITION_LABELS[ns] || ns}
-            </Button>
-          ))}
-        </PopoverContent>
-      </Popover>
-
-      <StatusChangeDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        osCodigo={os.codigo}
-        fromStatus={os.status}
-        toStatus={pendingStatus}
-        loading={loading}
-        onConfirm={handleConfirm}
-      />
-    </>
-  );
-}
-
-export function OSTable({ data, onSelect, onStatusChanged }: OSTableProps) {
+export function OSTable({ data, onSelect }: OSTableProps) {
   return (
     <div className="bg-card rounded-lg border overflow-hidden">
       <div className="overflow-x-auto">
@@ -200,7 +110,9 @@ export function OSTable({ data, onSelect, onStatusChanged }: OSTableProps) {
                       <span className="text-muted-foreground">/{totalPecas}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <StatusDropdown os={os} onStatusChanged={onStatusChanged} />
+                      <Badge variant="outline" className="text-xs font-medium">
+                        {STATUS_LABELS[os.status] || os.status}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                       {os.localizacao}
