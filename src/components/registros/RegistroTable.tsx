@@ -48,9 +48,9 @@ function StatusDropdown({ registro, onStatusChanged }: { registro: Registro; onS
 
   if (nextStatuses.length === 0) {
     return (
-      <Badge variant="outline" className="text-xs font-medium">
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${registroBadgeClass(registro.status)}`}>
         {REGISTRO_STATUS_LABELS[registro.status] || registro.status}
-      </Badge>
+      </span>
     );
   }
 
@@ -77,7 +77,7 @@ function StatusDropdown({ registro, onStatusChanged }: { registro: Registro; onS
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-        <button className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium text-foreground hover:bg-muted/50 transition-colors">
+        <button className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium hover:opacity-80 transition-opacity ${registroBadgeClass(registro.status)}`}>
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
           {REGISTRO_STATUS_LABELS[registro.status] || registro.status}
           <ChevronDown className="h-3 w-3 opacity-50" />
