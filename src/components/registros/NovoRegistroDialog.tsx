@@ -281,7 +281,31 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
-    setFotos((prev) => [...prev, ...files]);
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const accepted: File[] = [];
+    const rejected: string[] = [];
+
+    for (const f of files) {
+      if (!ALLOWED.includes(f.type)) {
+        rejected.push(`${f.name} (formato inválido — use JPG, PNG ou WEBP)`);
+        continue;
+      }
+      if (f.size > MAX_SIZE) {
+        rejected.push(`${f.name} (acima de 10MB)`);
+        continue;
+      }
+      accepted.push(f);
+    }
+
+    if (rejected.length > 0) {
+      toast({
+        title: "Alguns arquivos foram rejeitados",
+        description: rejected.join("; "),
+        variant: "destructive",
+      });
+    }
+    if (accepted.length > 0) setFotos((prev) => [...prev, ...accepted]);
     e.target.value = "";
   }
 
