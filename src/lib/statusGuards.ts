@@ -77,25 +77,45 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
     }
   }
 
-  // Expedição -> Entregue : exige romaneio Base 2 → Cliente vinculado
+  // Expedição -> Entregue : exige romaneio Base 2 → Cliente vinculado e recebido
   if (os.status === "expedicao" && toStatus === "entregue") {
-    if (!hasRomaneio(os, "base2_cliente")) {
+    const romaneios = (os as any).romaneios || [];
+    const rom = romaneios.find((r: any) => r.tipo_rota === "base2_cliente");
+    if (!rom) {
+      return {
+        kind: "open_romaneio",
+        tipoRota: "base2_cliente",
+        presetOsId: os.id,
+      };
+    }
+    if (rom.status !== "entregue" && rom.status !== "recebido") {
       return {
         kind: "blocked",
-        title: "Romaneio obrigatório",
-        reason: "Esta OS não possui um romaneio Base 2 → Cliente vinculado. Crie o romaneio em Logística antes de confirmar a entrega.",
+        title: "Aguardando confirmação do cliente",
+        reason:
+          "O romaneio Base 2 → Cliente já foi criado, mas o cliente ainda não confirmou o recebimento. Acesse Logística e registre a confirmação com a foto do romaneio assinado.",
       };
     }
     return { kind: "confirm_entrega" };
   }
 
-  // Terceiros -> Entregue : exige romaneio Base 1 → Cliente (envio externo) vinculado
+  // Terceiros -> Entregue : exige romaneio Base 1 → Cliente vinculado e recebido
   if (os.status === "terceiros" && toStatus === "entregue") {
-    if (!hasRomaneio(os, "base1_cliente")) {
+    const romaneios = (os as any).romaneios || [];
+    const rom = romaneios.find((r: any) => r.tipo_rota === "base1_cliente");
+    if (!rom) {
+      return {
+        kind: "open_romaneio",
+        tipoRota: "base1_cliente",
+        presetOsId: os.id,
+      };
+    }
+    if (rom.status !== "entregue" && rom.status !== "recebido") {
       return {
         kind: "blocked",
-        title: "Romaneio obrigatório",
-        reason: "Esta OS não possui um romaneio Base 1 → Cliente vinculado ao terceiro. Crie o romaneio em Logística antes de confirmar a entrega.",
+        title: "Aguardando confirmação do cliente",
+        reason:
+          "O romaneio Base 1 → Cliente já foi criado, mas o cliente ainda não confirmou o recebimento. Acesse Logística e registre a confirmação.",
       };
     }
     return { kind: "confirm_entrega" };
