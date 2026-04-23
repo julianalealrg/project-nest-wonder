@@ -1,6 +1,7 @@
 import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { romaneioBadgeClass } from "@/lib/statusColors";
 
 interface RomaneioTableProps {
   data: Romaneio[];
@@ -32,11 +33,6 @@ export function RomaneioTable({ data, onSelect }: RomaneioTableProps) {
               </tr>
             ) : (
               data.map((rom) => {
-                const statusColors: Record<string, string> = {
-                  pendente: "bg-muted text-muted-foreground",
-                  em_transito: "bg-blue-100 text-blue-700",
-                  entregue: "bg-green-100 text-green-700",
-                };
                 return (
                   <tr
                     key={rom.id}
@@ -77,7 +73,7 @@ export function RomaneioTable({ data, onSelect }: RomaneioTableProps) {
                       {rom.motorista || "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[rom.status] || ""}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${romaneioBadgeClass(rom.status)}`}>
                         {ROMANEIO_STATUS_LABELS[rom.status] || rom.status}
                       </span>
                     </td>
