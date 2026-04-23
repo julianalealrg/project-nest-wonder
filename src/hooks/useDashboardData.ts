@@ -77,7 +77,7 @@ export function useDashboardData(filters: DashboardFilters) {
   const taxaResolucao = totalRegistros > 0 ? Math.round((resolvidos / totalRegistros) * 100) : 0;
 
   // Tempo médio de produção
-  const entregues = filteredOS.filter((o: any) => o.status === "Entregue");
+  const entregues = filteredOS.filter((o: any) => o.status === "entregue");
   const tempoMedio = entregues.length > 0
     ? Math.round(entregues.reduce((sum: number, o: any) => sum + differenceInDays(new Date(o.updated_at), new Date(o.created_at)), 0) / entregues.length)
     : 0;
