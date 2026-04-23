@@ -60,6 +60,14 @@ const DEFAULT_AMBIENTES = [
   "Escritório", "Hall", "Garagem", "Piscina", "Adega", "Fachada",
 ];
 
+// Sanitize date strings: AI parser may return literal "null", "", or undefined
+function sanitizeDate(value: unknown): string | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s || s.toLowerCase() === "null" || s.toLowerCase() === "undefined") return null;
+  return s;
+}
+
 function emptyPeca(): PecaForm {
   return {
     item: "",
