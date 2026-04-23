@@ -19,7 +19,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any; blocked?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; blocked?: string; mustChangePassword?: boolean }>;
   signOut: () => Promise<void>;
 }
 
