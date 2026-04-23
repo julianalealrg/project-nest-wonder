@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +18,10 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    const { error } = await signIn(email, password);
-    if (error) {
+    const { error: signInError, blocked } = await signIn(email, password);
+    if (blocked) {
+      setError(blocked);
+    } else if (signInError) {
       setError("Email ou senha incorretos.");
     }
     setLoading(false);
@@ -71,6 +74,18 @@ export default function Login() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </Button>
+
+            <div className="flex justify-between text-xs pt-2">
+              <Link to="/cadastro" className="text-muted-foreground hover:text-foreground underline">
+                Cadastre-se
+              </Link>
+              <Link
+                to="/recuperar-senha"
+                className="text-muted-foreground hover:text-foreground underline"
+              >
+                Esqueceu a senha?
+              </Link>
+            </div>
           </form>
         </div>
 
