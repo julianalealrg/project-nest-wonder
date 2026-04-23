@@ -27,9 +27,11 @@ interface NovoRomaneioDialogProps {
   onSuccess?: () => void;
   presetTipoRota?: string;
   presetOsId?: string;
+  /** Restringe as opções de rota disponíveis no dropdown. Se omitido, mostra todas. */
+  allowedRotas?: string[];
 }
 
-export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRota, presetOsId }: NovoRomaneioDialogProps) {
+export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRota, presetOsId, allowedRotas }: NovoRomaneioDialogProps) {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [tipoRota, setTipoRota] = useState("");
