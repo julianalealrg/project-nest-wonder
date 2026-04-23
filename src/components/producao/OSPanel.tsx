@@ -444,6 +444,32 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         loading={loading}
         onConfirm={handlePecaConfirm}
       />
+
+      <BlockedTransitionDialog
+        open={blockedDialog.open}
+        onOpenChange={(o) => setBlockedDialog((s) => ({ ...s, open: o }))}
+        title={blockedDialog.title}
+        reason={blockedDialog.reason}
+        details={blockedDialog.details}
+      />
+
+      <TerceiroSelectDialog
+        open={terceiroOpen}
+        onOpenChange={setTerceiroOpen}
+        loading={loading}
+        onConfirm={handleTerceiroConfirm}
+      />
+
+      <NovoRomaneioDialog
+        open={romaneioOpen}
+        onOpenChange={(o) => {
+          setRomaneioOpen(o);
+          if (!o) setRomaneioPreset(null);
+        }}
+        presetTipoRota={romaneioPreset?.tipoRota}
+        presetOsId={romaneioPreset?.osId}
+        onSuccess={() => onStatusChanged?.()}
+      />
     </>
   );
 }
