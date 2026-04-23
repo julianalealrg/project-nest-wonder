@@ -116,6 +116,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [selectedPecaIds, setSelectedPecaIds] = useState<Set<string>>(new Set());
   const [batchOpen, setBatchOpen] = useState(false);
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
+  const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const { profile } = useAuth();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
