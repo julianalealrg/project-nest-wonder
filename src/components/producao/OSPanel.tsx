@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, FileText, ChevronRight, Loader2, Play, ExternalLink } from "lucide-react";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { getNextStatuses, STATUS_LABELS as TRANSITION_LABELS } from "@/lib/statusTransitions";
@@ -13,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
+import { PecaBatchAdvanceDialog } from "./PecaBatchAdvanceDialog";
 import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
 import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
@@ -101,7 +103,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [terceiroOpen, setTerceiroOpen] = useState(false);
   const [romaneioOpen, setRomaneioOpen] = useState(false);
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
+  const [selectedPecaIds, setSelectedPecaIds] = useState<Set<string>>(new Set());
+  const [batchOpen, setBatchOpen] = useState(false);
   const { profile } = useAuth();
+
+  // Reset seleção quando troca de OS
+  useEffect(() => {
+    setSelectedPecaIds(new Set());
+  }, [os?.id]);
 
   const allPiecesCompletedStation = useMemo(() => {
     if (!os) return null;
@@ -120,9 +129,90 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
     return null;
   }, [os]);
 
+  // === Seleção em lote ===
+  const selectablePecas = useMemo(
+    () => (os ? os.pecas.filter((p) => getNextStation(p) !== null) : []),
+    [os],
+  );
+  const selectedPecas = useMemo(
+    () => (os ? os.pecas.filter((p) => selectedPecaIds.has(p.id)) : []),
+    [os, selectedPecaIds],
+  );
+  const batchInfo = useMemo(() => {
+    if (!os || selectedPecas.length === 0) {
+      return { station: null as ReturnType<typeof getNextStation>, mismatch: false, guard: { permitido: true } as { permitido: boolean; motivo?: string } };
+    }
+    const stations = selectedPecas.map((p) => getNextStation(p));
+    const first = stations[0];
+    const mismatch = stations.some((s) => s !== first);
+    if (mismatch || !first) return { station: first, mismatch: true, guard: { permitido: true } };
+    const guard = podeAvancarPecaPara(first, os.status);
+    return { station: first, mismatch: false, guard };
+  }, [selectedPecas, os]);
+
   if (!os) return null;
 
   const nextStatuses = getNextStatuses(os.status);
+  const allSelected = selectablePecas.length > 0 && selectablePecas.every((p) => selectedPecaIds.has(p.id));
+
+  function togglePeca(pecaId: string) {
+    setSelectedPecaIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pecaId)) next.delete(pecaId);
+      else next.add(pecaId);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) setSelectedPecaIds(new Set());
+    else setSelectedPecaIds(new Set(selectablePecas.map((p) => p.id)));
+  }
+
+  function clearSelection() {
+    setSelectedPecaIds(new Set());
+  }
+
+  async function handleBatchConfirm(fields: Record<string, string>) {
+    if (!os || !batchInfo.station || selectedPecas.length === 0) return;
+    setLoading(true);
+    let success = 0;
+    let failed = 0;
+    try {
+      for (const peca of selectedPecas) {
+        try {
+          await advancePecaStation({
+            pecaId: peca.id,
+            osId: os.id,
+            osCodigo: os.codigo,
+            pecaItem: peca.item,
+            station: batchInfo.station!,
+            fields,
+            userName: profile?.nome || "Sistema",
+            osStatus: os.status,
+          });
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      const stationLabel = STATION_LABELS_SHORT[batchInfo.station] || batchInfo.station;
+      if (failed === 0) {
+        toast({ title: `${success} peça${success > 1 ? "s" : ""} avançada${success > 1 ? "s" : ""} para ${stationLabel}` });
+      } else {
+        toast({
+          title: "Avanço em lote concluído",
+          description: `${success} sucesso, ${failed} falha${failed > 1 ? "s" : ""}.`,
+          variant: failed === selectedPecas.length ? "destructive" : "default",
+        });
+      }
+      setBatchOpen(false);
+      clearSelection();
+      onStatusChanged?.();
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function handleSelect(newStatus: string) {
     if (!os) return;
@@ -289,15 +379,77 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
             <Separator />
 
             <div>
-              <h3 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Peças ({os.pecas.filter((p) => p.status_cq === "aprovado").length}/{os.pecas.length})
-              </h3>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Peças ({os.pecas.filter((p) => p.status_cq === "aprovado").length}/{os.pecas.length})
+                </h3>
+                {selectablePecas.length > 0 && (
+                  <label className="flex items-center gap-2 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                    Selecionar todas
+                  </label>
+                )}
+              </div>
+
+              {selectedPecas.length > 0 && (
+                <div className="mb-3 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/60 p-2.5">
+                  <span className="text-[12px] font-medium text-foreground">
+                    {selectedPecas.length} peça{selectedPecas.length > 1 ? "s" : ""} selecionada{selectedPecas.length > 1 ? "s" : ""}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {batchInfo.mismatch ? (
+                      <span className="text-[10.5px] text-muted-foreground max-w-[220px] text-right leading-tight">
+                        Selecione apenas peças que estão na mesma etapa para avançar em lote.
+                      </span>
+                    ) : null}
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 text-[11px]"
+                              disabled={batchInfo.mismatch || !batchInfo.station || !batchInfo.guard.permitido || loading}
+                              onClick={() => setBatchOpen(true)}
+                            >
+                              <Play className="mr-1 h-3 w-3" />
+                              Avançar {batchInfo.station ? STATION_LABELS_SHORT[batchInfo.station] : ""}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!batchInfo.guard.permitido && batchInfo.guard.motivo && (
+                          <TooltipContent side="left" className="max-w-[260px] text-xs">
+                            {batchInfo.guard.motivo}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={clearSelection}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 {os.pecas.map((peca) => {
                   const nextStation = getNextStation(peca);
                   const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status) : { permitido: true };
+                  const isSelectable = nextStation !== null;
+                  const isSelected = selectedPecaIds.has(peca.id);
                   return (
-                    <div key={peca.id} className="flex items-center gap-3 rounded-md bg-muted/30 p-3">
+                    <div
+                      key={peca.id}
+                      className={`flex items-center gap-3 rounded-md p-3 transition-colors ${
+                        isSelected ? "bg-muted/70 ring-1 ring-border" : "bg-muted/30"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        disabled={!isSelectable}
+                        onCheckedChange={() => togglePeca(peca.id)}
+                        aria-label={`Selecionar peça ${peca.item}`}
+                      />
                       <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
                       <span className="flex-1 truncate text-[13px] text-foreground">{peca.descricao}</span>
                       <div className="flex items-center gap-1.5" title="Corte | 45° | Poliborda | Usinagem | Acabamento | CQ">
@@ -470,6 +622,15 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         station={selectedPeca ? getNextStation(selectedPeca) : null}
         loading={loading}
         onConfirm={handlePecaConfirm}
+      />
+
+      <PecaBatchAdvanceDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        station={batchInfo.station ?? null}
+        count={selectedPecas.length}
+        loading={loading}
+        onConfirm={handleBatchConfirm}
       />
 
       <BlockedTransitionDialog
