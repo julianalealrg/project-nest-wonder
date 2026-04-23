@@ -11,6 +11,7 @@ interface Profile {
   funcao: string;
   perfil: "admin" | "operador" | "observador";
   status_aprovacao?: string;
+  deve_trocar_senha?: boolean;
 }
 
 interface AuthContextType {
