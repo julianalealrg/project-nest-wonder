@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { X, FileText, ChevronRight, Loader2, Play, ExternalLink, Check, Clock, Minus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
@@ -166,13 +167,19 @@ const STATION_LABELS_SHORT: Record<string, string> = {
 };
 
 /**
- * Calcula o label, estado disabled e tooltip do botão de próximo status,
- * baseado no resultado de `evaluateTransition` para refletir a ação real.
+ * Calcula o label, estado disabled, tooltip e (opcionalmente) navegação externa
+ * do botão de próximo status, baseado em `evaluateTransition` para refletir a ação real.
  */
 function getBotaoProximoStatus(
   os: MockOS,
   nextStatus: string,
-): { label: string; disabled: boolean; tooltip?: string } {
+): {
+  label: string;
+  disabled: boolean;
+  tooltip?: string;
+  /** Quando definido, o botão deve navegar para a Logística e abrir o romaneio em conferência. */
+  navigateRomaneioCodigo?: string;
+} {
   const guard = evaluateTransition(os, nextStatus);
 
   // expedicao / terceiros → entregue
@@ -181,9 +188,26 @@ function getBotaoProximoStatus(
     (os.status === "terceiros" && nextStatus === "entregue")
   ) {
     if (guard.kind === "open_romaneio") return { label: "Gerar romaneio", disabled: false };
-    if (guard.kind === "blocked")
-      return { label: "Aguardando cliente", disabled: true, tooltip: guard.reason };
+    if (guard.kind === "blocked") {
+      // Em vez de desabilitar, oferecer ação clicável que leva ao romaneio em Logística.
+      return {
+        label: "Confirmar entrega",
+        disabled: false,
+        tooltip: guard.reason,
+        navigateRomaneioCodigo: guard.romaneioCodigo,
+      };
+    }
     if (guard.kind === "confirm_entrega") return { label: "Confirmar entrega", disabled: false };
+  }
+
+  // enviado_base2 → acabamento : se bloqueado por romaneio não recebido, oferecer ação navegável.
+  if (os.status === "enviado_base2" && nextStatus === "acabamento" && guard.kind === "blocked" && guard.romaneioCodigo) {
+    return {
+      label: "Confirmar recebimento",
+      disabled: false,
+      tooltip: guard.reason,
+      navigateRomaneioCodigo: guard.romaneioCodigo,
+    };
   }
 
   // cortando → enviado_base2 (sempre passa por gerar romaneio B1→B2 quando peças OK)
