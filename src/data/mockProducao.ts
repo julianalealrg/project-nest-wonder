@@ -45,9 +45,12 @@ export interface MockOS {
   terceiro: string | null;
   pdf_url: string | null;
   updated_at: string;
+  registro_origem_id?: string | null;
+  registro_origem_aguarda_projetos?: boolean;
+  registro_origem_codigo?: string | null;
   pecas: MockPeca[];
   romaneios: { id?: string; codigo: string; tipo_rota: string; status: string; data_saida: string | null; data_recebimento?: string | null }[];
-  registros: { codigo: string; tipo: string; status: string; urgencia: string }[];
+  registros: { codigo: string; tipo: string; status: string; urgencia: string; encaminhar_projetos?: boolean }[];
 }
 
 const today = new Date();

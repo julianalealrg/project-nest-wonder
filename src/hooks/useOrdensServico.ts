@@ -83,12 +83,29 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
   }
 
   // Group registros by os_id
-  const registrosByOs = new Map<string, { codigo: string; tipo: string; status: string; urgencia: string }[]>();
+  const registrosByOs = new Map<string, { codigo: string; tipo: string; status: string; urgencia: string; encaminhar_projetos?: boolean }[]>();
   for (const r of registrosRes.data || []) {
     if (!r.os_id) continue;
     const list = registrosByOs.get(r.os_id) || [];
-    list.push({ codigo: r.codigo, tipo: r.tipo || "", status: r.status, urgencia: r.urgencia });
+    list.push({ codigo: r.codigo, tipo: r.tipo || "", status: r.status, urgencia: r.urgencia, encaminhar_projetos: (r as any).encaminhar_projetos ?? false });
     registrosByOs.set(r.os_id, list);
+  }
+
+  // Fetch registro_origem (origin record) for OSes generated from a registro
+  const origemIds = osList.map((o: any) => o.registro_origem_id).filter(Boolean);
+  const origemRegistrosMap = new Map<string, { encaminhar_projetos: boolean; status: string; codigo: string }>();
+  if (origemIds.length > 0) {
+    const { data: origemRegs } = await supabase
+      .from("registros")
+      .select("id, codigo, status, encaminhar_projetos")
+      .in("id", origemIds as string[]);
+    for (const r of origemRegs || []) {
+      origemRegistrosMap.set(r.id, {
+        encaminhar_projetos: (r as any).encaminhar_projetos ?? false,
+        status: r.status,
+        codigo: r.codigo,
+      });
+    }
   }
 
   // Detect origem from codigo prefix
@@ -102,6 +119,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
 
   return osList.map((os) => {
     const cliente = os.clientes as any;
+    const origem = (os as any).registro_origem_id ? origemRegistrosMap.get((os as any).registro_origem_id) : null;
     return {
       id: os.id,
       codigo: os.codigo,
@@ -120,6 +138,9 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       terceiro: null,
       pdf_url: os.pdf_url,
       updated_at: os.updated_at,
+      registro_origem_id: (os as any).registro_origem_id ?? null,
+      registro_origem_aguarda_projetos: origem ? origem.encaminhar_projetos && origem.status !== "resolvido" : false,
+      registro_origem_codigo: origem?.codigo ?? null,
       pecas: pecasByOs.get(os.id) || [],
       romaneios: romaneiosByOs.get(os.id) || [],
       registros: registrosByOs.get(os.id) || [],

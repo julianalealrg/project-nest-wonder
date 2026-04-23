@@ -19,7 +19,14 @@ export default function Registros() {
   const [tipo, setTipo] = useState("todos");
   const [supervisor, setSupervisor] = useState("todos");
   const [projetista, setProjetista] = useState("todos");
-  const [projetos, setProjetos] = useState("todos");
+  const [projetos, setProjetosState] = useState(() => {
+    if (typeof window === "undefined") return "todos";
+    return localStorage.getItem("registros:filter:projetos") || "todos";
+  });
+  const setProjetos = (v: string) => {
+    setProjetosState(v);
+    try { localStorage.setItem("registros:filter:projetos", v); } catch {}
+  };
   const [recolha, setRecolha] = useState("todos");
   const [selectedRegistro, setSelectedRegistro] = useState<Registro | null>(null);
   const [novoOpen, setNovoOpen] = useState(false);

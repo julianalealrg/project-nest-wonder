@@ -3,14 +3,7 @@ import type { MockOS } from "@/data/mockProducao";
 
 export type GuardAction =
   | { kind: "allow" }
-  | {
-      kind: "blocked";
-      title: string;
-      reason: string;
-      details?: string[];
-      /** Romaneio relacionado ao bloqueio — usado para navegar direto à Logística e abrir o painel certo. */
-      romaneioCodigo?: string;
-    }
+  | { kind: "blocked"; title: string; reason: string; details?: string[] }
   | { kind: "open_romaneio"; tipoRota: string; presetOsId: string }
   | { kind: "select_terceiro" }
   | { kind: "confirm_entrega" };
@@ -51,10 +44,8 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
       return {
         kind: "blocked",
         title: "Aguardando conferência na Base 2",
-        reason: romB1B2
-          ? `O romaneio ${romB1B2.codigo} já foi gerado e está em trânsito. Abra a Logística para registrar a conferência do recebimento na Base 2.`
-          : "Esta OS só pode ir para Acabamento depois que a Base 2 conferir e confirmar o recebimento do romaneio B1→B2. Vá para Logística e confirme o recebimento.",
-        romaneioCodigo: romB1B2?.codigo,
+        reason:
+          "Esta OS só pode ir para Acabamento depois que a Base 2 conferir e confirmar o recebimento do romaneio B1→B2. Vá para Logística e confirme o recebimento.",
       };
     }
     return { kind: "allow" };
@@ -101,8 +92,8 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
       return {
         kind: "blocked",
         title: "Aguardando confirmação do cliente",
-        reason: `O romaneio ${rom.codigo} já foi gerado e está em trânsito. Abra a Logística para registrar a confirmação com a foto do romaneio assinado pelo cliente.`,
-        romaneioCodigo: rom.codigo,
+        reason:
+          "O romaneio Base 2 → Cliente já foi criado, mas o cliente ainda não confirmou o recebimento. Acesse Logística e registre a confirmação com a foto do romaneio assinado.",
       };
     }
     return { kind: "confirm_entrega" };
@@ -123,8 +114,8 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
       return {
         kind: "blocked",
         title: "Aguardando confirmação do cliente",
-        reason: `O romaneio ${rom.codigo} já foi gerado e está em trânsito. Abra a Logística para registrar a confirmação com a foto do romaneio assinado pelo cliente.`,
-        romaneioCodigo: rom.codigo,
+        reason:
+          "O romaneio Base 1 → Cliente já foi criado, mas o cliente ainda não confirmou o recebimento. Acesse Logística e registre a confirmação.",
       };
     }
     return { kind: "confirm_entrega" };

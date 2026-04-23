@@ -139,9 +139,14 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                   className="border-b last:border-b-0 cursor-pointer transition-colors hover:bg-muted/40"
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <OrigemBadge origem={reg.origem} />
                       <span className="font-medium text-foreground">{reg.codigo}</span>
+                      {reg.encaminhar_projetos && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-purple-100 text-purple-700">
+                          PROJETOS
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-foreground hidden sm:table-cell">

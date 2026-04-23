@@ -60,11 +60,16 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-semibold text-foreground">{registro.codigo}</h2>
               <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${origemTag.className}`}>
                 {origemTag.label}
               </span>
+              {registro.encaminhar_projetos && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-purple-100 text-purple-700">
+                  <Palette className="h-2.5 w-2.5" /> PROJETOS
+                </span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{registro.cliente || "—"}</p>
           </div>
@@ -212,16 +217,20 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
             )}
 
             {/* Projetos */}
-            {registro.encaminhar_projetos && registro.instrucao_projetos && (
+            {registro.encaminhar_projetos && (
               <>
                 <Separator />
-                <div>
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                    <Palette className="h-3.5 w-3.5" /> Encaminhamento para Projetos
+                <div className="rounded-lg border-2 border-purple-300 bg-purple-50 p-4">
+                  <h3 className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Palette className="h-4 w-4" /> Encaminhamento para Projetos
                   </h3>
-                  <div className="border-l-2 border-purple-400 pl-3 py-1 text-sm text-foreground whitespace-pre-wrap">
-                    {registro.instrucao_projetos}
-                  </div>
+                  {registro.instrucao_projetos ? (
+                    <div className="text-sm text-foreground whitespace-pre-wrap">
+                      {registro.instrucao_projetos}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Sem instrução específica.</p>
+                  )}
                 </div>
               </>
             )}
