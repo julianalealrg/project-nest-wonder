@@ -61,7 +61,10 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
   }
 
   // Group romaneios by os_id (deduplicate by romaneio_id)
-  const romaneiosByOs = new Map<string, { codigo: string; tipo_rota: string; status: string; data_saida: string | null }[]>();
+  const romaneiosByOs = new Map<
+    string,
+    { id: string; codigo: string; tipo_rota: string; status: string; data_saida: string | null; data_recebimento: string | null }[]
+  >();
   const seenRomaneios = new Set<string>();
   for (const rp of romaneiosRes.data || []) {
     if (!rp.os_id || !rp.romaneios || seenRomaneios.has(`${rp.os_id}-${rp.romaneio_id}`)) continue;
@@ -69,10 +72,12 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
     const rom = rp.romaneios as any;
     const list = romaneiosByOs.get(rp.os_id) || [];
     list.push({
+      id: rom.id,
       codigo: rom.codigo,
       tipo_rota: rom.tipo_rota,
       status: rom.status,
       data_saida: rom.data_saida,
+      data_recebimento: rom.data_recebimento ?? null,
     });
     romaneiosByOs.set(rp.os_id, list);
   }
