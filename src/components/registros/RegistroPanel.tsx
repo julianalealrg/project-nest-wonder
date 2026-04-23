@@ -16,6 +16,7 @@ import { changeRegistroStatus } from "@/lib/changeRegistroStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
+import { registroBadgeClass } from "@/lib/statusColors";
 
 interface RegistroPanelProps {
   registro: Registro | null;
