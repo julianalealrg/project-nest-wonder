@@ -10,6 +10,9 @@ export interface RomaneioPeca {
   // joined
   peca_item: string;
   peca_descricao: string;
+  comprimento: number | null;
+  largura: number | null;
+  material: string | null;
   os_codigo: string;
   cliente_nome: string;
 }
