@@ -5,10 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, startOfMonth } from "date-fns";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 
 function useHomeKPIs() {
   return useQuery({
     queryKey: ["home-kpis"],
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const [osRes, regRes] = await Promise.all([
         supabase.from("ordens_servico").select("id, status, updated_at"),
@@ -21,7 +24,8 @@ function useHomeKPIs() {
       const mesInicio = startOfMonth(now);
 
       const osEmProducao = ordens.filter((o) => o.status !== "entregue").length;
-      const registrosAbertos = registros.filter((r) => r.status === "aberto").length;
+      // Registros abertos = qualquer status diferente de "resolvido"
+      const registrosAbertos = registros.filter((r) => r.status !== "resolvido").length;
       const alertasInatividade = ordens.filter(
         (o) => o.status !== "entregue" && differenceInDays(now, new Date(o.updated_at)) >= 3
       ).length;
@@ -48,6 +52,13 @@ export default function Index() {
   const isAdmin = profile?.perfil === "admin";
   const visibleModules = modules.filter((m) => !m.adminOnly || isAdmin);
   const { data: kpiData, isLoading } = useHomeKPIs();
+
+  // Realtime: refresh KPIs when underlying tables change
+  useRealtimeInvalidate([
+    { table: "registros", queryKeys: [["home-kpis"]] },
+    { table: "ordens_servico", queryKeys: [["home-kpis"]] },
+    { table: "romaneios", queryKeys: [["home-kpis"]] },
+  ]);
 
   const kpis = [
     { label: "OS em Produção", value: isLoading ? "…" : kpiData?.osEmProducao ?? 0, icon: Factory, color: "#2980B9" },
