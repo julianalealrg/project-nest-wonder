@@ -13,6 +13,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { romaneioBadgeClass } from "@/lib/statusColors";
 
 interface RomaneioPanelProps {
   romaneio: Romaneio | null;
