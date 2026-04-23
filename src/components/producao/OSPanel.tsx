@@ -87,11 +87,18 @@ const STATION_LABELS_SHORT: Record<string, string> = {
 };
 
 export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
   const [pecaDialogOpen, setPecaDialogOpen] = useState(false);
   const [selectedPeca, setSelectedPeca] = useState<MockPeca | null>(null);
+  // Guard popups
+  const [blockedOpen, setBlockedOpen] = useState(false);
+  const [blockedInfo, setBlockedInfo] = useState<{ title: string; message: string; actionLabel?: string; action?: GuardAction } | null>(null);
+  const [romaneioOpen, setRomaneioOpen] = useState(false);
+  const [romaneioPrefill, setRomaneioPrefill] = useState<{ osId: string; tipoRota: string } | null>(null);
+  const [terceiroOpen, setTerceiroOpen] = useState(false);
   const { profile } = useAuth();
 
   const allPiecesCompletedStation = useMemo(() => {
@@ -115,7 +122,29 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
 
   const nextStatuses = getNextStatuses(os.status);
 
+  function executeGuardAction(action: GuardAction) {
+    if (action.type === "open_romaneio") {
+      setRomaneioPrefill({ osId: action.osId, tipoRota: action.tipoRota });
+      setRomaneioOpen(true);
+    } else if (action.type === "open_terceiro") {
+      setTerceiroOpen(true);
+    } else if (action.type === "open_conferencia_entrada" || action.type === "open_entrega_cliente") {
+      navigate("/logistica");
+    }
+  }
+
   function handleSelect(newStatus: string) {
+    if (!os) return;
+    const guard = evaluateTransition(os, newStatus);
+    if (guard.kind === "blocked") {
+      setBlockedInfo({ title: guard.title, message: guard.message, actionLabel: guard.actionLabel, action: guard.action });
+      setBlockedOpen(true);
+      return;
+    }
+    if (guard.kind === "popup") {
+      executeGuardAction(guard.action);
+      return;
+    }
     setPendingStatus(newStatus);
     setDialogOpen(true);
   }
