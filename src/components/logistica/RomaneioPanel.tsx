@@ -241,12 +241,22 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
           Peças ({romaneio.pecas.length})
         </h3>
         <div className="space-y-2">
-          {romaneio.pecas.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30 text-sm">
-              <span className="font-medium text-foreground w-6 text-center">{p.peca_item}</span>
-              <div className="flex-1">
-                <span className="text-foreground">{p.peca_descricao}</span>
-                <span className="text-muted-foreground text-xs ml-2">{p.os_codigo}</span>
+          {romaneio.pecas.map((p) => {
+            const hasMedida = p.comprimento != null || p.largura != null;
+            const fmt = (v: number | null | undefined) =>
+              v == null ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+            return (
+            <div key={p.id} className="flex items-start gap-3 p-2.5 rounded-md bg-muted/30 text-sm">
+              <span className="font-medium text-foreground w-10 text-center pt-0.5">{p.peca_item}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-foreground">{p.peca_descricao}</div>
+                <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
+                  {hasMedida && (
+                    <span>{fmt(p.comprimento)} × {fmt(p.largura)} m</span>
+                  )}
+                  {p.material && <span>— {p.material}</span>}
+                  {p.os_codigo && <span>— OS {p.os_codigo}</span>}
+                </div>
               </div>
               {conferindo ? (
                 <Select
@@ -294,7 +304,8 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
                 return <span className="text-[10px] text-muted-foreground">—</span>;
               })()}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
