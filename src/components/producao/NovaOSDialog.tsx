@@ -431,11 +431,11 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
             ambiente: os.ambiente || null,
             material: os.material || null,
             projetista: projetistaFinal || null,
-            data_entrega: os.data_entrega,
+            data_entrega: sanitizeDate(os.data_entrega),
             area_m2: os.area_m2 === "" ? null : Number(os.area_m2),
             status: "aguardando_material",
             localizacao: "CD",
-            data_emissao: new Date().toISOString().split("T")[0],
+            data_emissao: sanitizeDate(new Date().toISOString().split("T")[0]),
           })
           .select("id")
           .single();
