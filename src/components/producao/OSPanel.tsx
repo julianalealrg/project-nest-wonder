@@ -379,15 +379,77 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
             <Separator />
 
             <div>
-              <h3 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Peças ({os.pecas.filter((p) => p.status_cq === "aprovado").length}/{os.pecas.length})
-              </h3>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Peças ({os.pecas.filter((p) => p.status_cq === "aprovado").length}/{os.pecas.length})
+                </h3>
+                {selectablePecas.length > 0 && (
+                  <label className="flex items-center gap-2 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                    Selecionar todas
+                  </label>
+                )}
+              </div>
+
+              {selectedPecas.length > 0 && (
+                <div className="mb-3 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/60 p-2.5">
+                  <span className="text-[12px] font-medium text-foreground">
+                    {selectedPecas.length} peça{selectedPecas.length > 1 ? "s" : ""} selecionada{selectedPecas.length > 1 ? "s" : ""}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {batchInfo.mismatch ? (
+                      <span className="text-[10.5px] text-muted-foreground max-w-[220px] text-right leading-tight">
+                        Selecione apenas peças que estão na mesma etapa para avançar em lote.
+                      </span>
+                    ) : null}
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 text-[11px]"
+                              disabled={batchInfo.mismatch || !batchInfo.station || !batchInfo.guard.permitido || loading}
+                              onClick={() => setBatchOpen(true)}
+                            >
+                              <Play className="mr-1 h-3 w-3" />
+                              Avançar {batchInfo.station ? STATION_LABELS_SHORT[batchInfo.station] : ""}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!batchInfo.guard.permitido && batchInfo.guard.motivo && (
+                          <TooltipContent side="left" className="max-w-[260px] text-xs">
+                            {batchInfo.guard.motivo}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={clearSelection}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 {os.pecas.map((peca) => {
                   const nextStation = getNextStation(peca);
                   const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status) : { permitido: true };
+                  const isSelectable = nextStation !== null;
+                  const isSelected = selectedPecaIds.has(peca.id);
                   return (
-                    <div key={peca.id} className="flex items-center gap-3 rounded-md bg-muted/30 p-3">
+                    <div
+                      key={peca.id}
+                      className={`flex items-center gap-3 rounded-md p-3 transition-colors ${
+                        isSelected ? "bg-muted/70 ring-1 ring-border" : "bg-muted/30"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        disabled={!isSelectable}
+                        onCheckedChange={() => togglePeca(peca.id)}
+                        aria-label={`Selecionar peça ${peca.item}`}
+                      />
                       <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
                       <span className="flex-1 truncate text-[13px] text-foreground">{peca.descricao}</span>
                       <div className="flex items-center gap-1.5" title="Corte | 45° | Poliborda | Usinagem | Acabamento | CQ">
