@@ -46,7 +46,7 @@ export interface MockOS {
   pdf_url: string | null;
   updated_at: string;
   pecas: MockPeca[];
-  romaneios: { codigo: string; tipo_rota: string; status: string; data_saida: string | null }[];
+  romaneios: { id?: string; codigo: string; tipo_rota: string; status: string; data_saida: string | null; data_recebimento?: string | null }[];
   registros: { codigo: string; tipo: string; status: string; urgencia: string }[];
 }
 
