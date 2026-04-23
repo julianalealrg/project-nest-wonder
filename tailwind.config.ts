@@ -17,6 +17,15 @@ export default {
         sans: ["Montserrat", "sans-serif"],
       },
       colors: {
+        nue: {
+          azul: "hsl(var(--nue-azul))",
+          verde: "hsl(var(--nue-verde))",
+          roxo: "hsl(var(--nue-roxo))",
+          laranja: "hsl(var(--nue-laranja))",
+          vermelho: "hsl(var(--nue-vermelho))",
+          amarelo: "hsl(var(--nue-amarelo))",
+          chumbo: "hsl(var(--nue-chumbo))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
