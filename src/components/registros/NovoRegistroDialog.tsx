@@ -534,7 +534,7 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
                     <label className="h-16 w-16 flex flex-col items-center justify-center rounded-md border border-dashed cursor-pointer hover:bg-muted/30 transition-colors">
                       <Upload className="h-4 w-4 text-muted-foreground" />
                       <span className="text-[9px] text-muted-foreground mt-0.5">Adicionar</span>
-                      <input type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+                      <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleFileChange} className="hidden" />
                     </label>
                   </div>
                 </div>
