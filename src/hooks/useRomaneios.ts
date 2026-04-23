@@ -68,8 +68,8 @@ export function useRomaneios() {
         .from("romaneio_pecas")
         .select(`
           id, peca_id, os_id, conferencia, observacao, romaneio_id,
-          pecas ( item, descricao ),
-          ordens_servico ( codigo, clientes ( nome ) )
+          pecas ( item, descricao, comprimento, largura ),
+          ordens_servico ( codigo, material, clientes ( nome ) )
         `)
         .in("romaneio_id", ids);
 
@@ -91,6 +91,9 @@ export function useRomaneios() {
           observacao: rp.observacao,
           peca_item: peca?.item || "",
           peca_descricao: peca?.descricao || "",
+          comprimento: peca?.comprimento ?? null,
+          largura: peca?.largura ?? null,
+          material: os?.material ?? null,
           os_codigo: osCodigo,
           cliente_nome: clienteNome,
         };
