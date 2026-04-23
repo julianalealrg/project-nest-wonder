@@ -71,7 +71,7 @@ export function useDashboardData(filters: DashboardFilters) {
 
   // KPIs
   const registrosAbertos = filteredRegistros.filter((r) => r.status !== "resolvido").length;
-  const osEmProducao = filteredOS.filter((o: any) => !["Entregue"].includes(o.status)).length;
+  const osEmProducao = filteredOS.filter((o: any) => !["entregue"].includes(o.status)).length;
   const totalRegistros = filteredRegistros.length;
   const resolvidos = filteredRegistros.filter((r) => r.status === "resolvido").length;
   const taxaResolucao = totalRegistros > 0 ? Math.round((resolvidos / totalRegistros) * 100) : 0;
