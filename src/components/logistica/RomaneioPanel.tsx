@@ -153,18 +153,12 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
     }
   }
 
-  const statusColors: Record<string, string> = {
-    pendente: "bg-muted text-muted-foreground",
-    em_transito: "bg-blue-100 text-blue-700",
-    entregue: "bg-green-100 text-green-700",
-  };
-
   const headerNode = (
     <div className="flex items-center justify-between px-5 py-4 border-b">
       <div>
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-foreground">{romaneio.codigo}</h2>
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[romaneio.status] || ""}`}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${romaneioBadgeClass(romaneio.status)}`}>
             {ROMANEIO_STATUS_LABELS[romaneio.status] || romaneio.status}
           </span>
         </div>
