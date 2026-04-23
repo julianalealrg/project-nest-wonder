@@ -598,9 +598,15 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                       <TooltipProvider delayDuration={150}>
                         <div className="flex flex-wrap items-center gap-1">
                           <StationChip station="corte" status={peca.status_corte} operador={peca.cortador} />
-                          <StationChip station="45" status={peca.status_45} operador={peca.operador_45} />
-                          <StationChip station="poliborda" status={peca.status_poliborda} operador={peca.operador_poliborda} />
-                          <StationChip station="usinagem" status={peca.status_usinagem} operador={peca.operador_usinagem} />
+                          {peca.precisa_45 && (
+                            <StationChip station="45" status={peca.status_45} operador={peca.operador_45} />
+                          )}
+                          {peca.precisa_poliborda && (
+                            <StationChip station="poliborda" status={peca.status_poliborda} operador={peca.operador_poliborda} />
+                          )}
+                          {peca.precisa_usinagem && (
+                            <StationChip station="usinagem" status={peca.status_usinagem} operador={peca.operador_usinagem} />
+                          )}
                           <StationChip station="acabamento" status={peca.status_acabamento} operador={peca.acabador} />
                           <StationChip station="cq" status={peca.status_cq} operador={peca.cq_responsavel} />
                         </div>
