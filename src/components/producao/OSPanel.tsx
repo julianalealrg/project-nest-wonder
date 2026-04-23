@@ -398,6 +398,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
     }
   }
 
+  return (
     <>
       <div className="fixed inset-0 z-40 bg-foreground/20" onClick={onClose} />
 
