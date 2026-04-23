@@ -24,10 +24,14 @@ interface OSOption {
 interface NovoRomaneioDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (romaneioId?: string) => void;
+  /** Pre-select an OS (and select all its peças) when opened */
+  prefillOsId?: string | null;
+  /** Pre-select the route type (e.g. "base1_base2") */
+  prefillTipoRota?: string | null;
 }
 
-export function NovoRomaneioDialog({ open, onOpenChange, onSuccess }: NovoRomaneioDialogProps) {
+export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, prefillOsId, prefillTipoRota }: NovoRomaneioDialogProps) {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [tipoRota, setTipoRota] = useState("");
@@ -65,7 +69,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess }: NovoRomane
           pecasMap.set(p.os_id, list);
         });
 
-        setOsList(data.map((d) => {
+        const mapped = data.map((d) => {
           const cli = d.clientes as any;
           return {
             id: d.id,
@@ -74,12 +78,26 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess }: NovoRomane
             cliente_endereco: cli?.endereco || null,
             pecas: pecasMap.get(d.id) || [],
           };
-        }));
+        });
+        setOsList(mapped);
+
+        // Apply prefill once data is loaded
+        if (prefillTipoRota) setTipoRota(prefillTipoRota);
+        if (prefillOsId) {
+          const os = mapped.find((o) => o.id === prefillOsId);
+          if (os) {
+            setSelectedOsIds([prefillOsId]);
+            setSelectedPecaIds(new Set(os.pecas.map((p) => p.id)));
+            if (prefillTipoRota === "base2_cliente" && os.cliente_endereco) {
+              setEnderecoDestino(os.cliente_endereco);
+            }
+          }
+        }
       }
       setLoadingOs(false);
     }
     load();
-  }, [open]);
+  }, [open, prefillOsId, prefillTipoRota]);
 
   function reset() {
     setTipoRota("");
@@ -225,7 +243,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess }: NovoRomane
       toast({ title: `Romaneio ${codigo} criado!` });
       reset();
       onOpenChange(false);
-      onSuccess?.();
+      onSuccess?.(newRom.id);
     } catch (err: any) {
       console.error(err);
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
