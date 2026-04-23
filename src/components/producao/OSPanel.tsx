@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
 import { PecaBatchAdvanceDialog } from "./PecaBatchAdvanceDialog";
+import { CqReprovaDialog } from "./CqReprovaDialog";
 import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
 import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
@@ -23,6 +24,13 @@ import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
 import { RomaneioPanel } from "@/components/logistica/RomaneioPanel";
 import { useRomaneios } from "@/hooks/useRomaneios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+
+// Transições regressivas (rework / reprovação) — devem ter destaque visual de alerta
+const REGRESSIVE_TRANSITIONS = new Set<string>(["cq->acabamento"]);
+function isRegressive(from: string, to: string) {
+  return REGRESSIVE_TRANSITIONS.has(`${from}->${to}`);
+}
 
 interface OSPanelProps {
   os: MockOS | null;
