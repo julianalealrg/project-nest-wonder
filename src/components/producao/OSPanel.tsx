@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { X, FileText, ChevronRight, Loader2, Play, ExternalLink, Check, Clock, Minus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { gerarPDFOS } from "@/lib/pdfOS";
 import { MockOS, MockPeca, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
@@ -166,13 +167,19 @@ const STATION_LABELS_SHORT: Record<string, string> = {
 };
 
 /**
- * Calcula o label, estado disabled e tooltip do botão de próximo status,
- * baseado no resultado de `evaluateTransition` para refletir a ação real.
+ * Calcula o label, estado disabled, tooltip e (opcionalmente) navegação externa
+ * do botão de próximo status, baseado em `evaluateTransition` para refletir a ação real.
  */
 function getBotaoProximoStatus(
   os: MockOS,
   nextStatus: string,
-): { label: string; disabled: boolean; tooltip?: string } {
+): {
+  label: string;
+  disabled: boolean;
+  tooltip?: string;
+  /** Quando definido, o botão deve navegar para a Logística e abrir o romaneio em conferência. */
+  navigateRomaneioCodigo?: string;
+} {
   const guard = evaluateTransition(os, nextStatus);
 
   // expedicao / terceiros → entregue
@@ -181,9 +188,26 @@ function getBotaoProximoStatus(
     (os.status === "terceiros" && nextStatus === "entregue")
   ) {
     if (guard.kind === "open_romaneio") return { label: "Gerar romaneio", disabled: false };
-    if (guard.kind === "blocked")
-      return { label: "Aguardando cliente", disabled: true, tooltip: guard.reason };
+    if (guard.kind === "blocked") {
+      // Em vez de desabilitar, oferecer ação clicável que leva ao romaneio em Logística.
+      return {
+        label: "Confirmar entrega",
+        disabled: false,
+        tooltip: guard.reason,
+        navigateRomaneioCodigo: guard.romaneioCodigo,
+      };
+    }
     if (guard.kind === "confirm_entrega") return { label: "Confirmar entrega", disabled: false };
+  }
+
+  // enviado_base2 → acabamento : se bloqueado por romaneio não recebido, oferecer ação navegável.
+  if (os.status === "enviado_base2" && nextStatus === "acabamento" && guard.kind === "blocked" && guard.romaneioCodigo) {
+    return {
+      label: "Confirmar recebimento",
+      disabled: false,
+      tooltip: guard.reason,
+      navigateRomaneioCodigo: guard.romaneioCodigo,
+    };
   }
 
   // cortando → enviado_base2 (sempre passa por gerar romaneio B1→B2 quando peças OK)
@@ -229,6 +253,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
     () => (selectedRomaneioCodigo ? allRomaneios.find((r) => r.codigo === selectedRomaneioCodigo) ?? null : null),
@@ -777,23 +802,47 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           {nextStatuses.map((ns) => {
             const regressive = isRegressive(os.status, ns);
             const btn = regressive
-              ? { label: `Reprovar → ${TRANSITION_LABELS[ns]}`, disabled: false, tooltip: undefined as string | undefined }
+              ? {
+                  label: `Reprovar → ${TRANSITION_LABELS[ns]}`,
+                  disabled: false,
+                  tooltip: undefined as string | undefined,
+                  navigateRomaneioCodigo: undefined as string | undefined,
+                }
               : getBotaoProximoStatus(os, ns);
+
+            // Caso especial: ação delegada à Logística (romaneio existe mas ainda não foi recebido).
+            // Renderiza um botão âmbar clicável que navega direto para o romaneio em conferência.
+            const isNavigateAction = !!btn.navigateRomaneioCodigo;
+
+            const handleClick = () => {
+              if (isNavigateAction && btn.navigateRomaneioCodigo) {
+                navigate(`/logistica?abrir=${encodeURIComponent(btn.navigateRomaneioCodigo)}`);
+                return;
+              }
+              handleSelect(ns);
+            };
+
             const buttonNode = (
               <Button
                 key={ns}
-                variant={regressive ? "outline" : "default"}
+                variant={regressive ? "outline" : isNavigateAction ? "outline" : "default"}
                 className={
                   regressive
                     ? "flex-1 px-6 py-3 text-[13px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    : "flex-1 px-6 py-3 text-[13px]"
+                    : isNavigateAction
+                      ? "flex-1 px-6 py-3 text-[13px] bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100 hover:text-amber-900"
+                      : "flex-1 px-6 py-3 text-[13px]"
                 }
                 disabled={loading || btn.disabled}
-                onClick={() => handleSelect(ns)}
+                onClick={handleClick}
               >
                 {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                 {btn.label}
-                {!regressive && <ChevronRight className="ml-1 h-4 w-4" />}
+                {isNavigateAction ? (
+                  <ExternalLink className="ml-1 h-4 w-4" />
+                ) : (
+                  !regressive && <ChevronRight className="ml-1 h-4 w-4" />
+                )}
               </Button>
             );
 

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Download, Truck, Home } from "lucide-react";
@@ -14,6 +15,8 @@ import {
   useRomaneios,
   Romaneio,
   getRotasPorCategoria,
+  ROTAS_INTERNAS,
+  ROTAS_CLIENTE,
   type CategoriaRota,
 } from "@/hooks/useRomaneios";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
@@ -37,8 +40,10 @@ export default function Logistica() {
   const [statusExp, setStatusExp] = useState("todos");
 
   const [selectedRomaneio, setSelectedRomaneio] = useState<Romaneio | null>(null);
+  const [autoStartConferencia, setAutoStartConferencia] = useState(false);
   const [novoOpen, setNovoOpen] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { data: romaneios = [], isLoading } = useRomaneios();
 
@@ -53,6 +58,28 @@ export default function Logistica() {
       window.localStorage.setItem(TAB_STORAGE_KEY, tab);
     }
   }, [tab]);
+
+  // Deep-link: /logistica?abrir=ROM-XXX abre o painel do romaneio em modo conferência.
+  useEffect(() => {
+    const codigo = searchParams.get("abrir");
+    if (!codigo || romaneios.length === 0) return;
+    const found = romaneios.find((r) => r.codigo === codigo);
+    if (!found) return;
+
+    // Ajusta a aba para a categoria correta do romaneio encontrado
+    const internas = ROTAS_INTERNAS as readonly string[];
+    const cliente = ROTAS_CLIENTE as readonly string[];
+    if (internas.includes(found.tipo_rota)) setTab("interna");
+    else if (cliente.includes(found.tipo_rota)) setTab("expedicao");
+
+    setSelectedRomaneio(found);
+    setAutoStartConferencia(true);
+
+    // Limpa o param para não reabrir em refreshes / re-montagens
+    const next = new URLSearchParams(searchParams);
+    next.delete("abrir");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, romaneios, setSearchParams]);
 
   const currentSelected = useMemo(() => {
     if (!selectedRomaneio) return null;
@@ -190,7 +217,15 @@ export default function Logistica() {
         </TabsContent>
       </Tabs>
 
-      <RomaneioPanel romaneio={currentSelected} onClose={() => setSelectedRomaneio(null)} onChanged={handleRefresh} />
+      <RomaneioPanel
+        romaneio={currentSelected}
+        onClose={() => {
+          setSelectedRomaneio(null);
+          setAutoStartConferencia(false);
+        }}
+        onChanged={handleRefresh}
+        autoStartConferencia={autoStartConferencia}
+      />
       <NovoRomaneioDialog
         open={novoOpen}
         onOpenChange={setNovoOpen}
