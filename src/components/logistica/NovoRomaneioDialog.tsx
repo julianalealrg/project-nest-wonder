@@ -269,9 +269,11 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
                 <Select value={tipoRota} onValueChange={setTipoRota}>
                   <SelectTrigger><SelectValue placeholder="Selecione a rota" /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(ROTA_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
+                    {Object.entries(ROTA_LABELS)
+                      .filter(([k]) => !allowedRotas || allowedRotas.includes(k))
+                      .map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
