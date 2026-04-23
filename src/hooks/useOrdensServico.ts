@@ -22,7 +22,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
     supabase.from("pecas").select("*").in("os_id", osIds),
     supabase
       .from("romaneio_pecas")
-      .select("romaneio_id, os_id, romaneios ( codigo, tipo_rota, status, data_saida )")
+      .select("romaneio_id, os_id, romaneios ( id, codigo, tipo_rota, status, data_saida, data_recebimento )")
       .in("os_id", osIds),
     supabase.from("registros").select("codigo, tipo, status, urgencia, os_id").in("os_id", osIds),
   ]);
