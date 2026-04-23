@@ -59,6 +59,28 @@ export default function Logistica() {
     }
   }, [tab]);
 
+  // Deep-link: /logistica?abrir=ROM-XXX abre o painel do romaneio em modo conferência.
+  useEffect(() => {
+    const codigo = searchParams.get("abrir");
+    if (!codigo || romaneios.length === 0) return;
+    const found = romaneios.find((r) => r.codigo === codigo);
+    if (!found) return;
+
+    // Ajusta a aba para a categoria correta do romaneio encontrado
+    const internas = ROTAS_INTERNAS as readonly string[];
+    const cliente = ROTAS_CLIENTE as readonly string[];
+    if (internas.includes(found.tipo_rota)) setTab("interna");
+    else if (cliente.includes(found.tipo_rota)) setTab("expedicao");
+
+    setSelectedRomaneio(found);
+    setAutoStartConferencia(true);
+
+    // Limpa o param para não reabrir em refreshes / re-montagens
+    const next = new URLSearchParams(searchParams);
+    next.delete("abrir");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, romaneios, setSearchParams]);
+
   const currentSelected = useMemo(() => {
     if (!selectedRomaneio) return null;
     return romaneios.find((r) => r.id === selectedRomaneio.id) || null;
@@ -195,7 +217,15 @@ export default function Logistica() {
         </TabsContent>
       </Tabs>
 
-      <RomaneioPanel romaneio={currentSelected} onClose={() => setSelectedRomaneio(null)} onChanged={handleRefresh} />
+      <RomaneioPanel
+        romaneio={currentSelected}
+        onClose={() => {
+          setSelectedRomaneio(null);
+          setAutoStartConferencia(false);
+        }}
+        onChanged={handleRefresh}
+        autoStartConferencia={autoStartConferencia}
+      />
       <NovoRomaneioDialog
         open={novoOpen}
         onOpenChange={setNovoOpen}
