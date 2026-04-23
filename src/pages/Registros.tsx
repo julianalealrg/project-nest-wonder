@@ -9,6 +9,7 @@ import { RegistroTable } from "@/components/registros/RegistroTable";
 import { RegistroPanel } from "@/components/registros/RegistroPanel";
 import { NovoRegistroDialog } from "@/components/registros/NovoRegistroDialog";
 import { useRegistros, Registro } from "@/hooks/useRegistros";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 
 export default function Registros() {
   const [search, setSearch] = useState("");
@@ -25,6 +26,13 @@ export default function Registros() {
 
   const queryClient = useQueryClient();
   const { data: registros = [], isLoading } = useRegistros();
+
+  // Realtime: refresh registros list and home KPIs when DB changes
+  useRealtimeInvalidate([
+    { table: "registros", queryKeys: [["registros"], ["home-kpis"]] },
+    { table: "registro_pecas", queryKeys: [["registros"]] },
+    { table: "evidencias", queryKeys: [["registros"]] },
+  ]);
 
   const tipos = useMemo(() => [...new Set(registros.map((r) => r.tipo).filter(Boolean) as string[])], [registros]);
 

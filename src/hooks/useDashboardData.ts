@@ -20,6 +20,8 @@ function getPeriodStart(periodo: string): Date | null {
 export function useDashboardData(filters: DashboardFilters) {
   const registrosQuery = useQuery({
     queryKey: ["dashboard-registros"],
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase.from("registros").select("*");
       if (error) throw error;
@@ -29,6 +31,8 @@ export function useDashboardData(filters: DashboardFilters) {
 
   const osQuery = useQuery({
     queryKey: ["dashboard-os"],
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ordens_servico")
@@ -40,6 +44,8 @@ export function useDashboardData(filters: DashboardFilters) {
 
   const logsQuery = useQuery({
     queryKey: ["dashboard-logs"],
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase.from("activity_logs").select("*");
       if (error) throw error;

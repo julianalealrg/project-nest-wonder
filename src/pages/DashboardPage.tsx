@@ -7,6 +7,7 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportDashboardExcel } from "@/lib/exportExcel";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 
 export default function DashboardPage() {
   const [origem, setOrigem] = useState("todos");
@@ -17,6 +18,14 @@ export default function DashboardPage() {
 
   const filters = { origem, periodo, supervisor, projetista, urgencia };
   const { isLoading, kpis, charts } = useDashboardData(filters);
+
+  // Realtime: refresh dashboard data on table changes
+  useRealtimeInvalidate([
+    { table: "registros", queryKeys: [["dashboard-registros"]] },
+    { table: "ordens_servico", queryKeys: [["dashboard-os"]] },
+    { table: "pecas", queryKeys: [["dashboard-os"]] },
+    { table: "romaneios", queryKeys: [["dashboard-os"]] },
+  ]);
 
   return (
     <AppLayout

@@ -10,6 +10,7 @@ import { RomaneioTable } from "@/components/logistica/RomaneioTable";
 import { RomaneioPanel } from "@/components/logistica/RomaneioPanel";
 import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
 import { useRomaneios, Romaneio } from "@/hooks/useRomaneios";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 
 export default function Logistica() {
   const [search, setSearch] = useState("");
@@ -20,6 +21,13 @@ export default function Logistica() {
 
   const queryClient = useQueryClient();
   const { data: romaneios = [], isLoading } = useRomaneios();
+
+  // Realtime: refresh romaneios + home KPIs when DB changes
+  useRealtimeInvalidate([
+    { table: "romaneios", queryKeys: [["romaneios"], ["home-kpis"]] },
+    { table: "romaneio_pecas", queryKeys: [["romaneios"]] },
+    { table: "ordens_servico", queryKeys: [["ordens_servico"], ["home-kpis"]] },
+  ]);
 
   const currentSelected = useMemo(() => {
     if (!selectedRomaneio) return null;

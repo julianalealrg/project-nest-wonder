@@ -408,7 +408,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
             projetista: projetistaFinal || null,
             data_entrega: os.data_entrega,
             area_m2: os.area_m2 === "" ? null : Number(os.area_m2),
-            status: "aguardando_chapa",
+            status: "aguardando_material",
             localizacao: "CD",
             data_emissao: new Date().toISOString().split("T")[0],
           })
