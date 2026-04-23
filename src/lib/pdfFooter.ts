@@ -14,7 +14,7 @@ export interface PdfFooterOptions {
  * Chamar UMA VEZ ao final, depois de adicionar todo o conteúdo.
  */
 export function finalizePdf(doc: jsPDF, opts: PdfFooterOptions = {}) {
-  const total = doc.internal.getNumberOfPages();
+  const total = (doc.internal as any).getNumberOfPages();
   const author = opts.userName?.trim() || "Sistema";
   const now = new Date();
   const stamp =
