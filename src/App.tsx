@@ -5,6 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
+import RecuperarSenha from "./pages/RecuperarSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
+import Unsubscribe from "./pages/Unsubscribe";
 import Index from "./pages/Index";
 import Producao from "./pages/Producao";
 import Logistica from "./pages/Logistica";
@@ -44,6 +48,10 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/cadastro" element={session ? <Navigate to="/" replace /> : <Cadastro />} />
+      <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/producao" element={<ProtectedRoute><Producao /></ProtectedRoute>} />
       <Route path="/logistica" element={<ProtectedRoute><Logistica /></ProtectedRoute>} />
