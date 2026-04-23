@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { PecaAdvanceDialog, getNextStation } from "./PecaAdvanceDialog";
 import { PecaBatchAdvanceDialog } from "./PecaBatchAdvanceDialog";
+import { CqReprovaDialog } from "./CqReprovaDialog";
 import { evaluateTransition, type GuardAction } from "@/lib/statusGuards";
 import { podeAvancarPecaPara } from "@/lib/pecaStationGuards";
 import { BlockedTransitionDialog } from "./BlockedTransitionDialog";
@@ -23,6 +24,13 @@ import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
 import { RomaneioPanel } from "@/components/logistica/RomaneioPanel";
 import { useRomaneios } from "@/hooks/useRomaneios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+
+// Transições regressivas (rework / reprovação) — devem ter destaque visual de alerta
+const REGRESSIVE_TRANSITIONS = new Set<string>(["cq->acabamento"]);
+function isRegressive(from: string, to: string) {
+  return REGRESSIVE_TRANSITIONS.has(`${from}->${to}`);
+}
 
 interface OSPanelProps {
   os: MockOS | null;
@@ -108,6 +116,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [selectedPecaIds, setSelectedPecaIds] = useState<Set<string>>(new Set());
   const [batchOpen, setBatchOpen] = useState(false);
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
+  const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const { profile } = useAuth();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
@@ -224,6 +233,13 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
 
   function handleSelect(newStatus: string) {
     if (!os) return;
+
+    // Transição regressiva CQ → Acabamento: abre dialog dedicado de reprovação
+    if (isRegressive(os.status, newStatus)) {
+      setCqReprovaOpen(true);
+      return;
+    }
+
     const guard: GuardAction = evaluateTransition(os, newStatus);
 
     if (guard.kind === "blocked") {
@@ -324,6 +340,59 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
       onStatusChanged?.();
     } catch (err: any) {
       toast({ title: "Erro ao avançar peça", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCqReprovaConfirm(motivo: string, pecaIds: string[]) {
+    if (!os || pecaIds.length === 0) return;
+    setLoading(true);
+    try {
+      // 1) Atualiza OS: volta para Acabamento na Base 2
+      const { error: osErr } = await supabase
+        .from("ordens_servico")
+        .update({ status: "acabamento", localizacao: "Base 2", updated_at: new Date().toISOString() } as any)
+        .eq("id", os.id);
+      if (osErr) throw osErr;
+
+      // 2) Marca peças reprovadas
+      const { error: pecasErr } = await supabase
+        .from("pecas")
+        .update({
+          status_cq: "reprovado",
+          cq_aprovado: false,
+          cq_observacao: motivo,
+          status_acabamento: "pendente",
+          updated_at: new Date().toISOString(),
+        } as any)
+        .in("id", pecaIds);
+      if (pecasErr) throw pecasErr;
+
+      // 3) Log
+      await supabase.from("activity_logs").insert({
+        action: "cq_reprovado",
+        entity_type: "ordens_servico",
+        entity_id: os.id,
+        entity_description: os.codigo,
+        user_name: profile?.nome || "Sistema",
+        details: {
+          motivo,
+          pecas_reprovadas: pecaIds.length,
+          peca_ids: pecaIds,
+          from_status: "cq",
+          to_status: "acabamento",
+        },
+      });
+
+      toast({
+        title: `${os.codigo} reprovada no CQ`,
+        description: `${pecaIds.length} peça${pecaIds.length > 1 ? "s" : ""} retornou para Acabamento.`,
+      });
+      setCqReprovaOpen(false);
+      onStatusChanged?.();
+    } catch (err: any) {
+      toast({ title: "Erro ao reprovar", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -600,18 +669,27 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
             <FileText className="mr-1 h-4 w-4" />
             Gerar PDF
           </Button>
-          {nextStatuses.map((ns) => (
-            <Button
-              key={ns}
-              className="flex-1 px-6 py-3 text-[13px]"
-              disabled={loading}
-              onClick={() => handleSelect(ns)}
-            >
-              {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-              {TRANSITION_LABELS[ns]}
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          ))}
+          {nextStatuses.map((ns) => {
+            const regressive = isRegressive(os.status, ns);
+            const label = regressive ? `Reprovar → ${TRANSITION_LABELS[ns]}` : TRANSITION_LABELS[ns];
+            return (
+              <Button
+                key={ns}
+                variant={regressive ? "outline" : "default"}
+                className={
+                  regressive
+                    ? "flex-1 px-6 py-3 text-[13px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    : "flex-1 px-6 py-3 text-[13px]"
+                }
+                disabled={loading}
+                onClick={() => handleSelect(ns)}
+              >
+                {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
+                {label}
+                {!regressive && <ChevronRight className="ml-1 h-4 w-4" />}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
@@ -641,6 +719,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         count={selectedPecas.length}
         loading={loading}
         onConfirm={handleBatchConfirm}
+      />
+
+      <CqReprovaDialog
+        open={cqReprovaOpen}
+        onOpenChange={setCqReprovaOpen}
+        pecas={os.pecas}
+        loading={loading}
+        onConfirm={handleCqReprovaConfirm}
       />
 
       <BlockedTransitionDialog
