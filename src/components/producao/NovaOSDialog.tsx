@@ -393,7 +393,24 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
         clienteId = newCliente.id;
       }
 
+      let savedCount = 0;
+      const skippedCodes: string[] = [];
+
       for (const os of osList) {
+        const codigoTrim = os.codigo.trim();
+
+        // Check for duplicate before insert (avoids unique constraint error)
+        const { data: existente } = await supabase
+          .from("ordens_servico")
+          .select("id, codigo")
+          .eq("codigo", codigoTrim)
+          .maybeSingle();
+
+        if (existente) {
+          skippedCodes.push(codigoTrim);
+          continue;
+        }
+
         const projetistaFinal = os.projetista === "outro"
           ? os.projetista_outro
           : os.projetista;
@@ -401,7 +418,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
         const { data: newOS, error: osError } = await supabase
           .from("ordens_servico")
           .insert({
-            codigo: os.codigo.trim(),
+            codigo: codigoTrim,
             cliente_id: clienteId,
             ambiente: os.ambiente || null,
             material: os.material || null,
@@ -443,9 +460,26 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
           const { error: pecaError } = await supabase.from("pecas").insert(pecasInsert);
           if (pecaError) throw pecaError;
         }
+
+        savedCount++;
       }
 
-      toast({ title: `${osList.length} OS cadastrada(s) com sucesso!` });
+      // Summary toast
+      if (savedCount === 0 && skippedCodes.length > 0) {
+        toast({
+          title: "Nenhuma OS cadastrada",
+          description: `${skippedCodes.length} OS já existia(m) no sistema: ${skippedCodes.join(", ")}`,
+          variant: "destructive",
+        });
+      } else if (skippedCodes.length > 0) {
+        toast({
+          title: `${savedCount} OS importada(s), ${skippedCodes.length} já existia(m) e foram ignoradas`,
+          description: `Ignoradas: ${skippedCodes.join(", ")}`,
+        });
+      } else {
+        toast({ title: `${savedCount} OS cadastrada(s) com sucesso!` });
+      }
+
       reset();
       onOpenChange(false);
       onSuccess?.();
