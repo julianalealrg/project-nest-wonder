@@ -624,6 +624,15 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         onConfirm={handlePecaConfirm}
       />
 
+      <PecaBatchAdvanceDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        station={batchInfo.station ?? null}
+        count={selectedPecas.length}
+        loading={loading}
+        onConfirm={handleBatchConfirm}
+      />
+
       <BlockedTransitionDialog
         open={blockedDialog.open}
         onOpenChange={(o) => setBlockedDialog((s) => ({ ...s, open: o }))}
