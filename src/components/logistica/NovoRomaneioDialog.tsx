@@ -67,7 +67,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
           pecasMap.set(p.os_id, list);
         });
 
-        setOsList(data.map((d) => {
+        const list = data.map((d) => {
           const cli = d.clientes as any;
           return {
             id: d.id,
@@ -76,12 +76,27 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
             cliente_endereco: cli?.endereco || null,
             pecas: pecasMap.get(d.id) || [],
           };
-        }));
+        });
+        setOsList(list);
+
+        // Aplicar preset (OS pré-selecionada vinda da Produção)
+        if (presetOsId) {
+          const presetOs = list.find((o) => o.id === presetOsId);
+          if (presetOs) {
+            setSelectedOsIds([presetOsId]);
+            setSelectedPecaIds(new Set(presetOs.pecas.map((p) => p.id)));
+          }
+        }
       }
       setLoadingOs(false);
     }
     load();
-  }, [open]);
+  }, [open, presetOsId]);
+
+  // Aplicar tipo de rota preset
+  useEffect(() => {
+    if (open && presetTipoRota) setTipoRota(presetTipoRota);
+  }, [open, presetTipoRota]);
 
   function reset() {
     setTipoRota("");
