@@ -526,14 +526,16 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
                       />
                       <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
                       <span className="flex-1 truncate text-[13px] text-foreground">{peca.descricao}</span>
-                      <div className="flex items-center gap-1.5" title="Corte | 45° | Poliborda | Usinagem | Acabamento | CQ">
-                        <StationBadge status={peca.status_corte} />
-                        <StationBadge status={peca.status_45} />
-                        <StationBadge status={peca.status_poliborda} />
-                        <StationBadge status={peca.status_usinagem} />
-                        <StationBadge status={peca.status_acabamento} />
-                        <StationBadge status={peca.status_cq} />
-                      </div>
+                      <TooltipProvider delayDuration={150}>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <StationChip station="corte" status={peca.status_corte} operador={peca.cortador} />
+                          <StationChip station="45" status={peca.status_45} operador={peca.operador_45} />
+                          <StationChip station="poliborda" status={peca.status_poliborda} operador={peca.operador_poliborda} />
+                          <StationChip station="usinagem" status={peca.status_usinagem} operador={peca.operador_usinagem} />
+                          <StationChip station="acabamento" status={peca.status_acabamento} operador={peca.acabador} />
+                          <StationChip station="cq" status={peca.status_cq} operador={peca.cq_responsavel} />
+                        </div>
+                      </TooltipProvider>
                       {peca.cortador && <span className="text-[10px] text-muted-foreground">{peca.cortador}</span>}
                       {nextStation && (
                         <TooltipProvider delayDuration={200}>
