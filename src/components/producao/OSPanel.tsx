@@ -165,6 +165,51 @@ const STATION_LABELS_SHORT: Record<string, string> = {
   cq: "CQ",
 };
 
+/**
+ * Calcula o label, estado disabled e tooltip do botão de próximo status,
+ * baseado no resultado de `evaluateTransition` para refletir a ação real.
+ */
+function getBotaoProximoStatus(
+  os: MockOS,
+  nextStatus: string,
+): { label: string; disabled: boolean; tooltip?: string } {
+  const guard = evaluateTransition(os, nextStatus);
+
+  // expedicao / terceiros → entregue
+  if (
+    (os.status === "expedicao" && nextStatus === "entregue") ||
+    (os.status === "terceiros" && nextStatus === "entregue")
+  ) {
+    if (guard.kind === "open_romaneio") return { label: "Gerar romaneio", disabled: false };
+    if (guard.kind === "blocked")
+      return { label: "Aguardando cliente", disabled: true, tooltip: guard.reason };
+    if (guard.kind === "confirm_entrega") return { label: "Confirmar entrega", disabled: false };
+  }
+
+  // cortando → enviado_base2 (sempre passa por gerar romaneio B1→B2 quando peças OK)
+  if (os.status === "cortando" && nextStatus === "enviado_base2") {
+    if (guard.kind === "open_romaneio") return { label: "Gerar romaneio B1→B2", disabled: false };
+    if (guard.kind === "blocked")
+      return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: true, tooltip: guard.reason };
+  }
+
+  // cortando → terceiros
+  if (os.status === "cortando" && nextStatus === "terceiros") {
+    if (guard.kind === "select_terceiro") return { label: "Enviar para terceiro", disabled: false };
+  }
+
+  // Demais transições: respeita bloqueios genéricos (ex: Acabamento→CQ com peças pendentes)
+  if (guard.kind === "blocked") {
+    return {
+      label: TRANSITION_LABELS[nextStatus] || nextStatus,
+      disabled: true,
+      tooltip: guard.reason,
+    };
+  }
+
+  return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: false };
+}
+
 export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
