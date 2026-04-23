@@ -21,10 +21,12 @@ export function RomaneioPanel({ romaneio, onClose, onChanged }: RomaneioPanelPro
   const [loading, setLoading] = useState(false);
   const [conferindo, setConferindo] = useState(false);
   const [conferencias, setConferencias] = useState<Record<string, string>>({});
+  const [entregaClienteOpen, setEntregaClienteOpen] = useState(false);
   const { profile } = useAuth();
 
   if (!romaneio) return null;
 
+  const isClienteRoute = romaneio.tipo_rota === "base2_cliente";
   const canDepart = romaneio.status === "pendente";
   const canReceive = romaneio.status === "em_transito";
 
