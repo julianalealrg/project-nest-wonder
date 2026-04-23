@@ -18,7 +18,19 @@ interface AdvancePecaParams {
 
 export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, station, fields, userName, osStatus }: AdvancePecaParams) {
   if (osStatus) {
-    const guard = podeAvancarPecaPara(station, osStatus);
+    // Buscar romaneios vinculados para validar guard de Acabamento (B1->B2 deve ter sido recebido)
+    let romaneios: { tipo_rota: string; status: string }[] | undefined;
+    if (station === "acabamento") {
+      const { data: rps } = await supabase
+        .from("romaneio_pecas")
+        .select("romaneios(tipo_rota, status)")
+        .eq("os_id", osId);
+      romaneios = (rps || [])
+        .map((rp: any) => rp.romaneios)
+        .filter(Boolean)
+        .map((r: any) => ({ tipo_rota: r.tipo_rota, status: r.status }));
+    }
+    const guard = podeAvancarPecaPara(station, osStatus, romaneios);
     if (!guard.permitido) {
       throw new Error(guard.motivo || "Avanço bloqueado pelo status da OS.");
     }

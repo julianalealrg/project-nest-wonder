@@ -229,7 +229,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
     const first = stations[0];
     const mismatch = stations.some((s) => s !== first);
     if (mismatch || !first) return { station: first, mismatch: true, guard: { permitido: true } };
-    const guard = podeAvancarPecaPara(first, os.status);
+    const guard = podeAvancarPecaPara(first, os.status, (os as any).romaneios);
     return { station: first, mismatch: false, guard };
   }, [selectedPecas, os]);
 
@@ -370,7 +370,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   function handlePecaAdvance(peca: MockPeca) {
     const next = getNextStation(peca);
     if (!next) return;
-    const guard = podeAvancarPecaPara(next, os!.status);
+    const guard = podeAvancarPecaPara(next, os!.status, (os as any).romaneios);
     if (!guard.permitido) {
       setBlockedDialog({
         open: true,
