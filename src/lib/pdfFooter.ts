@@ -36,7 +36,7 @@ function addWatermark(doc: jsPDF) {
   const cy = pageH / 2;
 
   // jsPDF não tem opacidade direta em setTextColor; usamos GState
-  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.07 }) : null;
+  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.04 }) : null;
   if (gState) (doc as any).setGState(gState);
 
   doc.setFont(PDF_FONT, "bold");

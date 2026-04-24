@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { ROTA_LABELS } from "@/hooks/useRomaneios";
+import { gerarCodigoRomaneio } from "@/lib/gerarCodigoRomaneio";
 
 interface OSOption {
   id: string;
@@ -160,21 +161,8 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
 
     setSaving(true);
     try {
-      // Generate code
-      const year = new Date().getFullYear();
-      const { data: lastRom } = await supabase
-        .from("romaneios")
-        .select("codigo")
-        .like("codigo", `ROM-${year}-%`)
-        .order("codigo", { ascending: false })
-        .limit(1);
-
-      let nextNum = 1;
-      if (lastRom && lastRom.length > 0) {
-        const n = parseInt(lastRom[0].codigo.replace(`ROM-${year}-`, ""), 10);
-        if (!isNaN(n)) nextNum = n + 1;
-      }
-      const codigo = `ROM-${year}-${String(nextNum).padStart(4, "0")}`;
+      // Generate code (novo padrão: ROM-{B1B2|B2C|...}-{YY}-{NNN})
+      const codigo = await gerarCodigoRomaneio(tipoRota);
 
       const { data: newRom, error: romError } = await supabase
         .from("romaneios")

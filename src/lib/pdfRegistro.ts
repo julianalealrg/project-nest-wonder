@@ -92,26 +92,42 @@ export async function gerarPDFRegistroCompleto(registro: Registro, extras: Regis
     ["Data", new Date(registro.created_at).toLocaleDateString("pt-BR")],
   ], y);
 
-  // Classificação
-  doc.setDrawColor(...PDF_COLORS.border);
-  doc.line(14, y, 196, y);
-  y += 5;
-  doc.setFont(PDF_FONT, "bold");
-  doc.setFontSize(PDF_SIZES.label);
-  doc.setTextColor(...PDF_COLORS.text);
-  doc.text("Classificação", 14, y);
-  y += 5;
-  y = addInfoGrid(doc, [
-    ["Tipo", `${registro.tipo || "—"}${registro.tipo_outro ? ` — ${registro.tipo_outro}` : ""}`],
-    [
+  // Classificação — campos condicionais por origem
+  const isOcorrencia = registro.origem === "obra" || registro.origem === "fabrica";
+  const isSolicitacao = registro.origem === "solicitacao";
+  const isQuebraAcabamento = isSolicitacao && registro.tipo === "Quebra no acabamento";
+
+  const classifItems: [string, string][] = [];
+  if (registro.tipo) {
+    classifItems.push([
+      "Tipo",
+      `${registro.tipo}${registro.tipo_outro ? ` — ${registro.tipo_outro}` : ""}`,
+    ]);
+  }
+  if (isOcorrencia && (registro.responsavel_erro_papel || registro.responsavel_erro_nome)) {
+    classifItems.push([
       "Responsável erro",
       `${registro.responsavel_erro_papel || "—"}${
         registro.responsavel_erro_nome ? ` — ${registro.responsavel_erro_nome}` : ""
       }`,
-    ],
-    ["Acabador responsável", registro.acabador_responsavel || "—"],
-    ["Urgência", REGISTRO_URGENCIA_LABELS[registro.urgencia] || registro.urgencia],
-  ], y);
+    ]);
+  }
+  if (isQuebraAcabamento && registro.acabador_responsavel) {
+    classifItems.push(["Acabador responsável", registro.acabador_responsavel]);
+  }
+  classifItems.push(["Urgência", REGISTRO_URGENCIA_LABELS[registro.urgencia] || registro.urgencia]);
+
+  if (classifItems.length > 0) {
+    doc.setDrawColor(...PDF_COLORS.border);
+    doc.line(14, y, 196, y);
+    y += 5;
+    doc.setFont(PDF_FONT, "bold");
+    doc.setFontSize(PDF_SIZES.label);
+    doc.setTextColor(...PDF_COLORS.text);
+    doc.text("Classificação", 14, y);
+    y += 5;
+    y = addInfoGrid(doc, classifItems, y);
+  }
 
   // Peças
   if (registro.pecas.length > 0) {
