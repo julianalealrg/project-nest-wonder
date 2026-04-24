@@ -461,5 +461,7 @@ export function gerarPDFRegistroProducao(
   doc.setTextColor(...PDF_COLORS.text);
 
   finalizePdf(doc, { userName: extras.userName });
-  doc.save(`${registro.codigo}_producao.pdf`);
+  const fileName = `${registro.codigo}_producao.pdf`;
+  const blobUrl = doc.output("bloburl") as unknown as string;
+  return { blobUrl, fileName };
 }
