@@ -230,6 +230,12 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [batchOpen, setBatchOpen] = useState(false);
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  useEffect(() => {
+    return () => {
+      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
+    };
+  }, [pdfPreview]);
   const { profile } = useAuth();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
@@ -901,6 +907,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           }}
         />
       )}
+
+      <PdfPreviewDialog
+        open={!!pdfPreview}
+        onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+        blobUrl={pdfPreview?.blobUrl || null}
+        fileName={pdfPreview?.fileName || "documento.pdf"}
+        title={`PDF — ${os.codigo}`}
+      />
     </>
   );
 }
