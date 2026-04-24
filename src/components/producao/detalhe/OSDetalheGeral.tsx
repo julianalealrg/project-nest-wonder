@@ -193,7 +193,6 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
             { label: "Ambiente", value: os.ambiente },
             { label: "Supervisor", value: os.supervisor },
             { label: "Projetista", value: os.projetista },
-            { label: "Área", value: `${os.area_m2} m²` },
             { label: "Localização", value: os.localizacao },
             { label: "Data Emissão", value: os.data_emissao ? new Date(os.data_emissao).toLocaleDateString("pt-BR") : "—" },
             { label: "Data Entrega", value: os.data_entrega ? new Date(os.data_entrega).toLocaleDateString("pt-BR") : "—" },
@@ -203,6 +202,7 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
               <p className="text-[14px] font-medium text-foreground">{value || "—"}</p>
             </div>
           ))}
+          <AreaField os={os} onChanged={() => onStatusChanged?.()} />
           {os.terceiro && (
             <div className="col-span-2 sm:col-span-3">
               <span className="text-[11px] text-muted-foreground">Terceiro</span>
