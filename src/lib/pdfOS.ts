@@ -120,33 +120,52 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}): { blobUrl: str
   doc.text(`Peças (${os.pecas.length})`, 14, y);
   y += 3;
 
-  autoTable(doc, {
-    startY: y,
-    head: [["#", "Descrição", "Comp. (m)", "Larg. (m)", "Qtd", "Material", "Obs"]],
-    body: os.pecas.map((p) => [
+  // Colunas opcionais: omitir se todas as peças estiverem vazias
+  const temMaterial = !!(os.material && os.material.trim());
+  const temObs = os.pecas.some((p) => p.precisa_45 || p.precisa_poliborda || p.precisa_usinagem);
+
+  const head: string[] = ["#", "Descrição", "Comp. (m)", "Larg. (m)", "Qtd"];
+  if (temMaterial) head.push("Material");
+  if (temObs) head.push("Obs");
+
+  const body = os.pecas.map((p) => {
+    const row: any[] = [
       p.item,
       p.descricao,
-      p.comprimento != null ? Number(p.comprimento).toFixed(3) : "—",
-      p.largura != null ? Number(p.largura).toFixed(3) : "—",
+      p.comprimento != null ? Number(p.comprimento).toFixed(3) : "",
+      p.largura != null ? Number(p.largura).toFixed(3) : "",
       String(p.quantidade),
-      os.material || "—",
-      [p.precisa_45 && "45°", p.precisa_poliborda && "Polib.", p.precisa_usinagem && "Usin."]
-        .filter(Boolean)
-        .join(", ") || "—",
-    ]),
+    ];
+    if (temMaterial) row.push(os.material || "");
+    if (temObs) {
+      row.push(
+        [p.precisa_45 && "45°", p.precisa_poliborda && "Polib.", p.precisa_usinagem && "Usin."]
+          .filter(Boolean)
+          .join(", "),
+      );
+    }
+    return row;
+  });
+
+  const colStyles: Record<number, any> = {
+    0: { cellWidth: 10 },
+    2: { cellWidth: 22, halign: "right" },
+    3: { cellWidth: 22, halign: "right" },
+    4: { cellWidth: 12, halign: "right" },
+  };
+  if (temMaterial) colStyles[5] = { cellWidth: 38 };
+
+  autoTable(doc, {
+    startY: y,
+    head: [head],
+    body,
     styles: { fontSize: PDF_SIZES.small, cellPadding: 2, font: PDF_FONT, textColor: PDF_COLORS.text },
     headStyles: {
       fillColor: PDF_COLORS.cinzaLight,
       textColor: PDF_COLORS.text,
       fontStyle: "bold",
     },
-    columnStyles: {
-      0: { cellWidth: 10 },
-      2: { cellWidth: 22, halign: "right" },
-      3: { cellWidth: 22, halign: "right" },
-      4: { cellWidth: 12, halign: "right" },
-      5: { cellWidth: 38 },
-    },
+    columnStyles: colStyles,
     theme: "grid",
     margin: { left: 14, right: 14 },
   });
@@ -164,12 +183,15 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}): { blobUrl: str
   y += 26;
   doc.setLineWidth(0.2);
 
-  // Badge colorido grande de destino + assinaturas — fixos no rodapé da página 1
-  // Reservar margem de 18mm pro rodapé (linha em pageH-12 + textos em pageH-8)
+  // Badge de destino + assinaturas — posicionados próximos ao conteúdo,
+  // mas respeitando margem mínima do rodapé (18mm).
   const pageH = doc.internal.pageSize.getHeight();
-  const sigBottom = pageH - 18; // base inferior das linhas de assinatura
-  const sigY = sigBottom - 12;  // linha de assinatura (Nome/Data ficam abaixo)
-  const destY = sigY - 22;      // badge destino acima das assinaturas
+  const sigBottomMax = pageH - 18;
+  // Bloco completo: destino (12mm) + gap (10mm) + assinaturas (12mm) = 34mm
+  const desiredDestY = y + 6;
+  const maxDestY = sigBottomMax - 12 - 22;
+  const destY = Math.min(desiredDestY, maxDestY);
+  const sigY = destY + 22;
 
   const destLabel = (os.localizacao || "—").toUpperCase();
   const destCol = destinoColor(os.localizacao);

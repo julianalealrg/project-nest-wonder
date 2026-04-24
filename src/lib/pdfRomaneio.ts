@@ -135,6 +135,46 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
     return `${fmt(c)} × ${fmt(l)}`;
   };
 
+  // Helper pra montar tabela com colunas opcionais (Material só se alguma peça tiver)
+  const buildTable = (pecasArr: typeof romaneio.pecas, startY: number) => {
+    const temMaterial = pecasArr.some((p) => p.material && p.material.trim());
+    const head: string[] = ["#", "Descrição", "Medida (C × L) m"];
+    if (temMaterial) head.push("Material");
+    head.push("OS", "Conferência");
+
+    const body = pecasArr.map((p) => {
+      const row: any[] = [p.peca_item, p.peca_descricao, fmtMedida(p.comprimento, p.largura)];
+      if (temMaterial) row.push(p.material || "");
+      row.push(p.os_codigo, "");
+      return row;
+    });
+
+    const colStyles: Record<number, any> = {
+      0: { cellWidth: 12 },
+      2: { cellWidth: 32, halign: "right" },
+    };
+    if (temMaterial) {
+      colStyles[3] = { cellWidth: 38 };
+      colStyles[4] = { cellWidth: 22 };
+      colStyles[5] = { cellWidth: 26 };
+    } else {
+      colStyles[3] = { cellWidth: 22 };
+      colStyles[4] = { cellWidth: 26 };
+    }
+
+    autoTable(doc, {
+      startY,
+      head: [head],
+      body,
+      styles: { fontSize: PDF_SIZES.small + 0.5, cellPadding: 2.5, font: PDF_FONT, textColor: PDF_COLORS.text },
+      headStyles: { fillColor: PDF_COLORS.cinzaLight, textColor: PDF_COLORS.text, fontStyle: "bold" },
+      columnStyles: colStyles,
+      theme: "grid",
+      margin: { left: 14, right: 14 },
+    });
+    return (doc as any).lastAutoTable.finalY;
+  };
+
   if (isB2Cliente) {
     const byOs = new Map<string, typeof romaneio.pecas>();
     romaneio.pecas.forEach((p) => {
@@ -151,57 +191,10 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
       const material = pecas[0]?.material ? ` — ${pecas[0].material}` : "";
       doc.text(`OS: ${osCodigo} — ${pecas[0]?.cliente_nome || ""}${material}`, 14, y);
       y += 3;
-
-      autoTable(doc, {
-        startY: y,
-        head: [["#", "Descrição", "Medida (C × L) m", "Material", "OS", "Conferência"]],
-        body: pecas.map((p) => [
-          p.peca_item,
-          p.peca_descricao,
-          fmtMedida(p.comprimento, p.largura),
-          p.material || "—",
-          p.os_codigo,
-          "",
-        ]),
-        styles: { fontSize: PDF_SIZES.small + 0.5, cellPadding: 2.5, font: PDF_FONT, textColor: PDF_COLORS.text },
-        headStyles: { fillColor: PDF_COLORS.cinzaLight, textColor: PDF_COLORS.text, fontStyle: "bold" },
-        columnStyles: {
-          0: { cellWidth: 12 },
-          2: { cellWidth: 32, halign: "right" },
-          3: { cellWidth: 38 },
-          4: { cellWidth: 22 },
-          5: { cellWidth: 26 },
-        },
-        theme: "grid",
-        margin: { left: 14, right: 14 },
-      });
-      y = (doc as any).lastAutoTable.finalY + 5;
+      y = buildTable(pecas, y) + 5;
     });
   } else {
-    autoTable(doc, {
-      startY: y,
-      head: [["#", "Descrição", "Medida (C × L) m", "Material", "OS", "Conferência"]],
-      body: romaneio.pecas.map((p) => [
-        p.peca_item,
-        p.peca_descricao,
-        fmtMedida(p.comprimento, p.largura),
-        p.material || "—",
-        p.os_codigo,
-        "",
-      ]),
-      styles: { fontSize: PDF_SIZES.small + 0.5, cellPadding: 2.5, font: PDF_FONT, textColor: PDF_COLORS.text },
-      headStyles: { fillColor: PDF_COLORS.cinzaLight, textColor: PDF_COLORS.text, fontStyle: "bold" },
-      columnStyles: {
-        0: { cellWidth: 12 },
-        2: { cellWidth: 32, halign: "right" },
-        3: { cellWidth: 38 },
-        4: { cellWidth: 22 },
-        5: { cellWidth: 26 },
-      },
-      theme: "grid",
-      margin: { left: 14, right: 14 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 5;
+    y = buildTable(romaneio.pecas, y) + 5;
   }
 
   // Observações / Motivo (se houver)
@@ -218,12 +211,12 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
     y += lines.length * 4.2 + 4;
   }
 
-  // Cláusula de recebimento em caixa destacada
+  // Cláusula de recebimento — próxima ao conteúdo, respeitando margem do rodapé (18mm)
   const pageH = doc.internal.pageSize.getHeight();
-  const minClauseY = y + 2;
-  const clauseY = Math.max(minClauseY, pageH - 58);
   const clauseW = 182;
   const clauseH = 38;
+  const maxClauseY = pageH - 18 - clauseH;
+  const clauseY = Math.min(y + 6, maxClauseY);
 
   doc.setFillColor(...PDF_COLORS.cinzaLight);
   doc.setDrawColor(...PDF_COLORS.border);

@@ -24,30 +24,8 @@ export function finalizePdf(doc: jsPDF, opts: PdfFooterOptions = {}) {
 
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
-    addWatermark(doc);
     addFooter(doc, i, total, stamp, author);
   }
-}
-
-function addWatermark(doc: jsPDF) {
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const cx = pageW / 2;
-  const cy = pageH / 2;
-
-  // jsPDF não tem opacidade direta em setTextColor; usamos GState
-  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.04 }) : null;
-  if (gState) (doc as any).setGState(gState);
-
-  doc.setFont(PDF_FONT, "bold");
-  doc.setFontSize(72);
-  doc.setTextColor(...PDF_COLORS.chumbo);
-  doc.text("NUE PROJETOS", cx, cy, { align: "center", angle: 45 });
-
-  // Reseta opacidade pra próximas operações
-  const reset = (doc as any).GState ? new (doc as any).GState({ opacity: 1 }) : null;
-  if (reset) (doc as any).setGState(reset);
-  doc.setTextColor(...PDF_COLORS.text);
 }
 
 function addFooter(doc: jsPDF, page: number, total: number, stamp: string, author: string) {
