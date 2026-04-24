@@ -153,7 +153,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
   function handlePecaAdvance(peca: MockPeca) {
     const next = getNextStation(peca);
     if (!next) return;
-    const guard = podeAvancarPecaPara(next, os.status, (os as any).romaneios);
+    const guard = podeAvancarPecaPara(next, os.status, (os as any).romaneios, os.pecas as any, peca.id);
     if (!guard.permitido) {
       setBlockedDialog({
         open: true,
