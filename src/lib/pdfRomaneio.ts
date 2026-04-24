@@ -211,12 +211,12 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
     y += lines.length * 4.2 + 4;
   }
 
-  // Cláusula de recebimento em caixa destacada
+  // Cláusula de recebimento — próxima ao conteúdo, respeitando margem do rodapé (18mm)
   const pageH = doc.internal.pageSize.getHeight();
-  const minClauseY = y + 2;
-  const clauseY = Math.max(minClauseY, pageH - 58);
   const clauseW = 182;
   const clauseH = 38;
+  const maxClauseY = pageH - 18 - clauseH;
+  const clauseY = Math.min(y + 6, maxClauseY);
 
   doc.setFillColor(...PDF_COLORS.cinzaLight);
   doc.setDrawColor(...PDF_COLORS.border);
