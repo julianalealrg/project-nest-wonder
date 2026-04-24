@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, FileText, ChevronRight, Loader2, AlertTriangle, Truck, Palette } from "lucide-react";
 import { Registro } from "@/hooks/useRegistros";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
 import { registroBadgeClass } from "@/lib/statusColors";
+import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 
 interface RegistroPanelProps {
   registro: Registro | null;
@@ -26,6 +27,13 @@ interface RegistroPanelProps {
 
 export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPanelProps) {
   const [loading, setLoading] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  useEffect(() => {
+    return () => {
+      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
+    };
+  }, [pdfPreview]);
   const { profile } = useAuth();
 
   if (!registro) return null;
