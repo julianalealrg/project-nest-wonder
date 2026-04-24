@@ -275,6 +275,121 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
         details: { origem, tipo, urgencia },
       });
 
+      // Auto-criar OS de produção a partir do registro, conforme ação produtiva escolhida
+      let osGeradaId: string | null = null;
+      if (acaoProdutiva !== "nenhuma") {
+        try {
+          // Status inicial conforme ação
+          let statusOS: string;
+          let localizacaoOS: string;
+          if (acaoProdutiva === "apenas_retrabalho") {
+            statusOS = "acabamento";
+            localizacaoOS = "Base 2";
+          } else {
+            // cortar_nova ou cortar_retrabalhar
+            statusOS = materialDisponivel === "sim" ? "fila_corte" : "aguardando_material";
+            localizacaoOS = materialDisponivel === "sim" ? "Base 1" : "CD";
+          }
+
+          // Código da OS gerada — usa o código do registro como sufixo
+          const codigoOS = `OS-${codigo}`;
+
+          // Resolve cliente_id (pode reutilizar a OS de origem ou criar/buscar pelo nome)
+          let clienteIdOS: string | null = null;
+          if (osId) {
+            const { data: osOrigem } = await supabase
+              .from("ordens_servico")
+              .select("cliente_id")
+              .eq("id", osId)
+              .maybeSingle();
+            clienteIdOS = osOrigem?.cliente_id || null;
+          }
+          if (!clienteIdOS && cliente.trim()) {
+            const { data: cliExist } = await supabase
+              .from("clientes")
+              .select("id")
+              .ilike("nome", cliente.trim())
+              .maybeSingle();
+            if (cliExist) {
+              clienteIdOS = cliExist.id;
+            } else {
+              const { data: newCli } = await supabase
+                .from("clientes")
+                .insert({ nome: cliente.trim(), supervisor: supervisorFinal || null })
+                .select("id")
+                .single();
+              clienteIdOS = newCli?.id || null;
+            }
+          }
+
+          const { data: newOS, error: osError } = await supabase
+            .from("ordens_servico")
+            .insert({
+              codigo: codigoOS,
+              cliente_id: clienteIdOS,
+              ambiente: ambiente.trim() || null,
+              material: material.trim() || null,
+              projetista: projetistaFinal || null,
+              status: statusOS,
+              localizacao: localizacaoOS,
+              origem: origem === "obra" ? "OC" : origem === "fabrica" ? "OF" : "REP",
+              registro_origem_id: newReg.id,
+              material_disponivel: (acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") ? (materialDisponivel === "sim") : null,
+              data_emissao: new Date().toISOString().split("T")[0],
+            })
+            .select("id")
+            .single();
+
+          if (osError) throw osError;
+          osGeradaId = newOS.id;
+
+          // Copiar peças do registro para a OS gerada (se houver)
+          if (pecasToInsert.length > 0) {
+            const pecasOS = pecasToInsert.map((p) => {
+              // medida_necessaria como "1.20 x 0.60" — tenta extrair
+              const med = (p.medida_necessaria || "").toLowerCase();
+              const parts = med.split(/[x×*]/).map((s) => parseFloat(s.replace(",", ".").trim()));
+              const comprimento = !isNaN(parts[0]) ? parts[0] : null;
+              const largura = !isNaN(parts[1]) ? parts[1] : null;
+              return {
+                os_id: newOS.id,
+                item: p.item || null,
+                descricao: p.descricao,
+                quantidade: p.quantidade,
+                comprimento,
+                largura,
+                // Se for apenas_retrabalho, peças saltam o corte
+                status_corte: acaoProdutiva === "apenas_retrabalho" ? "nao_aplicavel" : "pendente",
+              };
+            });
+            await supabase.from("pecas").insert(pecasOS as any);
+          }
+
+          // Atualizar registro com os_gerada_id e status "em_producao"
+          await supabase
+            .from("registros")
+            .update({ os_gerada_id: osGeradaId, status: "em_producao" })
+            .eq("id", newReg.id);
+
+          // Activity log da OS criada
+          await supabase.from("activity_logs").insert({
+            action: "os_gerada_de_registro",
+            entity_type: "ordens_servico",
+            entity_id: osGeradaId,
+            entity_description: codigoOS,
+            user_name: profile?.nome || "Sistema",
+            details: { registro_codigo: codigo, acao_produtiva: acaoProdutiva, status_inicial: statusOS },
+          });
+        } catch (osErr: any) {
+          console.error("Falha ao criar OS automática:", osErr);
+          toast({
+            title: "Registro criado, mas falhou ao gerar OS",
+            description: osErr.message,
+            variant: "destructive",
+          });
+        }
+      }
+
       // Email para Projetos quando encaminhar_projetos = true
       if (encaminharProjetos && projetistaFinal) {
         try {
