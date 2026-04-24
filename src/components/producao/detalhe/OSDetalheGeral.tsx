@@ -316,10 +316,25 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
       />
       <NovoRomaneioDialog
         open={romaneioOpen}
-        onOpenChange={(o) => { setRomaneioOpen(o); if (!o) setRomaneioPreset(null); }}
+        onOpenChange={(o) => {
+          setRomaneioOpen(o);
+          if (!o) {
+            setRomaneioPreset(null);
+            // Cancelado/fechado sem salvar: limpa pendência sem mudar status
+            setPendingStatusAfterRomaneio(null);
+          }
+        }}
         presetTipoRota={romaneioPreset?.tipoRota}
         presetOsId={romaneioPreset?.osId}
-        onSuccess={() => onStatusChanged?.()}
+        onSuccess={async () => {
+          // Romaneio criado com sucesso: agora sim aplica a mudança de status pendente
+          if (pendingStatusAfterRomaneio) {
+            const next = pendingStatusAfterRomaneio;
+            setPendingStatusAfterRomaneio(null);
+            await doChangeStatus(next, {});
+          }
+          onStatusChanged?.();
+        }}
       />
     </div>
   );
