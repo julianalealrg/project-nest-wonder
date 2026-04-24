@@ -79,6 +79,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
   const [pecas, setPecas] = useState<PecaReg[]>([emptyPeca()]);
   const [fotos, setFotos] = useState<File[]>([]);
   const [osId, setOsId] = useState<string | null>(null);
+  const [acaoProdutiva, setAcaoProdutiva] = useState<"cortar_nova" | "cortar_retrabalhar" | "apenas_retrabalho" | "nenhuma" | "">("");
+  const [materialDisponivel, setMaterialDisponivel] = useState<"sim" | "nao">("sim");
 
   function reset() {
     setOrigem("");
@@ -106,6 +108,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     setPecas([emptyPeca()]);
     setFotos([]);
     setOsId(null);
+    setAcaoProdutiva("");
+    setMaterialDisponivel("sim");
   }
 
   // Auto-fill from OS
