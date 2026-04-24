@@ -62,7 +62,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Ambiente</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Material</th>
               <th className="text-center px-4 py-3 font-medium text-muted-foreground">Peças</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground min-w-[120px]">Status</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Local</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Entrega</th>
               <th className="text-center px-4 py-3 font-medium text-muted-foreground">Dias</th>
@@ -112,17 +112,17 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                       <span className="text-foreground font-medium">{donePecas}</span>
                       <span className="text-muted-foreground">/{totalPecas}</span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 min-w-[120px]">
                       <div className="flex flex-wrap items-center gap-1">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${osBadgeClass(os.status)}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${osBadgeClass(os.status)}`}>
                           {STATUS_LABELS[os.status] || os.status}
                         </span>
                         {(() => {
                           const sugestao = calcularSugestaoAvanco(os);
                           if (!sugestao) return null;
                           return (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-verde/15 text-nue-verde">
-                              Pronta para {sugestao.label}
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-nue-verde/15 text-nue-verde">
+                              Pronta {sugestao.label}
                             </span>
                           );
                         })()}
@@ -130,7 +130,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                           const dep = calcularDependencia(os);
                           if (!dep) return null;
                           return (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-amarelo/15 text-nue-amarelo">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-nue-amarelo/15 text-nue-amarelo">
                               {dep.label}
                             </span>
                           );

@@ -15,20 +15,23 @@ interface LogEntry {
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  os_criada: "OS criada",
-  status_changed: "Status alterado",
-  peca_avancada: "Peça avançada",
+  avanco_automatico_pos_recebimento: "Avanço automático após recebimento",
+  avanco_peca: "Peça avançada",
   cq_reprovado: "CQ reprovado",
-  pdf_gerado: "PDF gerado",
-  romaneio_vinculado: "Romaneio vinculado",
+  criacao_registro: "Registro criado",
+  criacao_romaneio: "Romaneio criado",
+  despacho_romaneio: "Romaneio despachado",
+  mudanca_status: "Status alterado",
+  os_gerada_de_registro: "OS gerada do registro",
+  recebimento_romaneio: "Romaneio recebido",
 };
 
 function formatDetails(action: string, details: any): string {
   if (!details) return "";
-  if (action === "status_changed" && details.from_status && details.to_status) {
+  if (action === "mudanca_status" && details.from_status && details.to_status) {
     return `${details.from_status} → ${details.to_status}`;
   }
-  if (action === "peca_avancada" && details.station) {
+  if (action === "avanco_peca" && details.station) {
     return `Estação: ${details.station}${details.peca_item ? ` • Peça ${details.peca_item}` : ""}`;
   }
   if (action === "cq_reprovado") {

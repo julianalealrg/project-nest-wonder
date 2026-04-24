@@ -333,7 +333,7 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
               projetista: projetistaFinal || null,
               status: statusOS,
               localizacao: localizacaoOS,
-              origem: origem === "obra" ? "OC" : origem === "fabrica" ? "OF" : "REP",
+              origem: origem === "obra" ? "oc" : origem === "fabrica" ? "of" : "rep",
               registro_origem_id: newReg.id,
               material_disponivel: (acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") ? (materialDisponivel === "sim") : null,
               data_emissao: new Date().toISOString().split("T")[0],

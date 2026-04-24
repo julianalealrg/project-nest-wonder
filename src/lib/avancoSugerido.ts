@@ -18,7 +18,7 @@ export function calcularSugestaoAvanco(os: OSLike): AvancoSugerido | null {
         (!p.precisa_poliborda || p.status_poliborda === "concluido") &&
         (!p.precisa_usinagem || p.status_usinagem === "concluido"),
     );
-    if (ok) return { proximoStatus: "enviado_base2", label: "Env. B2" };
+    if (ok) return { proximoStatus: "enviado_base2", label: "p/ B2" };
   }
 
   if (os.status === "acabamento") {
@@ -51,7 +51,7 @@ export function calcularDependencia(os: OSWithRomaneios): DependenciaSugerida | 
   if (os.status === "cortando") {
     const temRomaneioB1B2 = romaneios.some((r) => r.tipo_rota === "base1_base2");
     if (!temRomaneioB1B2) {
-      return { tipo: "aguarda_romaneio_b1b2", label: "Aguarda romaneio" };
+      return { tipo: "aguarda_romaneio_b1b2", label: "Aguard. Rom." };
     }
   }
 
