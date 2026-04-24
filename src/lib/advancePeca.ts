@@ -30,7 +30,17 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
         .filter(Boolean)
         .map((r: any) => ({ tipo_rota: r.tipo_rota, status: r.status }));
     }
-    const guard = podeAvancarPecaPara(station, osStatus, romaneios);
+    // Para CQ, buscar peças da OS para permitir avanço quando OS ainda está em "acabamento"
+    // mas todas as outras peças já têm acabamento concluído.
+    let pecasGuard: { id: string; status_acabamento: string | null }[] | undefined;
+    if (station === "cq") {
+      const { data: pecasRows } = await supabase
+        .from("pecas")
+        .select("id, status_acabamento")
+        .eq("os_id", osId);
+      pecasGuard = (pecasRows || []) as any;
+    }
+    const guard = podeAvancarPecaPara(station, osStatus, romaneios, pecasGuard, pecaId);
     if (!guard.permitido) {
       throw new Error(guard.motivo || "Avanço bloqueado pelo status da OS.");
     }
