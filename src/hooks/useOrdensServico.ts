@@ -93,17 +93,18 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
 
   // Fetch registro_origem (origin record) for OSes generated from a registro
   const origemIds = osList.map((o: any) => o.registro_origem_id).filter(Boolean);
-  const origemRegistrosMap = new Map<string, { encaminhar_projetos: boolean; status: string; codigo: string }>();
+  const origemRegistrosMap = new Map<string, { encaminhar_projetos: boolean; status: string; codigo: string; acao_produtiva: string | null }>();
   if (origemIds.length > 0) {
     const { data: origemRegs } = await supabase
       .from("registros")
-      .select("id, codigo, status, encaminhar_projetos")
+      .select("id, codigo, status, encaminhar_projetos, acao_produtiva")
       .in("id", origemIds as string[]);
     for (const r of origemRegs || []) {
       origemRegistrosMap.set(r.id, {
         encaminhar_projetos: (r as any).encaminhar_projetos ?? false,
         status: r.status,
         codigo: r.codigo,
+        acao_produtiva: (r as any).acao_produtiva ?? null,
       });
     }
   }
@@ -141,6 +142,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       registro_origem_id: (os as any).registro_origem_id ?? null,
       registro_origem_aguarda_projetos: origem ? origem.encaminhar_projetos && origem.status !== "resolvido" : false,
       registro_origem_codigo: origem?.codigo ?? null,
+      registro_origem_acao_produtiva: origem?.acao_produtiva ?? null,
       pecas: pecasByOs.get(os.id) || [],
       romaneios: romaneiosByOs.get(os.id) || [],
       registros: registrosByOs.get(os.id) || [],
