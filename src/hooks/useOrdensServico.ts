@@ -131,6 +131,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       projetista: os.projetista || "",
       supervisor: cliente?.supervisor || "",
       area_m2: Number(os.area_m2) || 0,
+      area_m2_manual: (os as any).area_m2_manual ?? false,
       data_emissao: os.data_emissao || os.created_at,
       data_entrega: os.data_entrega,
       status: os.status,
