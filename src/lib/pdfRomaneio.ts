@@ -256,6 +256,8 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
 
   finalizePdf(doc, { userName: extras.userName });
   const fileName = `${romaneio.codigo}.pdf`;
-  const blobUrl = doc.output("bloburl") as unknown as string;
+  const rawBlob = doc.output("blob");
+  const blob = new Blob([rawBlob], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
   return { blobUrl, fileName };
 }
