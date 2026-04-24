@@ -120,8 +120,8 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
     }
     if (guard.kind === "open_romaneio") {
       setRomaneioPreset({ tipoRota: guard.tipoRota, osId: guard.presetOsId });
+      setPendingStatusAfterRomaneio(newStatus);
       setRomaneioOpen(true);
-      if (os.status === "cortando" && newStatus === "enviado_base2") doChangeStatus(newStatus, {});
       return;
     }
     if (guard.kind === "select_terceiro") {
