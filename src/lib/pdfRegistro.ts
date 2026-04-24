@@ -343,7 +343,9 @@ export async function gerarPDFRegistroCompleto(
 
   finalizePdf(doc, { userName: extras.userName });
   const fileName = `${registro.codigo}.pdf`;
-  const blobUrl = doc.output("bloburl") as unknown as string;
+  const rawBlob = doc.output("blob");
+  const blob = new Blob([rawBlob], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
   return { blobUrl, fileName };
 }
 
@@ -471,6 +473,8 @@ export function gerarPDFRegistroProducao(
 
   finalizePdf(doc, { userName: extras.userName });
   const fileName = `${registro.codigo}_producao.pdf`;
-  const blobUrl = doc.output("bloburl") as unknown as string;
+  const rawBlob = doc.output("blob");
+  const blob = new Blob([rawBlob], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
   return { blobUrl, fileName };
 }

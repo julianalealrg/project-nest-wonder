@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
@@ -17,6 +18,13 @@ export function PdfPreviewDialog({
   fileName,
   title = "Visualizar PDF",
 }: PdfPreviewDialogProps) {
+  // Revoga a URL apenas quando trocar de blobUrl ou desmontar — nunca durante o render.
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
+
   function handleDownload() {
     if (!blobUrl) return;
     const a = document.createElement("a");
@@ -57,11 +65,27 @@ export function PdfPreviewDialog({
         </DialogHeader>
         <div className="flex-1 bg-muted/30 overflow-hidden">
           {blobUrl ? (
-            <iframe
-              src={blobUrl}
-              title={fileName}
-              className="w-full h-full border-0"
-            />
+            <object
+              data={blobUrl}
+              type="application/pdf"
+              className="w-full h-full"
+              aria-label={fileName}
+            >
+              <div className="flex items-center justify-center h-full p-6 text-sm text-muted-foreground text-center">
+                <p>
+                  Seu navegador não conseguiu exibir o PDF inline.{" "}
+                  <a
+                    href={blobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline font-medium"
+                  >
+                    Abrir em nova aba
+                  </a>{" "}
+                  ou use o botão Baixar.
+                </p>
+              </div>
+            </object>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
               Gerando PDF...

@@ -106,11 +106,7 @@ function StatusDropdown({ registro, onStatusChanged }: { registro: Registro; onS
 export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTableProps) {
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string; codigo: string } | null>(null);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
-  useEffect(() => {
-    return () => {
-      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
-    };
-  }, [pdfPreview]);
+  // Revoke do blobUrl é feito pelo PdfPreviewDialog (no unmount/troca de URL).
 
   return (
     <div className="bg-card rounded-lg border overflow-hidden">

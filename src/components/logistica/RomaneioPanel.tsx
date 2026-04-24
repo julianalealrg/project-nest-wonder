@@ -29,11 +29,7 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   const [conferindo, setConferindo] = useState(false);
   const [conferencias, setConferencias] = useState<Record<string, string>>({});
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
-  useEffect(() => {
-    return () => {
-      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
-    };
-  }, [pdfPreview]);
+  // Revoke do blobUrl é feito pelo PdfPreviewDialog (no unmount/troca de URL).
   const { profile } = useAuth();
 
   if (!romaneio) return null;
