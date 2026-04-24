@@ -13,16 +13,18 @@ interface RomaneioPdfExtras {
 }
 
 // Quebra um endereço concatenado em linhas (Rua / Bairro / Cidade-UF / CEP).
-// Aceita "Rua X, 123 - Bairro - Cidade/UF - CEP 50000-000" ou variações.
+// Aceita "Rua X, 123 - Bairro - Cidade/UF - CEP 50000-000" ou variações com vírgula.
 function formatEndereco(endereco?: string | null): string[] {
   if (!endereco) return ["—"];
   const raw = endereco.trim();
-  // Tenta dividir por " - " (com espaços), depois por vírgulas se sobrar muito.
+  // Tenta dividir por " - " (com espaços)
   let parts = raw.split(/\s+-\s+/).map((p) => p.trim()).filter(Boolean);
   if (parts.length <= 1) {
+    // Sem hífens — tenta vírgulas
     parts = raw.split(/,\s*/).map((p) => p.trim()).filter(Boolean);
   }
-  return parts.length ? parts : [raw];
+  // Se ainda for uma linha só e não tiver separadores, retorna como está
+  return parts.length > 1 ? parts : [raw];
 }
 
 export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras = {}) {
@@ -34,17 +36,42 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
     tipo: "Romaneio",
   });
 
-  // Banner de rota colorido com seta
+  // Banner de rota colorido com seta desenhada graficamente (→ não renderiza na Montserrat embutida)
   const bannerColor = rotaColor(romaneio.tipo_rota);
   const bannerH = 11;
+  const pageW = doc.internal.pageSize.getWidth();
   doc.setFillColor(...bannerColor);
-  doc.roundedRect(14, y, 182, bannerH, 2, 2, "F");
+  doc.roundedRect(14, y, pageW - 28, bannerH, 2, 2, "F");
+
   doc.setFont(PDF_FONT, "bold");
   doc.setFontSize(PDF_SIZES.title);
   doc.setTextColor(...PDF_COLORS.white);
-  // Substitui "→" por seta unicode robusta
-  const rotaLabel = (ROTA_LABELS[romaneio.tipo_rota] || romaneio.tipo_rota).replace(/→/g, "→");
-  doc.text(rotaLabel, 105, y + 7.5, { align: "center" });
+
+  const rotaLabel = ROTA_LABELS[romaneio.tipo_rota] || romaneio.tipo_rota;
+  // Detecta se há "→" ou "->" pra desenhar seta gráfica; senão centraliza texto direto
+  const splitMatch = rotaLabel.split(/\s*(?:→|->)\s*/);
+  const bannerCenterY = y + 7.5;
+  if (splitMatch.length === 2) {
+    const [esq, dir] = splitMatch;
+    const esqW = doc.getTextWidth(esq);
+    const dirW = doc.getTextWidth(dir);
+    const setaW = 12;
+    const totalW = esqW + 6 + setaW + 6 + dirW;
+    const xStart = (pageW - totalW) / 2;
+    doc.text(esq, xStart, bannerCenterY);
+    const setaX1 = xStart + esqW + 6;
+    const setaX2 = setaX1 + setaW;
+    // Linha + ponta da seta
+    doc.setDrawColor(...PDF_COLORS.white);
+    doc.setLineWidth(0.6);
+    doc.line(setaX1, bannerCenterY - 1.5, setaX2 - 2, bannerCenterY - 1.5);
+    doc.setFillColor(...PDF_COLORS.white);
+    doc.triangle(setaX2, bannerCenterY - 1.5, setaX2 - 3, bannerCenterY - 3, setaX2 - 3, bannerCenterY, "F");
+    doc.setLineWidth(0.2);
+    doc.text(dir, setaX2 + 6, bannerCenterY);
+  } else {
+    doc.text(rotaLabel, pageW / 2, bannerCenterY, { align: "center" });
+  }
   doc.setTextColor(...PDF_COLORS.text);
   y += bannerH + 5;
 
@@ -101,10 +128,10 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
   const isB2Cliente = romaneio.tipo_rota === "base2_cliente";
   const isToCliente = romaneio.tipo_rota === "base2_cliente" || romaneio.tipo_rota === "base1_cliente";
 
+  // Medidas no banco já em metros — render direto com 3 casas
   const fmtMedida = (c: number | null, l: number | null) => {
     if (c == null && l == null) return "—";
-    const fmt = (v: number | null) =>
-      v == null ? "—" : (v / 1000 < 100 ? (v / 1000).toFixed(3) : v.toFixed(0));
+    const fmt = (v: number | null) => (v == null ? "—" : Number(v).toFixed(3));
     return `${fmt(c)} × ${fmt(l)}`;
   };
 
