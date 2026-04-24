@@ -1,0 +1,1 @@
+ALTER TABLE public.registros ADD COLUMN IF NOT EXISTS resolvido_em TIMESTAMP WITH TIME ZONE;
