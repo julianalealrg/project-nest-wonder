@@ -321,13 +321,18 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
           setRomaneioOpen(o);
           if (!o) {
             setRomaneioPreset(null);
-            // Cancelado/fechado sem salvar: limpa pendência sem mudar status
-            setPendingStatusAfterRomaneio(null);
+            // Só limpa a pendência se o fechamento NÃO foi disparado por sucesso
+            if (!romaneioSuccessRef.current) {
+              setPendingStatusAfterRomaneio(null);
+            }
+            romaneioSuccessRef.current = false;
           }
         }}
         presetTipoRota={romaneioPreset?.tipoRota}
         presetOsId={romaneioPreset?.osId}
         onSuccess={async () => {
+          // Marca que o fechamento veio de um sucesso, para o onOpenChange não limpar a pendência
+          romaneioSuccessRef.current = true;
           // Romaneio criado com sucesso: agora sim aplica a mudança de status pendente
           if (pendingStatusAfterRomaneio) {
             const next = pendingStatusAfterRomaneio;
