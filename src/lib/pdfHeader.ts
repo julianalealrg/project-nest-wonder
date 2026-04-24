@@ -22,17 +22,10 @@ const HEADER_BOTTOM_Y = 36; // mm — onde termina o header
  * linha fina cinza separando do corpo.
  */
 export function addPdfHeader(doc: jsPDF, opts: PdfHeaderOptions): number {
-  // Logo (mantém aspect ratio 16:9)
-  const logoH = 12;
+  // Logo (mantém aspect ratio 16:9) — lettering "NUE Projetos" já está embutido
+  const logoH = 14;
   const logoW = logoH * (1920 / 1080);
   doc.addImage(NUE_LOGO_DATA, "PNG", 14, 8, logoW, logoH);
-
-  // Texto "NUE Projetos" abaixo do logo, fonte 10pt, cor chumbo
-  doc.setFont(PDF_FONT, "normal");
-  doc.setFontSize(PDF_SIZES.label);
-  doc.setTextColor(...PDF_COLORS.chumbo);
-  doc.text("NUE Projetos", 14, 27);
-  doc.setTextColor(...PDF_COLORS.text);
 
   // Bloco direito: tipo (label pequeno) + código (destaque)
   doc.setFont(PDF_FONT, "normal");
@@ -52,14 +45,14 @@ export function addPdfHeader(doc: jsPDF, opts: PdfHeaderOptions): number {
     const pillH = 5;
     doc.setFont(PDF_FONT, "bold");
     doc.setFontSize(PDF_SIZES.small - 1);
-    // Renderiza da direita para a esquerda
+    // Renderiza da direita para a esquerda — texto SEMPRE branco para contraste
     for (let i = opts.pills.length - 1; i >= 0; i--) {
       const p = opts.pills[i];
       const txtW = doc.getTextWidth(p.label);
       const pillW = txtW + 4;
       doc.setFillColor(...p.color);
       doc.roundedRect(pillX - pillW, pillY, pillW, pillH, 1, 1, "F");
-      doc.setTextColor(...PDF_COLORS.white);
+      doc.setTextColor(255, 255, 255);
       doc.text(p.label, pillX - pillW / 2, pillY + 3.6, { align: "center" });
       pillX -= pillW + 2;
     }
