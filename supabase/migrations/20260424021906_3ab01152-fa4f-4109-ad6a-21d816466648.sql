@@ -1,0 +1,1 @@
+UPDATE public.ordens_servico SET origem = LOWER(origem) WHERE origem IN ('OC', 'OF', 'REP', 'OS');
