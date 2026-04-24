@@ -14,6 +14,14 @@ export type GuardAction =
  */
 export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
   const pecas = os.pecas || [];
+  const isRetrabalhoOnly =
+    !!(os as any).registro_origem_id && (os as any).registro_origem_acao_produtiva === "apenas_retrabalho";
+
+  // OS de "apenas retrabalho" começa em Acabamento e nunca passa pela Base 1 / trânsito.
+  // Liberamos transições que normalmente dependem de romaneio B1→B2.
+  if (isRetrabalhoOnly && os.status === "enviado_base2" && toStatus === "acabamento") {
+    return { kind: "allow" };
+  }
 
   // Cortando -> Enviado Base 2 : abrir popup de Novo Romaneio (B1->B2) já com a OS pré-selecionada
   if (os.status === "cortando" && toStatus === "enviado_base2") {

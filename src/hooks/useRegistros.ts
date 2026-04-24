@@ -36,6 +36,10 @@ export interface Registro {
   requer_recolha: boolean | null;
   recolha_origem: string | null;
   recolha_destino: string | null;
+  acao_produtiva: string | null;
+  material_disponivel: boolean | null;
+  os_gerada_id: string | null;
+  resolvido_em: string | null;
   created_at: string;
   updated_at: string;
   pecas: RegistroPeca[];

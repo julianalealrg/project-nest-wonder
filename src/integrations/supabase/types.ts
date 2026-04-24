@@ -509,6 +509,7 @@ export type Database = {
           recolha_destino: string | null
           recolha_origem: string | null
           requer_recolha: boolean | null
+          resolvido_em: string | null
           responsavel_erro_nome: string | null
           responsavel_erro_papel: string | null
           status: string
@@ -540,6 +541,7 @@ export type Database = {
           recolha_destino?: string | null
           recolha_origem?: string | null
           requer_recolha?: boolean | null
+          resolvido_em?: string | null
           responsavel_erro_nome?: string | null
           responsavel_erro_papel?: string | null
           status?: string
@@ -571,6 +573,7 @@ export type Database = {
           recolha_destino?: string | null
           recolha_origem?: string | null
           requer_recolha?: boolean | null
+          resolvido_em?: string | null
           responsavel_erro_nome?: string | null
           responsavel_erro_papel?: string | null
           status?: string

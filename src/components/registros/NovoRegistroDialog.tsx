@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Upload, X, HardHat, Factory, RefreshCw, Plus, Trash2 } from "lucide-react";
@@ -78,6 +79,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
   const [pecas, setPecas] = useState<PecaReg[]>([emptyPeca()]);
   const [fotos, setFotos] = useState<File[]>([]);
   const [osId, setOsId] = useState<string | null>(null);
+  const [acaoProdutiva, setAcaoProdutiva] = useState<"cortar_nova" | "cortar_retrabalhar" | "apenas_retrabalho" | "nenhuma" | "">("");
+  const [materialDisponivel, setMaterialDisponivel] = useState<"sim" | "nao">("sim");
 
   function reset() {
     setOrigem("");
@@ -105,6 +108,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     setPecas([emptyPeca()]);
     setFotos([]);
     setOsId(null);
+    setAcaoProdutiva("");
+    setMaterialDisponivel("sim");
   }
 
   // Auto-fill from OS
@@ -179,6 +184,7 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     if (showAcabador && !acabadorResponsavel.trim()) { toast({ title: "Acabador responsável é obrigatório", variant: "destructive" }); return; }
     if (encaminharProjetos && !instrucaoProjetos.trim()) { toast({ title: "Instrução para Projetos é obrigatória", variant: "destructive" }); return; }
     if (requerRecolha && (!recolhaOrigem || !recolhaDestino)) { toast({ title: "Origem e destino da recolha são obrigatórios", variant: "destructive" }); return; }
+    if (!acaoProdutiva) { toast({ title: "Selecione a ação produtiva", variant: "destructive" }); return; }
 
     setSaving(true);
     try {
@@ -214,6 +220,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
           requer_recolha: requerRecolha,
           recolha_origem: requerRecolha ? recolhaOrigem : null,
           recolha_destino: requerRecolha ? recolhaDestino : null,
+          acao_produtiva: acaoProdutiva,
+          material_disponivel: (acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") ? (materialDisponivel === "sim") : null,
         })
         .select("id")
         .single();
@@ -266,6 +274,121 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
         user_name: profile?.nome || "Sistema",
         details: { origem, tipo, urgencia },
       });
+
+      // Auto-criar OS de produção a partir do registro, conforme ação produtiva escolhida
+      let osGeradaId: string | null = null;
+      if (acaoProdutiva !== "nenhuma") {
+        try {
+          // Status inicial conforme ação
+          let statusOS: string;
+          let localizacaoOS: string;
+          if (acaoProdutiva === "apenas_retrabalho") {
+            statusOS = "acabamento";
+            localizacaoOS = "Base 2";
+          } else {
+            // cortar_nova ou cortar_retrabalhar
+            statusOS = materialDisponivel === "sim" ? "fila_corte" : "aguardando_material";
+            localizacaoOS = materialDisponivel === "sim" ? "Base 1" : "CD";
+          }
+
+          // Código da OS gerada — usa o código do registro como sufixo
+          const codigoOS = `OS-${codigo}`;
+
+          // Resolve cliente_id (pode reutilizar a OS de origem ou criar/buscar pelo nome)
+          let clienteIdOS: string | null = null;
+          if (osId) {
+            const { data: osOrigem } = await supabase
+              .from("ordens_servico")
+              .select("cliente_id")
+              .eq("id", osId)
+              .maybeSingle();
+            clienteIdOS = osOrigem?.cliente_id || null;
+          }
+          if (!clienteIdOS && cliente.trim()) {
+            const { data: cliExist } = await supabase
+              .from("clientes")
+              .select("id")
+              .ilike("nome", cliente.trim())
+              .maybeSingle();
+            if (cliExist) {
+              clienteIdOS = cliExist.id;
+            } else {
+              const { data: newCli } = await supabase
+                .from("clientes")
+                .insert({ nome: cliente.trim(), supervisor: supervisorFinal || null })
+                .select("id")
+                .single();
+              clienteIdOS = newCli?.id || null;
+            }
+          }
+
+          const { data: newOS, error: osError } = await supabase
+            .from("ordens_servico")
+            .insert({
+              codigo: codigoOS,
+              cliente_id: clienteIdOS,
+              ambiente: ambiente.trim() || null,
+              material: material.trim() || null,
+              projetista: projetistaFinal || null,
+              status: statusOS,
+              localizacao: localizacaoOS,
+              origem: origem === "obra" ? "OC" : origem === "fabrica" ? "OF" : "REP",
+              registro_origem_id: newReg.id,
+              material_disponivel: (acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") ? (materialDisponivel === "sim") : null,
+              data_emissao: new Date().toISOString().split("T")[0],
+            })
+            .select("id")
+            .single();
+
+          if (osError) throw osError;
+          osGeradaId = newOS.id;
+
+          // Copiar peças do registro para a OS gerada (se houver)
+          if (pecasToInsert.length > 0) {
+            const pecasOS = pecasToInsert.map((p) => {
+              // medida_necessaria como "1.20 x 0.60" — tenta extrair
+              const med = (p.medida_necessaria || "").toLowerCase();
+              const parts = med.split(/[x×*]/).map((s) => parseFloat(s.replace(",", ".").trim()));
+              const comprimento = !isNaN(parts[0]) ? parts[0] : null;
+              const largura = !isNaN(parts[1]) ? parts[1] : null;
+              return {
+                os_id: newOS.id,
+                item: p.item || null,
+                descricao: p.descricao,
+                quantidade: p.quantidade,
+                comprimento,
+                largura,
+                // Se for apenas_retrabalho, peças saltam o corte
+                status_corte: acaoProdutiva === "apenas_retrabalho" ? "nao_aplicavel" : "pendente",
+              };
+            });
+            await supabase.from("pecas").insert(pecasOS as any);
+          }
+
+          // Atualizar registro com os_gerada_id e status "em_producao"
+          await supabase
+            .from("registros")
+            .update({ os_gerada_id: osGeradaId, status: "em_producao" })
+            .eq("id", newReg.id);
+
+          // Activity log da OS criada
+          await supabase.from("activity_logs").insert({
+            action: "os_gerada_de_registro",
+            entity_type: "ordens_servico",
+            entity_id: osGeradaId,
+            entity_description: codigoOS,
+            user_name: profile?.nome || "Sistema",
+            details: { registro_codigo: codigo, acao_produtiva: acaoProdutiva, status_inicial: statusOS },
+          });
+        } catch (osErr: any) {
+          console.error("Falha ao criar OS automática:", osErr);
+          toast({
+            title: "Registro criado, mas falhou ao gerar OS",
+            description: osErr.message,
+            variant: "destructive",
+          });
+        }
+      }
 
       // Email para Projetos quando encaminhar_projetos = true
       if (encaminharProjetos && projetistaFinal) {
@@ -626,6 +749,68 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
                         rows={2}
                       />
                       <p className="text-[10px] text-muted-foreground">Status inicial será "Aguardando OS"</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ação produtiva */}
+                <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                  <Label className="text-xs font-semibold">Ação produtiva *</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Define o fluxo de produção que será criado automaticamente para este registro.
+                  </p>
+                  <RadioGroup
+                    value={acaoProdutiva}
+                    onValueChange={(v) => setAcaoProdutiva(v as typeof acaoProdutiva)}
+                    className="gap-2"
+                  >
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="cortar_nova" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Cortar peça nova</p>
+                        <p className="text-[11px] text-muted-foreground">Passa por Base 1 completo (corte → acabamento → CQ)</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="cortar_retrabalhar" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Cortar nova + retrabalhar antiga</p>
+                        <p className="text-[11px] text-muted-foreground">Base 1 + Base 2</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="apenas_retrabalho" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Apenas retrabalho de acabamento</p>
+                        <p className="text-[11px] text-muted-foreground">Pula Base 1 — vai direto para Acabamento (Base 2)</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="nenhuma" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Nenhuma ação produtiva</p>
+                        <p className="text-[11px] text-muted-foreground">Apenas registrar a ocorrência — não gera OS</p>
+                      </div>
+                    </label>
+                  </RadioGroup>
+
+                  {(acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") && (
+                    <div className="pt-2 border-t space-y-1">
+                      <Label className="text-xs">Material disponível? *</Label>
+                      <RadioGroup
+                        value={materialDisponivel}
+                        onValueChange={(v) => setMaterialDisponivel(v as "sim" | "nao")}
+                        className="flex gap-4"
+                      >
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <RadioGroupItem value="sim" />
+                          <span className="text-xs">Sim — vai para Fila de Corte</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <RadioGroupItem value="nao" />
+                          <span className="text-xs">Não — aguardando material</span>
+                        </label>
+                      </RadioGroup>
                     </div>
                   )}
                 </div>

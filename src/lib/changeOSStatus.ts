@@ -32,6 +32,30 @@ export async function changeOSStatus({ osId, osCodigo, fromStatus, toStatus, use
 
   if (error) throw error;
 
+  // Se a OS foi gerada por um registro e foi entregue, marca o registro como resolvido
+  if (toStatus === "entregue") {
+    try {
+      const { data: osRow } = await supabase
+        .from("ordens_servico")
+        .select("registro_origem_id")
+        .eq("id", osId)
+        .maybeSingle();
+      const registroOrigemId = (osRow as any)?.registro_origem_id;
+      if (registroOrigemId) {
+        await supabase
+          .from("registros")
+          .update({
+            status: "resolvido",
+            resolvido_em: new Date().toISOString(),
+          } as any)
+          .eq("id", registroOrigemId);
+      }
+    } catch (e) {
+      console.error("Falha ao resolver registro vinculado:", e);
+      // não bloqueia a transição da OS
+    }
+  }
+
   // Update pecas with operator info if provided
   const pecaUpdate: Record<string, string> = {};
   if (extraFields.cortador) pecaUpdate.cortador = extraFields.cortador;

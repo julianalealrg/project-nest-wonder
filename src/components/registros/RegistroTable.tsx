@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Registro } from "@/hooks/useRegistros";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Loader2, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Loader2, MoreHorizontal, ArrowUpRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
 import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
@@ -146,6 +147,21 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-nue-roxo/15 text-nue-roxo">
                           PROJETOS
                         </span>
+                      )}
+                      {reg.os_gerada_id && (
+                        <Link
+                          to={`/producao?os=${reg.os_gerada_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase transition-opacity hover:opacity-80 ${
+                            reg.status === "resolvido"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                              : "bg-nue-azul/15 text-nue-azul"
+                          }`}
+                          title={reg.status === "resolvido" ? "OS entregue — registro resolvido" : "Ver OS em produção"}
+                        >
+                          {reg.status === "resolvido" ? "RESOLVIDO" : "EM PRODUÇÃO"}
+                          <ArrowUpRight className="h-2.5 w-2.5" />
+                        </Link>
                       )}
                     </div>
                   </td>
