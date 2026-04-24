@@ -45,7 +45,7 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
     pills,
   });
 
-  // Grid de dados em 2 colunas compactas
+  // Grid de dados em 2 colunas compactas — omite Prioridade/Urgência se vazias
   const items: [string, string][] = [
     ["Cliente", os.cliente],
     ["Material", os.material],
@@ -53,9 +53,13 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
     ["Supervisor", os.supervisor],
     ["Projetista", os.projetista],
     ["Data Entrega", os.data_entrega ? new Date(os.data_entrega).toLocaleDateString("pt-BR") : "—"],
-    ["Prioridade", extras.prioridade || "—"],
-    ["Urgência", extras.urgencia ? URG_LABEL[extras.urgencia] || String(extras.urgencia) : "—"],
   ];
+  if (extras.prioridade && extras.prioridade.trim()) {
+    items.push(["Prioridade", extras.prioridade]);
+  }
+  if (extras.urgencia) {
+    items.push(["Urgência", URG_LABEL[extras.urgencia] || String(extras.urgencia)]);
+  }
 
   const colW = 91;
   const rowH = 10;
@@ -122,8 +126,8 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
     body: os.pecas.map((p) => [
       p.item,
       p.descricao,
-      p.comprimento ? (p.comprimento / 1000).toFixed(3) : "—",
-      p.largura ? (p.largura / 1000).toFixed(3) : "—",
+      p.comprimento != null ? Number(p.comprimento).toFixed(3) : "—",
+      p.largura != null ? Number(p.largura).toFixed(3) : "—",
       String(p.quantidade),
       os.material || "—",
       [p.precisa_45 && "45°", p.precisa_poliborda && "Polib.", p.precisa_usinagem && "Usin."]
