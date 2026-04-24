@@ -29,11 +29,7 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
   const [loading, setLoading] = useState(false);
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-  useEffect(() => {
-    return () => {
-      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
-    };
-  }, [pdfPreview]);
+  // Revoke do blobUrl é feito pelo PdfPreviewDialog (no unmount/troca de URL).
   const { profile } = useAuth();
 
   if (!registro) return null;
