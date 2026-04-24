@@ -262,5 +262,7 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
   doc.setTextColor(...PDF_COLORS.text);
 
   finalizePdf(doc, { userName: extras.userName });
-  doc.save(`${romaneio.codigo}.pdf`);
+  const fileName = `${romaneio.codigo}.pdf`;
+  const blobUrl = doc.output("bloburl") as unknown as string;
+  return { blobUrl, fileName };
 }
