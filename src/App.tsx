@@ -11,6 +11,7 @@ import RedefinirSenha from "./pages/RedefinirSenha";
 import Unsubscribe from "./pages/Unsubscribe";
 import Index from "./pages/Index";
 import Producao from "./pages/Producao";
+import OSDetalhe from "./pages/OSDetalhe";
 import Logistica from "./pages/Logistica";
 import Registros from "./pages/Registros";
 import DashboardPage from "./pages/DashboardPage";
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/producao" element={<ProtectedRoute><Producao /></ProtectedRoute>} />
+      <Route path="/producao/:id" element={<ProtectedRoute><OSDetalhe /></ProtectedRoute>} />
       <Route path="/logistica" element={<ProtectedRoute><Logistica /></ProtectedRoute>} />
       <Route path="/registros" element={<ProtectedRoute><Registros /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
