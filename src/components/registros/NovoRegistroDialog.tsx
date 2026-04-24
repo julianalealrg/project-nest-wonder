@@ -12,6 +12,7 @@ import { Loader2, Upload, X, HardHat, Factory, RefreshCw, Plus, Trash2 } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { gerarCodigoOS } from "@/lib/gerarCodigoOS";
 
 const TIPOS_OBRA = [
   "Peça com avaria", "Peça não localizada", "Peça errada", "Medição incorreta",
@@ -291,8 +292,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
             localizacaoOS = materialDisponivel === "sim" ? "Base 1" : "CD";
           }
 
-          // Código da OS gerada — usa o código do registro como sufixo
-          const codigoOS = `OS-${codigo}`;
+          // Código da OS gerada — sequencial OS{YY}-{NNN}, independente de origem
+          const codigoOS = await gerarCodigoOS();
 
           // Resolve cliente_id (pode reutilizar a OS de origem ou criar/buscar pelo nome)
           let clienteIdOS: string | null = null;

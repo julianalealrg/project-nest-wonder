@@ -12,6 +12,7 @@ import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 
 export default function Producao() {
   const [search, setSearch] = useState("");
+  const [tipo, setTipo] = useState("todos");
   const [localizacao, setLocalizacao] = useState("todos");
   const [status, setStatus] = useState("todos");
   const [cliente, setCliente] = useState("todos");
@@ -46,6 +47,7 @@ export default function Producao() {
     return osList.filter((os) => {
       const q = search.toLowerCase();
       if (q && !os.codigo.toLowerCase().includes(q) && !os.cliente.toLowerCase().includes(q)) return false;
+      if (tipo !== "todos" && (os.origem || "os").toLowerCase() !== tipo) return false;
       if (localizacao !== "todos" && os.localizacao !== localizacao) return false;
       if (status !== "todos" && os.status !== status) return false;
       if (cliente !== "todos" && os.cliente !== cliente) return false;
@@ -54,7 +56,7 @@ export default function Producao() {
       if (acabador !== "todos" && !os.pecas.some((p) => p.acabador === acabador)) return false;
       return true;
     });
-  }, [osList, search, localizacao, status, cliente, material, cortador, acabador]);
+  }, [osList, search, tipo, localizacao, status, cliente, material, cortador, acabador]);
 
   function handleRefresh() {
     queryClient.invalidateQueries({ queryKey: ["ordens_servico"] });
@@ -73,6 +75,7 @@ export default function Producao() {
       <div className="space-y-4">
         <OSFilters
           search={search} onSearchChange={setSearch}
+          tipo={tipo} onTipoChange={setTipo}
           localizacao={localizacao} onLocalizacaoChange={setLocalizacao}
           status={status} onStatusChange={setStatus}
           cliente={cliente} onClienteChange={setCliente}

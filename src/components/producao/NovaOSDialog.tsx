@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { gerarCodigoOS } from "@/lib/gerarCodigoOS";
 
 interface PecaForm {
   item: string;
@@ -353,10 +354,6 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
     }
     for (let i = 0; i < osList.length; i++) {
       const os = osList[i];
-      if (!os.codigo.trim()) {
-        toast({ title: `Código da OS ${i + 1} é obrigatório`, variant: "destructive" });
-        return;
-      }
       if (!os.data_entrega) {
         toast({ title: `Data de entrega da OS ${i + 1} é obrigatória`, variant: "destructive" });
         return;
@@ -405,9 +402,10 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
       const skippedCodes: string[] = [];
 
       for (const os of osList) {
-        const codigoTrim = os.codigo.trim();
+        // Auto-gera código sequencial OS{YY}-{NNN}
+        const codigoTrim = await gerarCodigoOS();
 
-        // Check for duplicate before insert (avoids unique constraint error)
+        // Verificação defensiva (gerador é sequencial, mas evita corrida)
         const { data: existente } = await supabase
           .from("ordens_servico")
           .select("id, codigo")
@@ -794,8 +792,13 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Código *</Label>
-                    <Input value={os.codigo} onChange={(e) => updateOS(osIdx, { codigo: e.target.value })} placeholder="OS-2025-0000" />
+                    <Label className="text-xs">Código</Label>
+                    <Input
+                      value={os.codigo || "Gerado automaticamente ao salvar"}
+                      readOnly
+                      disabled
+                      className="bg-muted/50 text-muted-foreground"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Ambiente</Label>

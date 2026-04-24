@@ -15,17 +15,12 @@ import { OSDetalheGeral } from "@/components/producao/detalhe/OSDetalheGeral";
 import { OSDetalhePecas } from "@/components/producao/detalhe/OSDetalhePecas";
 import { OSDetalheRomaneios } from "@/components/producao/detalhe/OSDetalheRomaneios";
 import { OSDetalheHistorico } from "@/components/producao/detalhe/OSDetalheHistorico";
+import { getOrigemTagInfo } from "@/lib/origemTag";
 
 function getOrigemTag(origem: string) {
-  const map: Record<string, { label: string; className: string }> = {
-    os: { label: "OS", className: "bg-muted text-muted-foreground" },
-    rep: { label: "REP", className: "bg-nue-azul/10 text-nue-azul" },
-    oc: { label: "OC", className: "bg-nue-roxo/10 text-nue-roxo" },
-    of: { label: "OF", className: "bg-nue-chumbo/15 text-nue-chumbo" },
-  };
-  const tag = map[origem] || map.os;
+  const tag = getOrigemTagInfo(origem);
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${tag.className}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${tag.badgeClass}`}>
       {tag.label}
     </span>
   );
