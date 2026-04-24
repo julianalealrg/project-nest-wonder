@@ -338,15 +338,28 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
     </div>
   );
 
+  const pdfDialog = (
+    <PdfPreviewDialog
+      open={!!pdfPreview}
+      onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+      blobUrl={pdfPreview?.blobUrl || null}
+      fileName={pdfPreview?.fileName || "documento.pdf"}
+      title={`PDF — ${romaneio.codigo}`}
+    />
+  );
+
   if (asDialog) {
     return (
-      <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 gap-0">
-          {headerNode}
-          {bodyNode}
-          {footerNode}
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 gap-0">
+            {headerNode}
+            {bodyNode}
+            {footerNode}
+          </DialogContent>
+        </Dialog>
+        {pdfDialog}
+      </>
     );
   }
 
@@ -358,6 +371,7 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         <ScrollArea className="flex-1">{bodyNode}</ScrollArea>
         {footerNode}
       </div>
+      {pdfDialog}
     </>
   );
 }
