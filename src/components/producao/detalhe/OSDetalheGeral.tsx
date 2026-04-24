@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Loader2, Palette, ArrowUpRight } from "lucide-react";
 import { MockOS, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
@@ -88,6 +88,8 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const [romaneioOpen, setRomaneioOpen] = useState(false);
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
+  const [pendingStatusAfterRomaneio, setPendingStatusAfterRomaneio] = useState<string | null>(null);
+  const romaneioSuccessRef = useRef(false);
 
   const nextStatuses = getNextStatuses(os.status);
 
@@ -119,8 +121,8 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
     }
     if (guard.kind === "open_romaneio") {
       setRomaneioPreset({ tipoRota: guard.tipoRota, osId: guard.presetOsId });
+      setPendingStatusAfterRomaneio(newStatus);
       setRomaneioOpen(true);
-      if (os.status === "cortando" && newStatus === "enviado_base2") doChangeStatus(newStatus, {});
       return;
     }
     if (guard.kind === "select_terceiro") {
@@ -315,10 +317,30 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
       />
       <NovoRomaneioDialog
         open={romaneioOpen}
-        onOpenChange={(o) => { setRomaneioOpen(o); if (!o) setRomaneioPreset(null); }}
+        onOpenChange={(o) => {
+          setRomaneioOpen(o);
+          if (!o) {
+            setRomaneioPreset(null);
+            // Só limpa a pendência se o fechamento NÃO foi disparado por sucesso
+            if (!romaneioSuccessRef.current) {
+              setPendingStatusAfterRomaneio(null);
+            }
+            romaneioSuccessRef.current = false;
+          }
+        }}
         presetTipoRota={romaneioPreset?.tipoRota}
         presetOsId={romaneioPreset?.osId}
-        onSuccess={() => onStatusChanged?.()}
+        onSuccess={async () => {
+          // Marca que o fechamento veio de um sucesso, para o onOpenChange não limpar a pendência
+          romaneioSuccessRef.current = true;
+          // Romaneio criado com sucesso: agora sim aplica a mudança de status pendente
+          if (pendingStatusAfterRomaneio) {
+            const next = pendingStatusAfterRomaneio;
+            setPendingStatusAfterRomaneio(null);
+            await doChangeStatus(next, {});
+          }
+          onStatusChanged?.();
+        }}
       />
     </div>
   );
