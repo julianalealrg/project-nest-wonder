@@ -239,7 +239,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
       <div className="space-y-2">
         {os.pecas.map((peca) => {
           const nextStation = getNextStation(peca);
-          const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status) : { permitido: true };
+          const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status, (os as any).romaneios, os.pecas as any, peca.id) : { permitido: true };
           const isSelectable = nextStation !== null;
           const isSelected = selectedPecaIds.has(peca.id);
           return (
