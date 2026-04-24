@@ -275,16 +275,26 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
         <div className="border-t px-5 py-3 flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex-1">
-                <FileText className="h-4 w-4 mr-1" />
+              <Button variant="outline" size="sm" className="flex-1" disabled={pdfLoading}>
+                {pdfLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
                 Gerar PDF
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => gerarPDFRegistroCompleto(registro)}>
+              <DropdownMenuItem
+                onClick={async () => {
+                  setPdfLoading(true);
+                  try {
+                    const result = await gerarPDFRegistroCompleto(registro);
+                    setPdfPreview(result);
+                  } finally {
+                    setPdfLoading(false);
+                  }
+                }}
+              >
                 PDF Completo
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => gerarPDFRegistroProducao(registro)}>
+              <DropdownMenuItem onClick={() => setPdfPreview(gerarPDFRegistroProducao(registro))}>
                 PDF Produção
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -304,6 +314,14 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
           ))}
         </div>
       </div>
+
+      <PdfPreviewDialog
+        open={!!pdfPreview}
+        onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+        blobUrl={pdfPreview?.blobUrl || null}
+        fileName={pdfPreview?.fileName || "documento.pdf"}
+        title={`PDF — ${registro.codigo}`}
+      />
     </>
   );
 }
