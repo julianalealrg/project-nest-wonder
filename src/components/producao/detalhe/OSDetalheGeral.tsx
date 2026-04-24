@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Loader2, Palette, ArrowUpRight } from "lucide-react";
+import { ChevronRight, Loader2, Palette, ArrowUpRight, Calculator, Pencil, RotateCcw, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { MockOS, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
