@@ -27,7 +27,7 @@ function formatEndereco(endereco?: string | null): string[] {
   return parts.length > 1 ? parts : [raw];
 }
 
-export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras = {}) {
+export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras = {}): { blobUrl: string; fileName: string } {
   const doc = new jsPDF();
   setupPdfDoc(doc);
 
