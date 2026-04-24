@@ -112,6 +112,33 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
       supabase.from("pecas").select("*").eq("os_id", osId),
     ]);
     if (osRow && pecasRows) {
+      // Auto-advance OS para "cq" quando peça vai para CQ e todas as peças
+      // já estão com acabamento concluído (ou não aplicável).
+      if (station === "cq" && osRow.status === "acabamento") {
+        const todasProntas = (pecasRows as any[]).every((p) => {
+          const st = p.status_acabamento;
+          return st === "concluido" || st === "nao_aplicavel";
+        });
+        if (todasProntas) {
+          await supabase
+            .from("ordens_servico")
+            .update({ status: "cq", localizacao: "Base 2", updated_at: new Date().toISOString() } as any)
+            .eq("id", osId);
+          await supabase.from("activity_logs").insert({
+            action: "mudanca_status",
+            entity_type: "ordens_servico",
+            entity_id: osId,
+            entity_description: osCodigo,
+            user_name: "Sistema (avanço automático)",
+            details: {
+              from_status: "acabamento",
+              to_status: "cq",
+              motivo: "Todas as peças concluídas no acabamento — primeira peça enviada para CQ",
+            },
+          });
+        }
+      }
+
       const sugestao = calcularSugestaoAvanco({ status: osRow.status, pecas: pecasRows as any });
       if (sugestao) {
         toast({
