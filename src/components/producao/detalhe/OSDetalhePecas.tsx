@@ -101,7 +101,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
     const first = stations[0];
     const mismatch = stations.some((s) => s !== first);
     if (mismatch || !first) return { station: first, mismatch: true, guard: { permitido: true } };
-    const guard = podeAvancarPecaPara(first, os.status, (os as any).romaneios);
+    const guard = podeAvancarPecaPara(first, os.status, (os as any).romaneios, os.pecas as any);
     return { station: first, mismatch: false, guard };
   }, [selectedPecas, os]);
 
@@ -153,7 +153,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
   function handlePecaAdvance(peca: MockPeca) {
     const next = getNextStation(peca);
     if (!next) return;
-    const guard = podeAvancarPecaPara(next, os.status, (os as any).romaneios);
+    const guard = podeAvancarPecaPara(next, os.status, (os as any).romaneios, os.pecas as any, peca.id);
     if (!guard.permitido) {
       setBlockedDialog({
         open: true,
@@ -239,7 +239,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
       <div className="space-y-2">
         {os.pecas.map((peca) => {
           const nextStation = getNextStation(peca);
-          const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status) : { permitido: true };
+          const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status, (os as any).romaneios, os.pecas as any, peca.id) : { permitido: true };
           const isSelectable = nextStation !== null;
           const isSelected = selectedPecaIds.has(peca.id);
           return (
