@@ -295,11 +295,13 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
         open={pecaDialogOpen} onOpenChange={setPecaDialogOpen}
         peca={selectedPeca} station={selectedPeca ? getNextStation(selectedPeca) : null}
         loading={loading} onConfirm={handlePecaConfirm}
+        irmas={selectedPeca ? (os.pecas.filter((p) => p.id !== selectedPeca.id) as any) : (os.pecas as any)}
       />
       <PecaBatchAdvanceDialog
         open={batchOpen} onOpenChange={setBatchOpen}
         station={batchInfo.station ?? null} count={selectedPecas.length}
         loading={loading} onConfirm={handleBatchConfirm}
+        irmas={(os.pecas.filter((p) => !selectedPecaIds.has(p.id))) as any}
       />
       <BlockedTransitionDialog
         open={blockedDialog.open}

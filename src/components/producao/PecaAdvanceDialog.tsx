@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,31 @@ export function getNextStation(peca: MockPeca): StationKey | null {
   return null;
 }
 
+export type PecaIrma = Partial<
+  Pick<
+    MockPeca,
+    "cortador" | "operador_45" | "operador_poliborda" | "operador_usinagem" | "acabador" | "cabine"
+  >
+> & { updated_at?: string | null };
+
+/**
+ * Retorna o último valor não vazio de um campo dentre as peças irmãs,
+ * priorizando a peça mais recentemente atualizada.
+ */
+function pickRecente(irmas: PecaIrma[] | undefined, field: keyof PecaIrma): string {
+  if (!irmas || irmas.length === 0) return "";
+  const ordered = [...irmas].sort((a, b) => {
+    const aT = a.updated_at ? new Date(a.updated_at as any).getTime() : 0;
+    const bT = b.updated_at ? new Date(b.updated_at as any).getTime() : 0;
+    return bT - aT;
+  });
+  for (const p of ordered) {
+    const v = p[field];
+    if (v && String(v).trim()) return String(v);
+  }
+  return "";
+}
+
 interface PecaAdvanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,16 +60,39 @@ interface PecaAdvanceDialogProps {
   station: StationKey | null;
   loading: boolean;
   onConfirm: (fields: Record<string, string>) => void;
+  /** Outras peças da mesma OS (excluindo a peça atual) — usado para pré-preencher operadores. */
+  irmas?: PecaIrma[];
 }
 
-export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, onConfirm }: PecaAdvanceDialogProps) {
+export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, onConfirm, irmas }: PecaAdvanceDialogProps) {
   const [fields, setFields] = useState<Record<string, string>>({});
   const [cqResult, setCqResult] = useState<"aprovado" | "reprovado">("aprovado");
 
-  function resetAndOpen() {
-    setFields({});
+  // Pré-preenche os campos quando o dialog abre, a partir das peças irmãs.
+  useEffect(() => {
+    if (!open || !station) return;
+    const initial: Record<string, string> = {};
+    switch (station) {
+      case "corte":
+        initial.cortador = pickRecente(irmas, "cortador");
+        break;
+      case "45":
+        initial.operador = pickRecente(irmas, "operador_45");
+        break;
+      case "poliborda":
+        initial.operador = pickRecente(irmas, "operador_poliborda");
+        break;
+      case "usinagem":
+        initial.operador = pickRecente(irmas, "operador_usinagem");
+        break;
+      case "acabamento":
+        initial.acabador = pickRecente(irmas, "acabador");
+        initial.cabine = pickRecente(irmas, "cabine");
+        break;
+    }
+    setFields(initial);
     setCqResult("aprovado");
-  }
+  }, [open, station, irmas]);
 
   function handleConfirm() {
     if (station === "cq") {
@@ -78,7 +126,7 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!loading) { resetAndOpen(); onOpenChange(v); } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!loading) onOpenChange(v); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-sm">Avançar — {label}</DialogTitle>

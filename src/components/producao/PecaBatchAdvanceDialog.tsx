@@ -17,6 +17,8 @@ const STATION_LABELS: Record<StationKey, string> = {
   cq: "CQ",
 };
 
+import type { PecaIrma } from "./PecaAdvanceDialog";
+
 interface PecaBatchAdvanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,18 +26,58 @@ interface PecaBatchAdvanceDialogProps {
   count: number;
   loading: boolean;
   onConfirm: (fields: Record<string, string>) => void;
+  /** Outras peças da mesma OS — usado para pré-preencher operadores. */
+  irmas?: PecaIrma[];
 }
 
-export function PecaBatchAdvanceDialog({ open, onOpenChange, station, count, loading, onConfirm }: PecaBatchAdvanceDialogProps) {
+function pickRecente(irmas: PecaIrma[] | undefined, field: keyof PecaIrma): string {
+  if (!irmas || irmas.length === 0) return "";
+  const ordered = [...irmas].sort((a, b) => {
+    const aT = a.updated_at ? new Date(a.updated_at as any).getTime() : 0;
+    const bT = b.updated_at ? new Date(b.updated_at as any).getTime() : 0;
+    return bT - aT;
+  });
+  for (const p of ordered) {
+    const v = p[field];
+    if (v && String(v).trim()) return String(v);
+  }
+  return "";
+}
+
+export function PecaBatchAdvanceDialog({ open, onOpenChange, station, count, loading, onConfirm, irmas }: PecaBatchAdvanceDialogProps) {
   const [fields, setFields] = useState<Record<string, string>>({});
   const [cqResult, setCqResult] = useState<"aprovado" | "reprovado">("aprovado");
 
   useEffect(() => {
-    if (open) {
-      setFields({});
-      setCqResult("aprovado");
+    if (!open || !station) {
+      if (open) {
+        setFields({});
+        setCqResult("aprovado");
+      }
+      return;
     }
-  }, [open]);
+    const initial: Record<string, string> = {};
+    switch (station) {
+      case "corte":
+        initial.cortador = pickRecente(irmas, "cortador");
+        break;
+      case "45":
+        initial.operador = pickRecente(irmas, "operador_45");
+        break;
+      case "poliborda":
+        initial.operador = pickRecente(irmas, "operador_poliborda");
+        break;
+      case "usinagem":
+        initial.operador = pickRecente(irmas, "operador_usinagem");
+        break;
+      case "acabamento":
+        initial.acabador = pickRecente(irmas, "acabador");
+        initial.cabine = pickRecente(irmas, "cabine");
+        break;
+    }
+    setFields(initial);
+    setCqResult("aprovado");
+  }, [open, station, irmas]);
 
   function setField(key: string, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));

@@ -14,7 +14,7 @@ interface TransitionField {
 
 const TRANSITION_FIELDS: Record<string, TransitionField[]> = {
   "aguardando_material->fila_corte": [],
-  "fila_corte->cortando": [{ key: "cortador", label: "Cortador", required: true }],
+  "fila_corte->cortando": [],
   "cortando->enviado_base2": [],
   "cortando->terceiros": [{ key: "terceiro", label: "Qual terceiro", required: true }],
   "enviado_base2->acabamento": [
