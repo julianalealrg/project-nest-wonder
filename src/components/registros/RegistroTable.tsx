@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Registro } from "@/hooks/useRegistros";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Loader2, MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
+import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 import {
   getNextRegistroStatuses,
   REGISTRO_STATUS_LABELS,
@@ -103,6 +104,14 @@ function StatusDropdown({ registro, onStatusChanged }: { registro: Registro; onS
 }
 
 export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTableProps) {
+  const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string; codigo: string } | null>(null);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
+  useEffect(() => {
+    return () => {
+      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
+    };
+  }, [pdfPreview]);
+
   return (
     <div className="bg-card rounded-lg border overflow-hidden">
       <div className="overflow-x-auto">
@@ -166,14 +175,33 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
-                          <MoreHorizontal className="h-4 w-4" />
+                          {pdfLoadingId === reg.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MoreHorizontal className="h-4 w-4" />
+                          )}
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => gerarPDFRegistroCompleto(reg)}>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            setPdfLoadingId(reg.id);
+                            try {
+                              const result = await gerarPDFRegistroCompleto(reg);
+                              setPdfPreview({ ...result, codigo: reg.codigo });
+                            } finally {
+                              setPdfLoadingId(null);
+                            }
+                          }}
+                        >
                           PDF Completo
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => gerarPDFRegistroProducao(reg)}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const result = gerarPDFRegistroProducao(reg);
+                            setPdfPreview({ ...result, codigo: reg.codigo });
+                          }}
+                        >
                           PDF Produção
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -185,6 +213,14 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
           </tbody>
         </table>
       </div>
+
+      <PdfPreviewDialog
+        open={!!pdfPreview}
+        onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+        blobUrl={pdfPreview?.blobUrl || null}
+        fileName={pdfPreview?.fileName || "documento.pdf"}
+        title={pdfPreview ? `PDF — ${pdfPreview.codigo}` : "PDF"}
+      />
     </div>
   );
 }

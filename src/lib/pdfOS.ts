@@ -27,7 +27,7 @@ const URG_COLOR: Record<string, [number, number, number]> = {
   baixa: PDF_COLORS.verde,
 };
 
-export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
+export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}): { blobUrl: string; fileName: string } {
   const doc = new jsPDF();
   setupPdfDoc(doc);
 
@@ -206,5 +206,7 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
   doc.setTextColor(...PDF_COLORS.text);
 
   finalizePdf(doc, { userName: extras.userName });
-  doc.save(`${os.codigo}.pdf`);
+  const fileName = `${os.codigo}.pdf`;
+  const blobUrl = doc.output("bloburl") as unknown as string;
+  return { blobUrl, fileName };
 }

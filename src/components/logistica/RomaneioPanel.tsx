@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
 import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
+import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,12 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   const [loading, setLoading] = useState(false);
   const [conferindo, setConferindo] = useState(false);
   const [conferencias, setConferencias] = useState<Record<string, string>>({});
+  const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  useEffect(() => {
+    return () => {
+      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
+    };
+  }, [pdfPreview]);
   const { profile } = useAuth();
 
   if (!romaneio) return null;
@@ -308,7 +315,7 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
 
   const footerNode = (
     <div className="border-t px-5 py-3 flex gap-2">
-      <Button variant="outline" size="sm" className="flex-1" onClick={() => gerarPDFRomaneio(romaneio)}>
+      <Button variant="outline" size="sm" className="flex-1" onClick={() => setPdfPreview(gerarPDFRomaneio(romaneio))}>
         <FileText className="h-4 w-4 mr-1" /> Gerar PDF
       </Button>
       {canDepart && (
@@ -331,15 +338,28 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
     </div>
   );
 
+  const pdfDialog = (
+    <PdfPreviewDialog
+      open={!!pdfPreview}
+      onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+      blobUrl={pdfPreview?.blobUrl || null}
+      fileName={pdfPreview?.fileName || "documento.pdf"}
+      title={`PDF — ${romaneio.codigo}`}
+    />
+  );
+
   if (asDialog) {
     return (
-      <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 gap-0">
-          {headerNode}
-          {bodyNode}
-          {footerNode}
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 gap-0">
+            {headerNode}
+            {bodyNode}
+            {footerNode}
+          </DialogContent>
+        </Dialog>
+        {pdfDialog}
+      </>
     );
   }
 
@@ -351,6 +371,7 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         <ScrollArea className="flex-1">{bodyNode}</ScrollArea>
         {footerNode}
       </div>
+      {pdfDialog}
     </>
   );
 }

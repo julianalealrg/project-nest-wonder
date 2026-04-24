@@ -26,6 +26,7 @@ import { RomaneioPanel } from "@/components/logistica/RomaneioPanel";
 import { useRomaneios } from "@/hooks/useRomaneios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
+import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 
 // Transições regressivas (rework / reprovação) — devem ter destaque visual de alerta
 const REGRESSIVE_TRANSITIONS = new Set<string>(["cq->acabamento"]);
@@ -229,6 +230,12 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [batchOpen, setBatchOpen] = useState(false);
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  useEffect(() => {
+    return () => {
+      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
+    };
+  }, [pdfPreview]);
   const { profile } = useAuth();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
@@ -783,7 +790,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
         </ScrollArea>
 
         <div className="flex gap-2 border-t px-6 py-4">
-          <Button variant="outline" className="flex-1 px-6 py-3 text-[13px]" onClick={() => gerarPDFOS(os)}>
+          <Button variant="outline" className="flex-1 px-6 py-3 text-[13px]" onClick={() => setPdfPreview(gerarPDFOS(os))}>
             <FileText className="mr-1 h-4 w-4" />
             Gerar PDF
           </Button>
@@ -900,6 +907,14 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
           }}
         />
       )}
+
+      <PdfPreviewDialog
+        open={!!pdfPreview}
+        onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+        blobUrl={pdfPreview?.blobUrl || null}
+        fileName={pdfPreview?.fileName || "documento.pdf"}
+        title={`PDF — ${os.codigo}`}
+      />
     </>
   );
 }

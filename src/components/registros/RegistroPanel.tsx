@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, FileText, ChevronRight, Loader2, AlertTriangle, Truck, Palette } from "lucide-react";
 import { Registro } from "@/hooks/useRegistros";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { gerarPDFRegistroCompleto, gerarPDFRegistroProducao } from "@/lib/pdfRegistro";
 import { registroBadgeClass } from "@/lib/statusColors";
+import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 
 interface RegistroPanelProps {
   registro: Registro | null;
@@ -26,6 +27,13 @@ interface RegistroPanelProps {
 
 export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPanelProps) {
   const [loading, setLoading] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  useEffect(() => {
+    return () => {
+      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
+    };
+  }, [pdfPreview]);
   const { profile } = useAuth();
 
   if (!registro) return null;
@@ -267,16 +275,26 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
         <div className="border-t px-5 py-3 flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex-1">
-                <FileText className="h-4 w-4 mr-1" />
+              <Button variant="outline" size="sm" className="flex-1" disabled={pdfLoading}>
+                {pdfLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
                 Gerar PDF
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => gerarPDFRegistroCompleto(registro)}>
+              <DropdownMenuItem
+                onClick={async () => {
+                  setPdfLoading(true);
+                  try {
+                    const result = await gerarPDFRegistroCompleto(registro);
+                    setPdfPreview(result);
+                  } finally {
+                    setPdfLoading(false);
+                  }
+                }}
+              >
                 PDF Completo
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => gerarPDFRegistroProducao(registro)}>
+              <DropdownMenuItem onClick={() => setPdfPreview(gerarPDFRegistroProducao(registro))}>
                 PDF Produção
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -296,6 +314,14 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
           ))}
         </div>
       </div>
+
+      <PdfPreviewDialog
+        open={!!pdfPreview}
+        onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+        blobUrl={pdfPreview?.blobUrl || null}
+        fileName={pdfPreview?.fileName || "documento.pdf"}
+        title={`PDF — ${registro.codigo}`}
+      />
     </>
   );
 }

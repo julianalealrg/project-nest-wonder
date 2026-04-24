@@ -70,7 +70,10 @@ async function loadImageAsDataUrl(url: string): Promise<string | null> {
   }
 }
 
-export async function gerarPDFRegistroCompleto(registro: Registro, extras: RegistroPdfExtras = {}) {
+export async function gerarPDFRegistroCompleto(
+  registro: Registro,
+  extras: RegistroPdfExtras = {},
+): Promise<{ blobUrl: string; fileName: string }> {
   const doc = new jsPDF();
   setupPdfDoc(doc);
 
@@ -330,10 +333,15 @@ export async function gerarPDFRegistroCompleto(registro: Registro, extras: Regis
   }
 
   finalizePdf(doc, { userName: extras.userName });
-  doc.save(`${registro.codigo}.pdf`);
+  const fileName = `${registro.codigo}.pdf`;
+  const blobUrl = doc.output("bloburl") as unknown as string;
+  return { blobUrl, fileName };
 }
 
-export function gerarPDFRegistroProducao(registro: Registro, extras: RegistroPdfExtras = {}) {
+export function gerarPDFRegistroProducao(
+  registro: Registro,
+  extras: RegistroPdfExtras = {},
+): { blobUrl: string; fileName: string } {
   const doc = new jsPDF();
   setupPdfDoc(doc);
 
@@ -453,5 +461,7 @@ export function gerarPDFRegistroProducao(registro: Registro, extras: RegistroPdf
   doc.setTextColor(...PDF_COLORS.text);
 
   finalizePdf(doc, { userName: extras.userName });
-  doc.save(`${registro.codigo}_producao.pdf`);
+  const fileName = `${registro.codigo}_producao.pdf`;
+  const blobUrl = doc.output("bloburl") as unknown as string;
+  return { blobUrl, fileName };
 }
