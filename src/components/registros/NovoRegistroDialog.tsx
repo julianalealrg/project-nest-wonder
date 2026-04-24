@@ -184,6 +184,7 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     if (showAcabador && !acabadorResponsavel.trim()) { toast({ title: "Acabador responsável é obrigatório", variant: "destructive" }); return; }
     if (encaminharProjetos && !instrucaoProjetos.trim()) { toast({ title: "Instrução para Projetos é obrigatória", variant: "destructive" }); return; }
     if (requerRecolha && (!recolhaOrigem || !recolhaDestino)) { toast({ title: "Origem e destino da recolha são obrigatórios", variant: "destructive" }); return; }
+    if (!acaoProdutiva) { toast({ title: "Selecione a ação produtiva", variant: "destructive" }); return; }
 
     setSaving(true);
     try {
@@ -219,6 +220,8 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
           requer_recolha: requerRecolha,
           recolha_origem: requerRecolha ? recolhaOrigem : null,
           recolha_destino: requerRecolha ? recolhaDestino : null,
+          acao_produtiva: acaoProdutiva,
+          material_disponivel: (acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") ? (materialDisponivel === "sim") : null,
         })
         .select("id")
         .single();
