@@ -120,33 +120,52 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}): { blobUrl: str
   doc.text(`Peças (${os.pecas.length})`, 14, y);
   y += 3;
 
-  autoTable(doc, {
-    startY: y,
-    head: [["#", "Descrição", "Comp. (m)", "Larg. (m)", "Qtd", "Material", "Obs"]],
-    body: os.pecas.map((p) => [
+  // Colunas opcionais: omitir se todas as peças estiverem vazias
+  const temMaterial = !!(os.material && os.material.trim());
+  const temObs = os.pecas.some((p) => p.precisa_45 || p.precisa_poliborda || p.precisa_usinagem);
+
+  const head: string[] = ["#", "Descrição", "Comp. (m)", "Larg. (m)", "Qtd"];
+  if (temMaterial) head.push("Material");
+  if (temObs) head.push("Obs");
+
+  const body = os.pecas.map((p) => {
+    const row: any[] = [
       p.item,
       p.descricao,
-      p.comprimento != null ? Number(p.comprimento).toFixed(3) : "—",
-      p.largura != null ? Number(p.largura).toFixed(3) : "—",
+      p.comprimento != null ? Number(p.comprimento).toFixed(3) : "",
+      p.largura != null ? Number(p.largura).toFixed(3) : "",
       String(p.quantidade),
-      os.material || "—",
-      [p.precisa_45 && "45°", p.precisa_poliborda && "Polib.", p.precisa_usinagem && "Usin."]
-        .filter(Boolean)
-        .join(", ") || "—",
-    ]),
+    ];
+    if (temMaterial) row.push(os.material || "");
+    if (temObs) {
+      row.push(
+        [p.precisa_45 && "45°", p.precisa_poliborda && "Polib.", p.precisa_usinagem && "Usin."]
+          .filter(Boolean)
+          .join(", "),
+      );
+    }
+    return row;
+  });
+
+  const colStyles: Record<number, any> = {
+    0: { cellWidth: 10 },
+    2: { cellWidth: 22, halign: "right" },
+    3: { cellWidth: 22, halign: "right" },
+    4: { cellWidth: 12, halign: "right" },
+  };
+  if (temMaterial) colStyles[5] = { cellWidth: 38 };
+
+  autoTable(doc, {
+    startY: y,
+    head: [head],
+    body,
     styles: { fontSize: PDF_SIZES.small, cellPadding: 2, font: PDF_FONT, textColor: PDF_COLORS.text },
     headStyles: {
       fillColor: PDF_COLORS.cinzaLight,
       textColor: PDF_COLORS.text,
       fontStyle: "bold",
     },
-    columnStyles: {
-      0: { cellWidth: 10 },
-      2: { cellWidth: 22, halign: "right" },
-      3: { cellWidth: 22, halign: "right" },
-      4: { cellWidth: 12, halign: "right" },
-      5: { cellWidth: 38 },
-    },
+    columnStyles: colStyles,
     theme: "grid",
     margin: { left: 14, right: 14 },
   });
