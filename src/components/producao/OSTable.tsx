@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Badge } from "@/components/ui/badge";
 import { calcularSugestaoAvanco, calcularDependencia } from "@/lib/avancoSugerido";
@@ -27,7 +28,7 @@ function renderEntrega(dataEntrega: string | null, status: string) {
 
 interface OSTableProps {
   data: MockOS[];
-  onSelect: (os: MockOS) => void;
+  onSelect?: (os: MockOS) => void;
   onStatusChanged?: () => void;
 }
 
@@ -55,6 +56,11 @@ function getRowBg(days: number, status: string): string {
 }
 
 export function OSTable({ data, onSelect }: OSTableProps) {
+  const navigate = useNavigate();
+  const handleRowClick = (os: MockOS) => {
+    if (onSelect) onSelect(os);
+    else navigate(`/producao/${os.id}`);
+  };
   return (
     <div className="bg-card rounded-lg border overflow-hidden">
       <div className="overflow-x-auto">
@@ -89,7 +95,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                 return (
                   <tr
                     key={os.id}
-                    onClick={() => onSelect(os)}
+                    onClick={() => handleRowClick(os)}
                     className={`border-b last:border-b-0 cursor-pointer transition-colors hover:bg-muted/40 ${rowBg}`}
                   >
                     <td className="px-4 py-3">
