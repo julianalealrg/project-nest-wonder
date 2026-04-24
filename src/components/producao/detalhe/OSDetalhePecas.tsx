@@ -101,7 +101,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
     const first = stations[0];
     const mismatch = stations.some((s) => s !== first);
     if (mismatch || !first) return { station: first, mismatch: true, guard: { permitido: true } };
-    const guard = podeAvancarPecaPara(first, os.status, (os as any).romaneios);
+    const guard = podeAvancarPecaPara(first, os.status, (os as any).romaneios, os.pecas as any);
     return { station: first, mismatch: false, guard };
   }, [selectedPecas, os]);
 
