@@ -26,12 +26,28 @@ export default function Producao() {
 
   const queryClient = useQueryClient();
   const { data: osList = [], isLoading } = useOrdensServico();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Realtime: refresh OS list when DB changes
   useRealtimeInvalidate([
     { table: "ordens_servico", queryKeys: [["ordens_servico"], ["home-kpis"]] },
     { table: "pecas", queryKeys: [["ordens_servico"]] },
   ]);
+
+  // Deep-link: ?os=<id> abre o painel da OS correspondente
+  useEffect(() => {
+    const osIdParam = searchParams.get("os");
+    if (osIdParam && osList.length > 0) {
+      const target = osList.find((o) => o.id === osIdParam);
+      if (target) {
+        setSelectedOS(target);
+        // limpa o param da URL para não reabrir em navegações futuras
+        const next = new URLSearchParams(searchParams);
+        next.delete("os");
+        setSearchParams(next, { replace: true });
+      }
+    }
+  }, [searchParams, osList, setSearchParams]);
 
   const clientes = useMemo(() => [...new Set(osList.map((o) => o.cliente))], [osList]);
   const materiais = useMemo(() => [...new Set(osList.map((o) => o.material).filter(Boolean))], [osList]);
