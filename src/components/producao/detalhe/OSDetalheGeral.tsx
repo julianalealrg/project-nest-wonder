@@ -445,7 +445,7 @@ function AreaField({ os, onChanged }: AreaFieldProps) {
       {isManual && !editing && (
         <div className="mt-0.5 flex flex-wrap items-center gap-2">
           <p className="text-[14px] font-medium text-foreground">{Number(os.area_m2 ?? 0).toFixed(4)} m²</p>
-          <span className="text-[11px] font-medium text-amber-600 inline-flex items-center gap-1">
+          <span className="text-[11px] font-medium text-destructive inline-flex items-center gap-1">
             <AlertTriangle className="h-3 w-3" /> Valor manual — não será atualizado quando peças mudarem
           </span>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setValue(String(os.area_m2 ?? "")); setEditing(true); }} disabled={saving}>
