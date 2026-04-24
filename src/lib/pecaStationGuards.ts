@@ -4,6 +4,8 @@ export function podeAvancarPecaPara(
   etapa: EtapaPeca,
   osStatus: string,
   romaneios?: { tipo_rota: string; status: string }[],
+  pecas?: { id?: string; status_acabamento?: string | null }[],
+  pecaIdEmAvanco?: string,
 ): { permitido: boolean; motivo?: string } {
   const base1 = [
     "cortando",
@@ -54,6 +56,23 @@ export function podeAvancarPecaPara(
   }
   if (etapa === "cq") {
     if (!base2Cq.includes(osStatus)) {
+      // Permissão especial: OS ainda em "acabamento", mas todas as outras peças
+      // já estão com acabamento concluído (ou não aplicável). Nesse caso
+      // liberamos o avanço — quem chamar é responsável por avançar a OS para "cq".
+      if (osStatus === "acabamento" && pecas && pecas.length > 0) {
+        const outrasPendentes = pecas.filter((p) => {
+          if (pecaIdEmAvanco && p.id === pecaIdEmAvanco) return false;
+          const st = p.status_acabamento;
+          return st !== "concluido" && st !== "nao_aplicavel";
+        });
+        if (outrasPendentes.length === 0) {
+          return { permitido: true };
+        }
+        return {
+          permitido: false,
+          motivo: `Ainda há ${outrasPendentes.length} peça(s) com acabamento pendente. Conclua o acabamento de todas as peças antes de aprovar no CQ.`,
+        };
+      }
       return {
         permitido: false,
         motivo: "A OS precisa estar em CQ antes de aprovar essa peça no CQ.",
