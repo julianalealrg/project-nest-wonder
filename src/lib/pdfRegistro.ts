@@ -96,7 +96,8 @@ export async function gerarPDFRegistroCompleto(
   ], y);
 
   // Classificação — campos condicionais por origem
-  const isOcorrencia = registro.origem === "obra" || registro.origem === "fabrica";
+  // NOTA: "Responsável erro" e "Nome do responsável" foram removidos do PDF
+  // por decisão de produto — esses campos ficam só no sistema (painel/dashboard).
   const isSolicitacao = registro.origem === "solicitacao";
   const isQuebraAcabamento = isSolicitacao && registro.tipo === "Quebra no acabamento";
 
@@ -105,14 +106,6 @@ export async function gerarPDFRegistroCompleto(
     classifItems.push([
       "Tipo",
       `${registro.tipo}${registro.tipo_outro ? ` — ${registro.tipo_outro}` : ""}`,
-    ]);
-  }
-  if (isOcorrencia && (registro.responsavel_erro_papel || registro.responsavel_erro_nome)) {
-    classifItems.push([
-      "Responsável erro",
-      `${registro.responsavel_erro_papel || "—"}${
-        registro.responsavel_erro_nome ? ` — ${registro.responsavel_erro_nome}` : ""
-      }`,
     ]);
   }
   if (isQuebraAcabamento && registro.acabador_responsavel) {
@@ -132,7 +125,7 @@ export async function gerarPDFRegistroCompleto(
     y = addInfoGrid(doc, classifItems, y);
   }
 
-  // Peças
+  // Peças — coluna "Não consta OS" condicional + colunas opcionais omitidas
   if (registro.pecas.length > 0) {
     doc.setDrawColor(...PDF_COLORS.border);
     doc.line(14, y, 196, y);
@@ -143,17 +136,33 @@ export async function gerarPDFRegistroCompleto(
     doc.text(`Peças (${registro.pecas.length})`, 14, y);
     y += 3;
 
+    const temNaoConsta = registro.pecas.some((p) => p.nao_consta_os);
+    const temMedidaAtual = registro.pecas.some((p) => p.medida_atual && p.medida_atual.trim());
+    const temMedidaNec = registro.pecas.some((p) => p.medida_necessaria && p.medida_necessaria.trim());
+
+    const head: string[] = ["#", "Descrição", "Qtd"];
+    if (temMedidaAtual) head.push("Medida atual");
+    if (temMedidaNec) head.push("Medida necessária");
+    if (temNaoConsta) head.push("Não consta OS");
+
+    const body = registro.pecas.map((p) => {
+      const row: any[] = [p.item || "", p.descricao || "", String(p.quantidade || 1)];
+      if (temMedidaAtual) row.push(p.medida_atual || "");
+      if (temMedidaNec) row.push(p.medida_necessaria || "");
+      if (temNaoConsta) {
+        row.push(
+          p.nao_consta_os
+            ? { content: "NÃO CONSTA OS", styles: { fontStyle: "bold", textColor: PDF_COLORS.vermelho } }
+            : "",
+        );
+      }
+      return row;
+    });
+
     autoTable(doc, {
       startY: y,
-      head: [["#", "Descrição", "Qtd", "Medida atual", "Medida necessária", "Não consta OS"]],
-      body: registro.pecas.map((p) => [
-        p.item || "",
-        p.descricao || "",
-        String(p.quantidade || 1),
-        p.medida_atual || "—",
-        p.medida_necessaria || "—",
-        p.nao_consta_os ? "SIM" : "—",
-      ]),
+      head: [head],
+      body,
       styles: { fontSize: PDF_SIZES.small, cellPadding: 2, font: PDF_FONT, textColor: PDF_COLORS.text },
       headStyles: { fillColor: PDF_COLORS.cinzaLight, textColor: PDF_COLORS.text, fontStyle: "bold" },
       theme: "grid",
