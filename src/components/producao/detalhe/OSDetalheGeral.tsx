@@ -88,6 +88,7 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const [romaneioOpen, setRomaneioOpen] = useState(false);
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
+  const [pendingStatusAfterRomaneio, setPendingStatusAfterRomaneio] = useState<string | null>(null);
 
   const nextStatuses = getNextStatuses(os.status);
 
