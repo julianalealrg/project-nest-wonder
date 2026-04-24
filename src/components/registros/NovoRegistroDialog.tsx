@@ -752,6 +752,68 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
                     </div>
                   )}
                 </div>
+
+                {/* Ação produtiva */}
+                <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                  <Label className="text-xs font-semibold">Ação produtiva *</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Define o fluxo de produção que será criado automaticamente para este registro.
+                  </p>
+                  <RadioGroup
+                    value={acaoProdutiva}
+                    onValueChange={(v) => setAcaoProdutiva(v as typeof acaoProdutiva)}
+                    className="gap-2"
+                  >
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="cortar_nova" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Cortar peça nova</p>
+                        <p className="text-[11px] text-muted-foreground">Passa por Base 1 completo (corte → acabamento → CQ)</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="cortar_retrabalhar" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Cortar nova + retrabalhar antiga</p>
+                        <p className="text-[11px] text-muted-foreground">Base 1 + Base 2</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="apenas_retrabalho" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Apenas retrabalho de acabamento</p>
+                        <p className="text-[11px] text-muted-foreground">Pula Base 1 — vai direto para Acabamento (Base 2)</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer rounded-md border bg-card p-2 hover:bg-muted/40">
+                      <RadioGroupItem value="nenhuma" className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">Nenhuma ação produtiva</p>
+                        <p className="text-[11px] text-muted-foreground">Apenas registrar a ocorrência — não gera OS</p>
+                      </div>
+                    </label>
+                  </RadioGroup>
+
+                  {(acaoProdutiva === "cortar_nova" || acaoProdutiva === "cortar_retrabalhar") && (
+                    <div className="pt-2 border-t space-y-1">
+                      <Label className="text-xs">Material disponível? *</Label>
+                      <RadioGroup
+                        value={materialDisponivel}
+                        onValueChange={(v) => setMaterialDisponivel(v as "sim" | "nao")}
+                        className="flex gap-4"
+                      >
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <RadioGroupItem value="sim" />
+                          <span className="text-xs">Sim — vai para Fila de Corte</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <RadioGroupItem value="nao" />
+                          <span className="text-xs">Não — aguardando material</span>
+                        </label>
+                      </RadioGroup>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
