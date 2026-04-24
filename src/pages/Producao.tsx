@@ -1,14 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Download } from "lucide-react";
 import { exportProducaoExcel } from "@/lib/exportExcel";
-import { MockOS } from "@/data/mockProducao";
 import { OSFilters } from "@/components/producao/OSFilters";
 import { OSTable } from "@/components/producao/OSTable";
-import { OSPanel } from "@/components/producao/OSPanel";
 import { NovaOSDialog } from "@/components/producao/NovaOSDialog";
 import { useOrdensServico } from "@/hooks/useOrdensServico";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
@@ -21,33 +18,16 @@ export default function Producao() {
   const [material, setMaterial] = useState("todos");
   const [cortador, setCortador] = useState("todos");
   const [acabador, setAcabador] = useState("todos");
-  const [selectedOS, setSelectedOS] = useState<MockOS | null>(null);
   const [novaOSOpen, setNovaOSOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: osList = [], isLoading } = useOrdensServico();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   // Realtime: refresh OS list when DB changes
   useRealtimeInvalidate([
     { table: "ordens_servico", queryKeys: [["ordens_servico"], ["home-kpis"]] },
     { table: "pecas", queryKeys: [["ordens_servico"]] },
   ]);
-
-  // Deep-link: ?os=<id> abre o painel da OS correspondente
-  useEffect(() => {
-    const osIdParam = searchParams.get("os");
-    if (osIdParam && osList.length > 0) {
-      const target = osList.find((o) => o.id === osIdParam);
-      if (target) {
-        setSelectedOS(target);
-        // limpa o param da URL para não reabrir em navegações futuras
-        const next = new URLSearchParams(searchParams);
-        next.delete("os");
-        setSearchParams(next, { replace: true });
-      }
-    }
-  }, [searchParams, osList, setSearchParams]);
 
   const clientes = useMemo(() => [...new Set(osList.map((o) => o.cliente))], [osList]);
   const materiais = useMemo(() => [...new Set(osList.map((o) => o.material).filter(Boolean))], [osList]);
@@ -61,12 +41,6 @@ export default function Producao() {
     osList.forEach((o) => o.pecas.forEach((p) => p.acabador && set.add(p.acabador)));
     return [...set];
   }, [osList]);
-
-  // Keep selectedOS in sync with fresh data
-  const currentSelectedOS = useMemo(() => {
-    if (!selectedOS) return null;
-    return osList.find((os) => os.id === selectedOS.id) || null;
-  }, [selectedOS, osList]);
 
   const filtered = useMemo(() => {
     return osList.filter((os) => {
@@ -117,10 +91,9 @@ export default function Producao() {
           )}
         </div>
 
-        <OSTable data={filtered} onSelect={setSelectedOS} onStatusChanged={handleRefresh} />
+        <OSTable data={filtered} onStatusChanged={handleRefresh} />
       </div>
 
-      <OSPanel os={currentSelectedOS} onClose={() => setSelectedOS(null)} onStatusChanged={handleRefresh} />
       <NovaOSDialog open={novaOSOpen} onOpenChange={setNovaOSOpen} onSuccess={handleRefresh} />
     </AppLayout>
   );

@@ -150,7 +150,7 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                       )}
                       {reg.os_gerada_id && (
                         <Link
-                          to={`/producao?os=${reg.os_gerada_id}`}
+                          to={`/producao/${reg.os_gerada_id}`}
                           onClick={(e) => e.stopPropagation()}
                           className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase transition-opacity hover:opacity-80 ${
                             reg.status === "resolvido"
