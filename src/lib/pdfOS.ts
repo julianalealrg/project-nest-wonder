@@ -164,9 +164,13 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
   y += 26;
   doc.setLineWidth(0.2);
 
-  // Badge colorido grande de destino — fixado no rodapé da página 1
+  // Badge colorido grande de destino + assinaturas — fixos no rodapé da página 1
+  // Reservar margem de 18mm pro rodapé (linha em pageH-12 + textos em pageH-8)
   const pageH = doc.internal.pageSize.getHeight();
-  const destY = pageH - 48;
+  const sigBottom = pageH - 18; // base inferior das linhas de assinatura
+  const sigY = sigBottom - 12;  // linha de assinatura (Nome/Data ficam abaixo)
+  const destY = sigY - 22;      // badge destino acima das assinaturas
+
   const destLabel = (os.localizacao || "—").toUpperCase();
   const destCol = destinoColor(os.localizacao);
   doc.setFillColor(...destCol);
@@ -178,7 +182,6 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
   doc.setTextColor(...PDF_COLORS.text);
 
   // Bloco de assinaturas com Data
-  const sigY = destY + 22;
   doc.setDrawColor(...PDF_COLORS.border);
   doc.setLineWidth(0.3);
   // Assinatura esq
@@ -187,18 +190,18 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}) {
   doc.setFontSize(PDF_SIZES.small);
   doc.setTextColor(...PDF_COLORS.muted);
   doc.text("Responsável Produção — Assinatura", 54, sigY + 4, { align: "center" });
-  doc.line(14, sigY + 12, 60, sigY + 12);
-  doc.text("Nome", 37, sigY + 16, { align: "center" });
-  doc.line(64, sigY + 12, 95, sigY + 12);
-  doc.text("Data", 79, sigY + 16, { align: "center" });
+  doc.line(14, sigY + 9, 60, sigY + 9);
+  doc.text("Nome", 37, sigY + 12, { align: "center" });
+  doc.line(64, sigY + 9, 95, sigY + 9);
+  doc.text("Data", 79, sigY + 12, { align: "center" });
 
   // Assinatura dir
   doc.line(115, sigY, 196, sigY);
   doc.text("Conferência — Assinatura", 155, sigY + 4, { align: "center" });
-  doc.line(115, sigY + 12, 161, sigY + 12);
-  doc.text("Nome", 138, sigY + 16, { align: "center" });
-  doc.line(165, sigY + 12, 196, sigY + 12);
-  doc.text("Data", 180, sigY + 16, { align: "center" });
+  doc.line(115, sigY + 9, 161, sigY + 9);
+  doc.text("Nome", 138, sigY + 12, { align: "center" });
+  doc.line(165, sigY + 9, 196, sigY + 9);
+  doc.text("Data", 180, sigY + 12, { align: "center" });
   doc.setLineWidth(0.2);
   doc.setTextColor(...PDF_COLORS.text);
 
