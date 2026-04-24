@@ -148,6 +148,21 @@ export function RegistroTable({ data, onSelect, onStatusChanged }: RegistroTable
                           PROJETOS
                         </span>
                       )}
+                      {reg.os_gerada_id && (
+                        <Link
+                          to={`/producao?os=${reg.os_gerada_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase transition-opacity hover:opacity-80 ${
+                            reg.status === "resolvido"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                              : "bg-nue-azul/15 text-nue-azul"
+                          }`}
+                          title={reg.status === "resolvido" ? "OS entregue — registro resolvido" : "Ver OS em produção"}
+                        >
+                          {reg.status === "resolvido" ? "RESOLVIDO" : "EM PRODUÇÃO"}
+                          <ArrowUpRight className="h-2.5 w-2.5" />
+                        </Link>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-foreground hidden sm:table-cell">
