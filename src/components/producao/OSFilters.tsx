@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface OSFiltersProps {
   search: string;
   onSearchChange: (v: string) => void;
+  tipo: string;
+  onTipoChange: (v: string) => void;
   localizacao: string;
   onLocalizacaoChange: (v: string) => void;
   status: string;
@@ -41,6 +43,19 @@ export function OSFilters(props: OSFiltersProps) {
             className="pl-9"
           />
         </div>
+
+        <Select value={props.tipo} onValueChange={props.onTipoChange}>
+          <SelectTrigger className="w-full sm:w-[140px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value="os">Normal</SelectItem>
+            <SelectItem value="rep">REP</SelectItem>
+            <SelectItem value="oc">OC</SelectItem>
+            <SelectItem value="of">OF</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Select value={props.localizacao} onValueChange={props.onLocalizacaoChange}>
           <SelectTrigger className="w-full sm:w-[160px]">

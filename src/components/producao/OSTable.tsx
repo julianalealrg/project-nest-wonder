@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
-import { Badge } from "@/components/ui/badge";
 import { calcularSugestaoAvanco, calcularDependencia } from "@/lib/avancoSugerido";
 import { osBadgeClass } from "@/lib/statusColors";
+import { getOrigemTagInfo } from "@/lib/origemTag";
 
 function renderEntrega(dataEntrega: string | null, status: string) {
   if (status === "entregue" || !dataEntrega) {
@@ -32,23 +32,12 @@ interface OSTableProps {
   onStatusChanged?: () => void;
 }
 
-function getOrigemTag(origem: string) {
-  const map: Record<string, { label: string; className: string }> = {
-    os: { label: "OS", className: "bg-muted text-muted-foreground" },
-    rep: { label: "REP", className: "bg-nue-azul/10 text-nue-azul" },
-    oc: { label: "OC", className: "bg-nue-roxo/10 text-nue-roxo" },
-    of: { label: "OF", className: "bg-nue-chumbo/15 text-nue-chumbo" },
-  };
-  const tag = map[origem] || map.os;
-  return <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${tag.className}`}>{tag.label}</span>;
-}
-
 function getDaysInactive(updatedAt: string): number {
   const diff = Date.now() - new Date(updatedAt).getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function getRowBg(days: number, status: string): string {
+function getInactivityRowBg(days: number, status: string): string {
   if (status === "entregue") return "";
   if (days >= 5) return "bg-red-50";
   if (days >= 3) return "bg-yellow-50";
@@ -67,6 +56,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/30">
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">OS</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Cliente</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Ambiente</th>
@@ -81,7 +71,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-12 text-muted-foreground">
+                <td colSpan={10} className="text-center py-12 text-muted-foreground">
                   Nenhuma OS encontrada.
                 </td>
               </tr>
@@ -90,7 +80,10 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                 const days = getDaysInactive(os.updated_at);
                 const donePecas = os.pecas.filter((p) => p.status_cq === "aprovado").length;
                 const totalPecas = os.pecas.length;
-                const rowBg = getRowBg(days, os.status);
+                const inactivityBg = getInactivityRowBg(days, os.status);
+                const tag = getOrigemTagInfo(os.origem);
+                // Inatividade tem prioridade visual sobre cor de tipo
+                const rowBg = inactivityBg || tag.rowClass;
 
                 return (
                   <tr
@@ -99,10 +92,12 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                     className={`border-b last:border-b-0 cursor-pointer transition-colors hover:bg-muted/40 ${rowBg}`}
                   >
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {getOrigemTag(os.origem)}
-                        <span className="font-medium text-foreground">{os.codigo}</span>
-                      </div>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${tag.badgeClass}`}>
+                        {tag.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-foreground">{os.codigo}</span>
                     </td>
                     <td className="px-4 py-3 text-foreground hidden sm:table-cell truncate max-w-[200px]">
                       {os.cliente}
