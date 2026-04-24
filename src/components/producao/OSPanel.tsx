@@ -231,11 +231,7 @@ export function OSPanel({ os, onClose, onStatusChanged }: OSPanelProps) {
   const [selectedRomaneioCodigo, setSelectedRomaneioCodigo] = useState<string | null>(null);
   const [cqReprovaOpen, setCqReprovaOpen] = useState(false);
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
-  useEffect(() => {
-    return () => {
-      if (pdfPreview?.blobUrl) URL.revokeObjectURL(pdfPreview.blobUrl);
-    };
-  }, [pdfPreview]);
+  // Revoke do blobUrl é feito pelo PdfPreviewDialog (no unmount/troca de URL).
   const { profile } = useAuth();
   const { data: allRomaneios = [], refetch: refetchRomaneios } = useRomaneios();
   const selectedRomaneio = useMemo(
