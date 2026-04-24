@@ -31,9 +31,9 @@ export function getNextStation(peca: MockPeca): StationKey | null {
 export type PecaIrma = Partial<
   Pick<
     MockPeca,
-    "cortador" | "operador_45" | "operador_poliborda" | "operador_usinagem" | "acabador" | "cabine" | "updated_at"
+    "cortador" | "operador_45" | "operador_poliborda" | "operador_usinagem" | "acabador" | "cabine"
   >
->;
+> & { updated_at?: string | null };
 
 /**
  * Retorna o último valor não vazio de um campo dentre as peças irmãs,
