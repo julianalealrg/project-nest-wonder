@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { gerarCodigoOS } from "@/lib/gerarCodigoOS";
 
 interface PecaForm {
   item: string;
