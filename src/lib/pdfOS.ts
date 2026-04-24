@@ -183,12 +183,15 @@ export function gerarPDFOS(os: MockOS, extras: OSPdfExtras = {}): { blobUrl: str
   y += 26;
   doc.setLineWidth(0.2);
 
-  // Badge colorido grande de destino + assinaturas — fixos no rodapé da página 1
-  // Reservar margem de 18mm pro rodapé (linha em pageH-12 + textos em pageH-8)
+  // Badge de destino + assinaturas — posicionados próximos ao conteúdo,
+  // mas respeitando margem mínima do rodapé (18mm).
   const pageH = doc.internal.pageSize.getHeight();
-  const sigBottom = pageH - 18; // base inferior das linhas de assinatura
-  const sigY = sigBottom - 12;  // linha de assinatura (Nome/Data ficam abaixo)
-  const destY = sigY - 22;      // badge destino acima das assinaturas
+  const sigBottomMax = pageH - 18;
+  // Bloco completo: destino (12mm) + gap (10mm) + assinaturas (12mm) = 34mm
+  const desiredDestY = y + 6;
+  const maxDestY = sigBottomMax - 12 - 22;
+  const destY = Math.min(desiredDestY, maxDestY);
+  const sigY = destY + 22;
 
   const destLabel = (os.localizacao || "—").toUpperCase();
   const destCol = destinoColor(os.localizacao);
