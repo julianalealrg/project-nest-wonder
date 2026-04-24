@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Loader2, Palette, ArrowUpRight } from "lucide-react";
+import { ChevronRight, Loader2, Palette, ArrowUpRight, Calculator, Pencil, RotateCcw, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { MockOS, STATUS_STEPS, STATUS_MAP, STATUS_LABELS } from "@/data/mockProducao";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -192,7 +193,6 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
             { label: "Ambiente", value: os.ambiente },
             { label: "Supervisor", value: os.supervisor },
             { label: "Projetista", value: os.projetista },
-            { label: "Área", value: `${os.area_m2} m²` },
             { label: "Localização", value: os.localizacao },
             { label: "Data Emissão", value: os.data_emissao ? new Date(os.data_emissao).toLocaleDateString("pt-BR") : "—" },
             { label: "Data Entrega", value: os.data_entrega ? new Date(os.data_entrega).toLocaleDateString("pt-BR") : "—" },
@@ -202,6 +202,7 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
               <p className="text-[14px] font-medium text-foreground">{value || "—"}</p>
             </div>
           ))}
+          <AreaField os={os} onChanged={() => onStatusChanged?.()} />
           {os.terceiro && (
             <div className="col-span-2 sm:col-span-3">
               <span className="text-[11px] text-muted-foreground">Terceiro</span>
@@ -342,6 +343,142 @@ export function OSDetalheGeral({ os, onStatusChanged }: Props) {
           onStatusChanged?.();
         }}
       />
+    </div>
+  );
+}
+
+interface AreaFieldProps {
+  os: MockOS;
+  onChanged: () => void;
+}
+
+function AreaField({ os, onChanged }: AreaFieldProps) {
+  const isManual = !!os.area_m2_manual;
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState<string>(String(os.area_m2 ?? ""));
+  const [saving, setSaving] = useState(false);
+
+  async function enableManual() {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("ordens_servico")
+        .update({ area_m2_manual: true, updated_at: new Date().toISOString() } as any)
+        .eq("id", os.id);
+      if (error) throw error;
+      setValue(String(os.area_m2 ?? ""));
+      setEditing(true);
+      onChanged();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveManualValue() {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num < 0) {
+      toast({ title: "Valor inválido", description: "Informe um número maior ou igual a zero.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("ordens_servico")
+        .update({ area_m2: num, area_m2_manual: true, updated_at: new Date().toISOString() } as any)
+        .eq("id", os.id);
+      if (error) throw error;
+      setEditing(false);
+      onChanged();
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function backToAuto() {
+    setSaving(true);
+    try {
+      // Recalcula com base nas peças (espelha a função SQL)
+      const { data: pecasRows } = await supabase
+        .from("pecas")
+        .select("comprimento, largura, quantidade")
+        .eq("os_id", os.id);
+      const computed = (pecasRows || []).reduce((sum: number, p: any) => {
+        const c = Number(p.comprimento) || 0;
+        const l = Number(p.largura) || 0;
+        const q = Number(p.quantidade) || 1;
+        return sum + c * l * q;
+      }, 0);
+      const { error } = await supabase
+        .from("ordens_servico")
+        .update({ area_m2_manual: false, area_m2: computed, updated_at: new Date().toISOString() } as any)
+        .eq("id", os.id);
+      if (error) throw error;
+      setEditing(false);
+      setValue(String(computed));
+      onChanged();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="col-span-2 sm:col-span-3">
+      <span className="text-[11px] text-muted-foreground">Área</span>
+      {!isManual && (
+        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+          <p className="text-[14px] font-medium text-foreground inline-flex items-center gap-1.5">
+            <Calculator className="h-3.5 w-3.5 text-muted-foreground" />
+            {Number(os.area_m2 ?? 0).toFixed(4)} m²
+          </p>
+          <span className="text-[11px] text-muted-foreground">Calculado automaticamente das peças</span>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={enableManual} disabled={saving}>
+            <Pencil className="h-3 w-3 mr-1" /> Editar manualmente
+          </Button>
+        </div>
+      )}
+      {isManual && !editing && (
+        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+          <p className="text-[14px] font-medium text-foreground">{Number(os.area_m2 ?? 0).toFixed(4)} m²</p>
+          <span className="text-[11px] font-medium text-destructive inline-flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" /> Valor manual — não será atualizado quando peças mudarem
+          </span>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setValue(String(os.area_m2 ?? "")); setEditing(true); }} disabled={saving}>
+            <Pencil className="h-3 w-3 mr-1" /> Editar
+          </Button>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={backToAuto} disabled={saving}>
+            <RotateCcw className="h-3 w-3 mr-1" /> Voltar para automático
+          </Button>
+        </div>
+      )}
+      {isManual && editing && (
+        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+          <Input
+            type="number"
+            step="0.001"
+            min={0}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="h-8 w-32 text-sm"
+            autoFocus
+          />
+          <span className="text-[12px] text-muted-foreground">m²</span>
+          <Button size="sm" className="h-7 px-3 text-[11px]" onClick={saveManualValue} disabled={saving}>
+            {saving && <Loader2 className="h-3 w-3 mr-1 animate-spin" />} Salvar
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setEditing(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={backToAuto} disabled={saving}>
+            <RotateCcw className="h-3 w-3 mr-1" /> Voltar para automático
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

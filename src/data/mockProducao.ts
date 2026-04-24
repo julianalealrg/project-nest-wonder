@@ -37,6 +37,7 @@ export interface MockOS {
   projetista: string;
   supervisor: string;
   area_m2: number;
+  area_m2_manual?: boolean;
   data_emissao: string;
   data_entrega: string | null;
   status: string;

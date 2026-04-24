@@ -837,14 +837,23 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                     <Input type="date" value={os.data_entrega} onChange={(e) => updateOS(osIdx, { data_entrega: e.target.value })} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Área (m²)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={os.area_m2}
-                      onChange={(e) => updateOS(osIdx, { area_m2: e.target.value === "" ? "" : Number(e.target.value) })}
-                      placeholder="0.00"
-                    />
+                    <Label className="text-xs">Área (calculada das peças)</Label>
+                    {(() => {
+                      const computed = os.pecas.reduce((sum, p) => {
+                        if (p.comprimento !== "" && p.largura !== "") {
+                          return sum + Number(p.comprimento) * Number(p.largura) * (p.quantidade || 1);
+                        }
+                        return sum;
+                      }, 0);
+                      return (
+                        <Input
+                          type="text"
+                          readOnly
+                          value={`${computed.toFixed(4)} m²`}
+                          className="bg-muted/40 cursor-not-allowed"
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
 

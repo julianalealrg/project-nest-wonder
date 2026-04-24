@@ -197,6 +197,7 @@ export type Database = {
         Row: {
           ambiente: string | null
           area_m2: number | null
+          area_m2_manual: boolean
           cliente_id: string | null
           codigo: string
           created_at: string
@@ -224,6 +225,7 @@ export type Database = {
         Insert: {
           ambiente?: string | null
           area_m2?: number | null
+          area_m2_manual?: boolean
           cliente_id?: string | null
           codigo: string
           created_at?: string
@@ -251,6 +253,7 @@ export type Database = {
         Update: {
           ambiente?: string | null
           area_m2?: number | null
+          area_m2_manual?: boolean
           cliente_id?: string | null
           codigo?: string
           created_at?: string
@@ -833,6 +836,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalcular_area_os: { Args: { p_os_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "operador" | "observador"
