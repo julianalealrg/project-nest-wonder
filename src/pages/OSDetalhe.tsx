@@ -14,6 +14,7 @@ import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 import { OSDetalheGeral } from "@/components/producao/detalhe/OSDetalheGeral";
 import { OSDetalhePecas } from "@/components/producao/detalhe/OSDetalhePecas";
 import { OSDetalheRomaneios } from "@/components/producao/detalhe/OSDetalheRomaneios";
+import { OSDetalheOcorrencias } from "@/components/producao/detalhe/OSDetalheOcorrencias";
 import { OSDetalheHistorico } from "@/components/producao/detalhe/OSDetalheHistorico";
 import { getOrigemTagInfo } from "@/lib/origemTag";
 
@@ -36,6 +37,7 @@ export default function OSDetalhe() {
   useRealtimeInvalidate([
     { table: "ordens_servico", queryKeys: [["ordens_servico"], ["home-kpis"]] },
     { table: "pecas", queryKeys: [["ordens_servico"]] },
+    { table: "registros", queryKeys: [["ordens_servico"]] },
     { table: "activity_logs", queryKeys: [["activity_logs", "ordens_servico", id || ""]] },
   ]);
 
@@ -74,6 +76,9 @@ export default function OSDetalhe() {
   const donePecas = os.pecas.filter((p) => p.status_cq === "aprovado").length;
   const totalPecas = os.pecas.length;
   const pctPecas = totalPecas > 0 ? Math.round((donePecas / totalPecas) * 100) : 0;
+  const ocorrenciasPendentes = (os.registros || []).filter(
+    (r) => r.status !== "resolvido" && !r.acao_produtiva,
+  ).length;
   const dataEntrega = os.data_entrega ? new Date(os.data_entrega) : null;
   const diasRestantes = dataEntrega ? Math.ceil((dataEntrega.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
 
@@ -151,6 +156,15 @@ export default function OSDetalhe() {
             <TabsTrigger value="geral">Geral</TabsTrigger>
             <TabsTrigger value="pecas">Peças ({totalPecas})</TabsTrigger>
             <TabsTrigger value="romaneios">Romaneios ({os.romaneios.length})</TabsTrigger>
+            <TabsTrigger value="ocorrencias">
+              Ocorrências{ocorrenciasPendentes > 0 ? (
+                <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground">
+                  {ocorrenciasPendentes}
+                </span>
+              ) : os.registros && os.registros.length > 0 ? (
+                <span className="ml-1.5 text-[11px] text-muted-foreground">({os.registros.length})</span>
+              ) : null}
+            </TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
 
@@ -164,6 +178,10 @@ export default function OSDetalhe() {
 
           <TabsContent value="romaneios" className="mt-4 rounded-lg border bg-card p-5">
             <OSDetalheRomaneios os={os} onStatusChanged={handleRefresh} />
+          </TabsContent>
+
+          <TabsContent value="ocorrencias" className="mt-4 rounded-lg border bg-card p-5">
+            <OSDetalheOcorrencias os={os} onChanged={handleRefresh} />
           </TabsContent>
 
           <TabsContent value="historico" className="mt-4 rounded-lg border bg-card p-5">

@@ -24,7 +24,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       .from("romaneio_pecas")
       .select("romaneio_id, os_id, romaneios ( id, codigo, tipo_rota, status, data_saida, data_recebimento )")
       .in("os_id", osIds),
-    supabase.from("registros").select("codigo, tipo, status, urgencia, os_id").in("os_id", osIds),
+    supabase.from("registros").select("id, codigo, tipo, origem, status, urgencia, os_id, acao_produtiva, encaminhar_projetos").in("os_id", osIds),
   ]);
 
   // Group pecas by os_id
@@ -83,11 +83,20 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
   }
 
   // Group registros by os_id
-  const registrosByOs = new Map<string, { codigo: string; tipo: string; status: string; urgencia: string; encaminhar_projetos?: boolean }[]>();
+  const registrosByOs = new Map<string, MockOS["registros"]>();
   for (const r of registrosRes.data || []) {
     if (!r.os_id) continue;
     const list = registrosByOs.get(r.os_id) || [];
-    list.push({ codigo: r.codigo, tipo: r.tipo || "", status: r.status, urgencia: r.urgencia, encaminhar_projetos: (r as any).encaminhar_projetos ?? false });
+    list.push({
+      id: r.id,
+      codigo: r.codigo,
+      tipo: r.tipo || "",
+      origem: (r as any).origem,
+      status: r.status,
+      urgencia: r.urgencia,
+      encaminhar_projetos: (r as any).encaminhar_projetos ?? false,
+      acao_produtiva: (r as any).acao_produtiva ?? null,
+    });
     registrosByOs.set(r.os_id, list);
   }
 

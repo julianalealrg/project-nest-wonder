@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
 import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
 import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
-import { Romaneio, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
+import { Romaneio, RomaneioPeca, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,11 +10,15 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { romaneioBadgeClass } from "@/lib/statusColors";
+import { FotoUploader } from "@/components/common/FotoUploader";
+import { uploadFotos, uploadUmaFoto } from "@/lib/uploadFotos";
+import { gerarCodigoRegistro } from "@/lib/gerarCodigoRegistro";
 
 interface RomaneioPanelProps {
   romaneio: Romaneio | null;
@@ -24,18 +28,28 @@ interface RomaneioPanelProps {
   asDialog?: boolean;
 }
 
+interface ConferenciaPecaState {
+  status: string;
+  observacao: string;
+  quantidadeAfetada: number;
+  fotos: File[];
+  fotosSalvas: string[];
+}
+
 export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }: RomaneioPanelProps) {
   const [loading, setLoading] = useState(false);
   const [conferindo, setConferindo] = useState(false);
-  const [conferencias, setConferencias] = useState<Record<string, string>>({});
+  const [conferencias, setConferencias] = useState<Record<string, ConferenciaPecaState>>({});
+  const [fotoPecas, setFotoPecas] = useState<File[]>([]);
+  const [fotoRomaneioAssinado, setFotoRomaneioAssinado] = useState<File[]>([]);
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
-  // Revoke do blobUrl é feito pelo PdfPreviewDialog (no unmount/troca de URL).
   const { profile } = useAuth();
 
   if (!romaneio) return null;
 
   const canDepart = romaneio.status === "pendente";
   const canReceive = romaneio.status === "em_transito";
+  const isB1B2 = romaneio.tipo_rota === "base1_base2";
 
   async function handleDespachar() {
     setLoading(true);
@@ -65,32 +79,165 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   }
 
   function startConferencia() {
-    const initial: Record<string, string> = {};
+    const initial: Record<string, ConferenciaPecaState> = {};
     romaneio!.pecas.forEach((p) => {
-      initial[p.id] = p.conferencia || "ok";
+      initial[p.id] = {
+        status: p.conferencia || "ok",
+        observacao: p.observacao || "",
+        quantidadeAfetada: p.quantidade,
+        fotos: [],
+        fotosSalvas: p.fotos || [],
+      };
     });
     setConferencias(initial);
+    setFotoPecas([]);
+    setFotoRomaneioAssinado([]);
     setConferindo(true);
+  }
+
+  function updateConferencia(pecaId: string, patch: Partial<ConferenciaPecaState>) {
+    setConferencias((prev) => ({
+      ...prev,
+      [pecaId]: { ...prev[pecaId], ...patch },
+    }));
+  }
+
+  /**
+   * Cria um Registro automático pra peça com problema na conferência.
+   * faltou → origem 'solicitacao' (precisa repor)
+   * avariada → origem 'fabrica' (problema interno em transporte)
+   */
+  async function criarRegistroOcorrencia(
+    peca: RomaneioPeca,
+    estado: ConferenciaPecaState,
+    fotosUrls: string[],
+  ): Promise<string | null> {
+    const origem: "solicitacao" | "fabrica" = estado.status === "faltou" ? "solicitacao" : "fabrica";
+    const tipo = estado.status === "faltou" ? "Peça faltante (recebimento B2)" : "Peça avariada em transporte";
+    const codigo = await gerarCodigoRegistro(origem);
+
+    // Busca dados auxiliares da OS pra preencher campos obrigatórios
+    let ambiente: string | null = null;
+    let supervisor: string | null = null;
+    let projetista: string | null = null;
+    let clienteNome: string | null = peca.cliente_nome || null;
+    if (peca.os_id) {
+      const { data: os } = await supabase
+        .from("ordens_servico")
+        .select("ambiente, projetista, clientes ( nome, supervisor )")
+        .eq("id", peca.os_id)
+        .maybeSingle();
+      if (os) {
+        ambiente = os.ambiente;
+        projetista = os.projetista;
+        const cli = (os as any).clientes;
+        if (cli) {
+          clienteNome = cli.nome || clienteNome;
+          supervisor = cli.supervisor;
+        }
+      }
+    }
+
+    const justificativa = estado.observacao.trim() ||
+      `${tipo} identificada na conferência do romaneio ${romaneio!.codigo}.`;
+
+    const { data: novoRegistro, error } = await supabase
+      .from("registros")
+      .insert({
+        codigo,
+        origem,
+        numero_os: peca.os_codigo || "",
+        os_id: peca.os_id,
+        peca_id: peca.peca_id,
+        romaneio_id: romaneio!.id,
+        quantidade_afetada: estado.quantidadeAfetada,
+        fotos: fotosUrls,
+        cliente: clienteNome,
+        material: peca.material,
+        ambiente,
+        supervisor,
+        projetista,
+        aberto_por: profile?.nome || "Sistema",
+        tipo,
+        urgencia: "alta",
+        status: "aberto",
+        justificativa,
+      })
+      .select("id, codigo")
+      .single();
+
+    if (error) {
+      console.error(`Falha ao criar registro pra peça ${peca.peca_item}:`, error);
+      return null;
+    }
+
+    await supabase.from("activity_logs").insert({
+      action: "registro_auto_recebimento",
+      entity_type: "registros",
+      entity_id: novoRegistro.id,
+      entity_description: novoRegistro.codigo,
+      user_name: profile?.nome || "Sistema",
+      details: {
+        origem_registro: "conferencia_romaneio",
+        romaneio_codigo: romaneio!.codigo,
+        peca_item: peca.peca_item,
+        os_codigo: peca.os_codigo,
+        conferencia: estado.status,
+      },
+    });
+
+    return novoRegistro.id;
   }
 
   async function handleConfirmarRecebimento() {
     setLoading(true);
     try {
-      // Update each romaneio_peca conferencia
-      for (const [pecaId, status] of Object.entries(conferencias)) {
+      const pecasComProblema: { peca: RomaneioPeca; estado: ConferenciaPecaState }[] = [];
+
+      // 1. Upload de fotos por peça com problema + update na conferência
+      for (const peca of romaneio!.pecas) {
+        const estado = conferencias[peca.id];
+        if (!estado) continue;
+
+        let fotosUrls: string[] = [...estado.fotosSalvas];
+        if (estado.fotos.length > 0) {
+          const novas = await uploadFotos(estado.fotos, `romaneio/${romaneio!.id}/peca/${peca.id}`);
+          fotosUrls = [...fotosUrls, ...novas];
+        }
+
         await supabase
           .from("romaneio_pecas")
-          .update({ conferencia: status })
-          .eq("id", pecaId);
+          .update({
+            conferencia: estado.status,
+            observacao: estado.observacao || null,
+            fotos: fotosUrls,
+          })
+          .eq("id", peca.id);
+
+        if (estado.status === "faltou" || estado.status === "avariada") {
+          pecasComProblema.push({ peca, estado: { ...estado, fotosSalvas: fotosUrls } });
+        }
       }
 
-      // Update romaneio
+      // 2. Upload das fotos gerais do recebimento
+      let fotoPecasUrl: string | null = romaneio!.foto_pecas_armazenadas_url;
+      let fotoRomaneioUrl: string | null = romaneio!.foto_romaneio_assinado_url;
+      if (fotoPecas.length > 0) {
+        fotoPecasUrl = (await uploadUmaFoto(fotoPecas[0], `romaneio/${romaneio!.id}/recebimento`)) || fotoPecasUrl;
+      }
+      if (fotoRomaneioAssinado.length > 0) {
+        fotoRomaneioUrl = (await uploadUmaFoto(fotoRomaneioAssinado[0], `romaneio/${romaneio!.id}/recebimento`)) || fotoRomaneioUrl;
+      }
+
+      // 3. Update romaneio
       const { error } = await supabase
         .from("romaneios")
         .update({
           status: "entregue",
           data_recebimento: new Date().toISOString(),
           recebido_por: profile?.nome || "Sistema",
+          foto_pecas_armazenadas_url: fotoPecasUrl,
+          foto_romaneio_assinado_url: fotoRomaneioUrl,
         })
         .eq("id", romaneio!.id);
       if (error) throw error;
@@ -101,20 +248,32 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         entity_id: romaneio!.id,
         entity_description: romaneio!.codigo,
         user_name: profile?.nome || "Sistema",
-        details: { conferencias },
+        details: {
+          conferencias: Object.fromEntries(
+            Object.entries(conferencias).map(([k, v]) => [k, v.status]),
+          ),
+          pecas_com_problema: pecasComProblema.length,
+        },
       });
 
-      // Sincronizar OS vinculadas: se for romaneio B1->B2, avançar OS de "enviado_base2" para "acabamento"
-      if (romaneio!.tipo_rota === "base1_base2") {
+      // 4. Criar Registros automáticos para peças com problema
+      const osIdsComProblema = new Set<string>();
+      for (const { peca, estado } of pecasComProblema) {
+        await criarRegistroOcorrencia(peca, estado, estado.fotosSalvas);
+        if (peca.os_id) osIdsComProblema.add(peca.os_id);
+      }
+
+      // 5. Avanço automático da OS de "enviado_base2" → "acabamento" só para OS sem problema
+      if (isB1B2) {
         const osIds = Array.from(
-          new Set(romaneio!.pecas.map((p: any) => p.os_id).filter(Boolean)),
+          new Set(romaneio!.pecas.map((p) => p.os_id).filter(Boolean)),
         ) as string[];
-        if (osIds.length > 0) {
-          // Buscar OS que estão em enviado_base2 para logar apenas as efetivamente atualizadas
+        const osIdsAvancar = osIds.filter((id) => !osIdsComProblema.has(id));
+        if (osIdsAvancar.length > 0) {
           const { data: osParaAtualizar } = await supabase
             .from("ordens_servico")
             .select("id, codigo")
-            .in("id", osIds)
+            .in("id", osIdsAvancar)
             .eq("status", "enviado_base2");
 
           if (osParaAtualizar && osParaAtualizar.length > 0) {
@@ -128,7 +287,6 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
               })
               .in("id", idsParaAtualizar);
 
-            // Log por OS
             const logs = osParaAtualizar.map((o) => ({
               action: "avanco_automatico_pos_recebimento",
               entity_type: "ordens_servico",
@@ -147,7 +305,10 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         }
       }
 
-      toast({ title: `${romaneio!.codigo} recebido com sucesso` });
+      const msg = pecasComProblema.length > 0
+        ? `${romaneio!.codigo} recebido. ${pecasComProblema.length} ocorrência(s) registrada(s).`
+        : `${romaneio!.codigo} recebido com sucesso`;
+      toast({ title: msg });
       setConferindo(false);
       onChanged?.();
     } catch (err: any) {
@@ -231,6 +392,62 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         </>
       )}
 
+      {/* Fotos do recebimento (somente quando já entregue) */}
+      {(romaneio.foto_pecas_armazenadas_url || romaneio.foto_romaneio_assinado_url) && !conferindo && (
+        <>
+          <Separator />
+          <div>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Recebimento</h3>
+            <div className="flex gap-2">
+              {romaneio.foto_pecas_armazenadas_url && (
+                <a href={romaneio.foto_pecas_armazenadas_url} target="_blank" rel="noopener noreferrer" className="block">
+                  <img src={romaneio.foto_pecas_armazenadas_url} alt="Peças armazenadas" className="h-20 w-20 object-cover rounded border" />
+                  <p className="text-[10px] text-muted-foreground mt-1 text-center">Peças</p>
+                </a>
+              )}
+              {romaneio.foto_romaneio_assinado_url && (
+                <a href={romaneio.foto_romaneio_assinado_url} target="_blank" rel="noopener noreferrer" className="block">
+                  <img src={romaneio.foto_romaneio_assinado_url} alt="Romaneio assinado" className="h-20 w-20 object-cover rounded border" />
+                  <p className="text-[10px] text-muted-foreground mt-1 text-center">Romaneio</p>
+                </a>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Bloco de upload de fotos gerais (somente em modo conferência) */}
+      {conferindo && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Fotos do recebimento</h3>
+            <div>
+              <Label className="text-xs">Peças armazenadas</Label>
+              <FotoUploader
+                fotos={fotoPecas}
+                onChange={setFotoPecas}
+                fotosSalvas={romaneio.foto_pecas_armazenadas_url ? [romaneio.foto_pecas_armazenadas_url] : []}
+                multiple={false}
+                size="sm"
+                label="Foto peças"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Romaneio assinado</Label>
+              <FotoUploader
+                fotos={fotoRomaneioAssinado}
+                onChange={setFotoRomaneioAssinado}
+                fotosSalvas={romaneio.foto_romaneio_assinado_url ? [romaneio.foto_romaneio_assinado_url] : []}
+                multiple={false}
+                size="sm"
+                label="Foto romaneio"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
       <Separator />
 
       {/* Peças */}
@@ -243,65 +460,126 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
             const hasMedida = p.comprimento != null || p.largura != null;
             const fmt = (v: number | null | undefined) =>
               v == null ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+            const estado = conferencias[p.id];
+            const showProblemaUI = conferindo && estado && (estado.status === "faltou" || estado.status === "avariada");
             return (
-            <div key={p.id} className="flex items-start gap-3 p-2.5 rounded-md bg-muted/30 text-sm">
-              <span className="font-medium text-foreground w-10 text-center pt-0.5">{p.peca_item}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-foreground">{p.peca_descricao}</div>
-                <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
-                  {hasMedida && (
-                    <span>{fmt(p.comprimento)} × {fmt(p.largura)} m</span>
-                  )}
-                  {p.material && <span>— {p.material}</span>}
-                  {p.os_codigo && <span>— OS {p.os_codigo}</span>}
+              <div key={p.id} className="rounded-md bg-muted/30 text-sm">
+                <div className="flex items-start gap-3 p-2.5">
+                  <span className="font-medium text-foreground w-10 text-center pt-0.5">{p.peca_item}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-foreground">{p.peca_descricao}</div>
+                    <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
+                      {hasMedida && (
+                        <span>{fmt(p.comprimento)} × {fmt(p.largura)} m</span>
+                      )}
+                      {p.material && <span>— {p.material}</span>}
+                      {p.os_codigo && <span>— OS {p.os_codigo}</span>}
+                      <span>— qtd {p.quantidade}</span>
+                    </div>
+                  </div>
+                  {conferindo ? (
+                    <Select
+                      value={estado?.status || "ok"}
+                      onValueChange={(v) => updateConferencia(p.id, { status: v })}
+                    >
+                      <SelectTrigger className="w-[110px] h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ok">✓ OK</SelectItem>
+                        <SelectItem value="faltou">✗ Faltou</SelectItem>
+                        <SelectItem value="avariada">⚠ Avariada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (() => {
+                    const showConferencia =
+                      romaneio.status === "entregue" || romaneio.status === "recebido";
+                    const conf = p.conferencia;
+                    if (!showConferencia || !conf || conf === "pendente") {
+                      return <span className="text-[10px] text-muted-foreground">—</span>;
+                    }
+                    if (conf === "ok") {
+                      return (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 uppercase">
+                          OK
+                        </span>
+                      );
+                    }
+                    if (conf === "faltou" || conf === "faltante") {
+                      return (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 uppercase">
+                          Faltante
+                        </span>
+                      );
+                    }
+                    if (conf === "avariada") {
+                      return (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700 uppercase">
+                          Avariada
+                        </span>
+                      );
+                    }
+                    return <span className="text-[10px] text-muted-foreground">—</span>;
+                  })()}
                 </div>
+                {/* Bloco extra quando peça está marcada como faltou/avariada */}
+                {showProblemaUI && (
+                  <div className="border-t bg-background/40 p-3 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[11px]">Quantidade afetada</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={p.quantidade}
+                          className="h-7 text-xs"
+                          value={estado.quantidadeAfetada}
+                          onChange={(e) => updateConferencia(p.id, { quantidadeAfetada: Math.max(1, Number(e.target.value) || 1) })}
+                        />
+                      </div>
+                      <div className="text-[11px] text-muted-foreground self-end pb-1">
+                        {estado.status === "faltou" ? "Vai gerar Solicitação de Reposição" : "Vai gerar Ocorrência de Fábrica"}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Observação</Label>
+                      <Textarea
+                        rows={2}
+                        className="text-xs"
+                        placeholder="Ex: faltou peça do tampo / quebrou no canto direito"
+                        value={estado.observacao}
+                        onChange={(e) => updateConferencia(p.id, { observacao: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Fotos da evidência</Label>
+                      <FotoUploader
+                        fotos={estado.fotos}
+                        onChange={(fs) => updateConferencia(p.id, { fotos: fs })}
+                        fotosSalvas={estado.fotosSalvas}
+                        onRemoverSalva={(url) => updateConferencia(p.id, { fotosSalvas: estado.fotosSalvas.filter((u) => u !== url) })}
+                        size="sm"
+                        label="Foto"
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Visualização de observação + fotos quando já recebido */}
+                {!conferindo && (p.observacao || (p.fotos && p.fotos.length > 0)) && (p.conferencia === "faltou" || p.conferencia === "avariada") && (
+                  <div className="border-t bg-background/40 p-2 space-y-1.5">
+                    {p.observacao && <p className="text-xs text-foreground">{p.observacao}</p>}
+                    {p.fotos && p.fotos.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {p.fotos.map((url) => (
+                          <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                            <img src={url} alt="" className="h-12 w-12 object-cover rounded border" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              {conferindo ? (
-                <Select
-                  value={conferencias[p.id] || "ok"}
-                  onValueChange={(v) => setConferencias((prev) => ({ ...prev, [p.id]: v }))}
-                >
-                  <SelectTrigger className="w-[110px] h-7 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ok">✓ OK</SelectItem>
-                    <SelectItem value="faltou">✗ Faltou</SelectItem>
-                    <SelectItem value="avariada">⚠ Avariada</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (() => {
-                // Só mostra badge de conferência quando o romaneio já chegou ao destino.
-                const showConferencia =
-                  romaneio.status === "entregue" || romaneio.status === "recebido";
-                const conf = p.conferencia;
-                if (!showConferencia || !conf || conf === "pendente") {
-                  return <span className="text-[10px] text-muted-foreground">—</span>;
-                }
-                if (conf === "ok") {
-                  return (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 uppercase">
-                      OK
-                    </span>
-                  );
-                }
-                if (conf === "faltou" || conf === "faltante") {
-                  return (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 uppercase">
-                      Faltante
-                    </span>
-                  );
-                }
-                if (conf === "avariada") {
-                  return (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700 uppercase">
-                      Avariada
-                    </span>
-                  );
-                }
-                return <span className="text-[10px] text-muted-foreground">—</span>;
-              })()}
-            </div>
             );
           })}
         </div>

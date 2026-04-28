@@ -7,6 +7,8 @@ export interface RomaneioPeca {
   os_id: string | null;
   conferencia: string | null;
   observacao: string | null;
+  fotos: string[];
+  quantidade: number;
   // joined
   peca_item: string;
   peca_descricao: string;
@@ -31,6 +33,7 @@ export interface Romaneio {
   recebido_por: string | null;
   pdf_url: string | null;
   foto_romaneio_assinado_url: string | null;
+  foto_pecas_armazenadas_url: string | null;
   created_at: string;
   pecas: RomaneioPeca[];
   os_codigos: string[];
@@ -79,8 +82,8 @@ export function useRomaneios() {
       const { data: rpData } = await supabase
         .from("romaneio_pecas")
         .select(`
-          id, peca_id, os_id, conferencia, observacao, romaneio_id,
-          pecas ( item, descricao, comprimento, largura ),
+          id, peca_id, os_id, conferencia, observacao, fotos, romaneio_id,
+          pecas ( item, descricao, comprimento, largura, quantidade ),
           ordens_servico ( codigo, material, clientes ( nome ) )
         `)
         .in("romaneio_id", ids);
@@ -101,6 +104,8 @@ export function useRomaneios() {
           os_id: rp.os_id,
           conferencia: rp.conferencia,
           observacao: rp.observacao,
+          fotos: (rp as any).fotos || [],
+          quantidade: peca?.quantidade ?? 1,
           peca_item: peca?.item || "",
           peca_descricao: peca?.descricao || "",
           comprimento: peca?.comprimento ?? null,

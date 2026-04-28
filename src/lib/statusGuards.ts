@@ -43,6 +43,7 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
   }
 
   // Enviado Base 2 -> Acabamento : exige conferência do romaneio B1->B2 na Base 2
+  // E nenhuma ocorrência de recebimento pendente sem encaminhamento.
   if (os.status === "enviado_base2" && toStatus === "acabamento") {
     const romaneios = (os as any).romaneios || [];
     const romB1B2 = romaneios.find((r: any) => r.tipo_rota === "base1_base2");
@@ -54,6 +55,18 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
         title: "Aguardando conferência na Base 2",
         reason:
           "Esta OS só pode ir para Acabamento depois que a Base 2 conferir e confirmar o recebimento do romaneio B1→B2. Vá para Logística e confirme o recebimento.",
+      };
+    }
+    const ocorrenciasPendentes = (os.registros || []).filter(
+      (r) => r.status !== "resolvido" && !r.acao_produtiva,
+    );
+    if (ocorrenciasPendentes.length > 0) {
+      return {
+        kind: "blocked",
+        title: "Ocorrências de recebimento pendentes",
+        reason:
+          `Existem ${ocorrenciasPendentes.length} ocorrência(s) sem encaminhamento. Abra a aba "Ocorrências" da OS e defina ação produtiva (ou conclua) antes de avançar para Acabamento.`,
+        details: ocorrenciasPendentes.map((r) => `${r.codigo} — ${r.tipo || "sem tipo"}`),
       };
     }
     return { kind: "allow" };
