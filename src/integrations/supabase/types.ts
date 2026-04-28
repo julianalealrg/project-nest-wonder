@@ -499,6 +499,7 @@ export type Database = {
           codigo: string
           created_at: string
           encaminhar_projetos: boolean | null
+          fotos: string[]
           id: string
           instrucao_projetos: string | null
           justificativa: string | null
@@ -508,13 +509,16 @@ export type Database = {
           origem: string
           os_gerada_id: string | null
           os_id: string | null
+          peca_id: string | null
           projetista: string | null
+          quantidade_afetada: number | null
           recolha_destino: string | null
           recolha_origem: string | null
           requer_recolha: boolean | null
           resolvido_em: string | null
           responsavel_erro_nome: string | null
           responsavel_erro_papel: string | null
+          romaneio_id: string | null
           status: string
           supervisor: string | null
           tipo: string | null
@@ -531,6 +535,7 @@ export type Database = {
           codigo: string
           created_at?: string
           encaminhar_projetos?: boolean | null
+          fotos?: string[]
           id?: string
           instrucao_projetos?: string | null
           justificativa?: string | null
@@ -540,13 +545,16 @@ export type Database = {
           origem: string
           os_gerada_id?: string | null
           os_id?: string | null
+          peca_id?: string | null
           projetista?: string | null
+          quantidade_afetada?: number | null
           recolha_destino?: string | null
           recolha_origem?: string | null
           requer_recolha?: boolean | null
           resolvido_em?: string | null
           responsavel_erro_nome?: string | null
           responsavel_erro_papel?: string | null
+          romaneio_id?: string | null
           status?: string
           supervisor?: string | null
           tipo?: string | null
@@ -563,6 +571,7 @@ export type Database = {
           codigo?: string
           created_at?: string
           encaminhar_projetos?: boolean | null
+          fotos?: string[]
           id?: string
           instrucao_projetos?: string | null
           justificativa?: string | null
@@ -572,13 +581,16 @@ export type Database = {
           origem?: string
           os_gerada_id?: string | null
           os_id?: string | null
+          peca_id?: string | null
           projetista?: string | null
+          quantidade_afetada?: number | null
           recolha_destino?: string | null
           recolha_origem?: string | null
           requer_recolha?: boolean | null
           resolvido_em?: string | null
           responsavel_erro_nome?: string | null
           responsavel_erro_papel?: string | null
+          romaneio_id?: string | null
           status?: string
           supervisor?: string | null
           tipo?: string | null
@@ -601,11 +613,26 @@ export type Database = {
             referencedRelation: "ordens_servico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "registros_peca_id_fkey"
+            columns: ["peca_id"]
+            isOneToOne: false
+            referencedRelation: "pecas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registros_romaneio_id_fkey"
+            columns: ["romaneio_id"]
+            isOneToOne: false
+            referencedRelation: "romaneios"
+            referencedColumns: ["id"]
+          },
         ]
       }
       romaneio_pecas: {
         Row: {
           conferencia: string | null
+          fotos: string[]
           id: string
           observacao: string | null
           os_id: string | null
@@ -614,6 +641,7 @@ export type Database = {
         }
         Insert: {
           conferencia?: string | null
+          fotos?: string[]
           id?: string
           observacao?: string | null
           os_id?: string | null
@@ -622,6 +650,7 @@ export type Database = {
         }
         Update: {
           conferencia?: string | null
+          fotos?: string[]
           id?: string
           observacao?: string | null
           os_id?: string | null
@@ -664,6 +693,7 @@ export type Database = {
           data_recebimento: string | null
           data_saida: string | null
           endereco_destino: string | null
+          foto_pecas_armazenadas_url: string | null
           foto_romaneio_assinado_url: string | null
           id: string
           motorista: string | null
@@ -684,6 +714,7 @@ export type Database = {
           data_recebimento?: string | null
           data_saida?: string | null
           endereco_destino?: string | null
+          foto_pecas_armazenadas_url?: string | null
           foto_romaneio_assinado_url?: string | null
           id?: string
           motorista?: string | null
@@ -704,6 +735,7 @@ export type Database = {
           data_recebimento?: string | null
           data_saida?: string | null
           endereco_destino?: string | null
+          foto_pecas_armazenadas_url?: string | null
           foto_romaneio_assinado_url?: string | null
           id?: string
           motorista?: string | null

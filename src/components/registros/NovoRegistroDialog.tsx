@@ -47,9 +47,13 @@ interface NovoRegistroDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  /** Pré-preencher Número da OS (auto-busca demais campos). */
+  presetOsCodigo?: string;
+  /** Pré-selecionar origem (ex: 'fabrica' quando vem do botão "Nova ocorrência" da OS). */
+  presetOrigem?: "obra" | "fabrica" | "solicitacao";
 }
 
-export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegistroDialogProps) {
+export function NovoRegistroDialog({ open, onOpenChange, onSuccess, presetOsCodigo, presetOrigem }: NovoRegistroDialogProps) {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
 
@@ -112,6 +116,13 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess }: NovoRegist
     setAcaoProdutiva("");
     setMaterialDisponivel("sim");
   }
+
+  // Pré-preenchimento ao abrir (vindo da aba Ocorrências da OS, etc.)
+  useEffect(() => {
+    if (!open) return;
+    if (presetOsCodigo && !numeroOs) setNumeroOs(presetOsCodigo);
+    if (presetOrigem && !origem) setOrigem(presetOrigem);
+  }, [open, presetOsCodigo, presetOrigem]);
 
   // Auto-fill from OS
   useEffect(() => {
