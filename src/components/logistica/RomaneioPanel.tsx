@@ -42,6 +42,10 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   const [conferencias, setConferencias] = useState<Record<string, ConferenciaPecaState>>({});
   const [fotoPecas, setFotoPecas] = useState<File[]>([]);
   const [fotoRomaneioAssinado, setFotoRomaneioAssinado] = useState<File[]>([]);
+  const [despachando, setDespachando] = useState(false);
+  const [fotoCavalete, setFotoCavalete] = useState<File[]>([]);
+  const [fotoCarga, setFotoCarga] = useState<File[]>([]);
+  const [fotoRomaneioMotorista, setFotoRomaneioMotorista] = useState<File[]>([]);
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
   const { profile } = useAuth();
 
@@ -51,12 +55,38 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   const canReceive = romaneio.status === "em_transito";
   const isB1B2 = romaneio.tipo_rota === "base1_base2";
 
-  async function handleDespachar() {
+  function startDespacho() {
+    setFotoCavalete([]);
+    setFotoCarga([]);
+    setFotoRomaneioMotorista([]);
+    setDespachando(true);
+  }
+
+  async function handleConfirmarDespacho() {
     setLoading(true);
     try {
+      let fotoCavaleteUrl: string | null = romaneio!.foto_cavalete_url;
+      let fotoCargaUrl: string | null = romaneio!.foto_carga_url;
+      let fotoMotoristaUrl: string | null = romaneio!.foto_romaneio_motorista_url;
+      if (fotoCavalete.length > 0) {
+        fotoCavaleteUrl = (await uploadUmaFoto(fotoCavalete[0], `romaneio/${romaneio!.id}/despacho`)) || fotoCavaleteUrl;
+      }
+      if (fotoCarga.length > 0) {
+        fotoCargaUrl = (await uploadUmaFoto(fotoCarga[0], `romaneio/${romaneio!.id}/despacho`)) || fotoCargaUrl;
+      }
+      if (fotoRomaneioMotorista.length > 0) {
+        fotoMotoristaUrl = (await uploadUmaFoto(fotoRomaneioMotorista[0], `romaneio/${romaneio!.id}/despacho`)) || fotoMotoristaUrl;
+      }
+
       const { error } = await supabase
         .from("romaneios")
-        .update({ status: "em_transito", data_saida: new Date().toISOString() })
+        .update({
+          status: "em_transito",
+          data_saida: new Date().toISOString(),
+          foto_cavalete_url: fotoCavaleteUrl,
+          foto_carga_url: fotoCargaUrl,
+          foto_romaneio_motorista_url: fotoMotoristaUrl,
+        })
         .eq("id", romaneio!.id);
       if (error) throw error;
 
@@ -66,10 +96,16 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         entity_id: romaneio!.id,
         entity_description: romaneio!.codigo,
         user_name: profile?.nome || "Sistema",
-        details: { status: "em_transito" },
+        details: {
+          status: "em_transito",
+          tem_foto_cavalete: !!fotoCavaleteUrl,
+          tem_foto_carga: !!fotoCargaUrl,
+          tem_foto_motorista: !!fotoMotoristaUrl,
+        },
       });
 
       toast({ title: `${romaneio!.codigo} despachado` });
+      setDespachando(false);
       onChanged?.();
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -392,6 +428,79 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         </>
       )}
 
+      {/* Fotos do despacho (somente quando já saiu da B1) */}
+      {(romaneio.foto_cavalete_url || romaneio.foto_carga_url || romaneio.foto_romaneio_motorista_url) && !despachando && (
+        <>
+          <Separator />
+          <div>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Despacho</h3>
+            <div className="flex gap-2">
+              {romaneio.foto_cavalete_url && (
+                <a href={romaneio.foto_cavalete_url} target="_blank" rel="noopener noreferrer" className="block">
+                  <img src={romaneio.foto_cavalete_url} alt="Cavalete" className="h-20 w-20 object-cover rounded border" />
+                  <p className="text-[10px] text-muted-foreground mt-1 text-center">Cavalete</p>
+                </a>
+              )}
+              {romaneio.foto_carga_url && (
+                <a href={romaneio.foto_carga_url} target="_blank" rel="noopener noreferrer" className="block">
+                  <img src={romaneio.foto_carga_url} alt="Carga" className="h-20 w-20 object-cover rounded border" />
+                  <p className="text-[10px] text-muted-foreground mt-1 text-center">Carga</p>
+                </a>
+              )}
+              {romaneio.foto_romaneio_motorista_url && (
+                <a href={romaneio.foto_romaneio_motorista_url} target="_blank" rel="noopener noreferrer" className="block">
+                  <img src={romaneio.foto_romaneio_motorista_url} alt="Romaneio motorista" className="h-20 w-20 object-cover rounded border" />
+                  <p className="text-[10px] text-muted-foreground mt-1 text-center">Motorista</p>
+                </a>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Bloco de upload de fotos do despacho (somente em modo despacho) */}
+      {despachando && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Fotos do despacho (opcionais)</h3>
+            <div>
+              <Label className="text-xs">Cavalete (conferência B1)</Label>
+              <FotoUploader
+                fotos={fotoCavalete}
+                onChange={setFotoCavalete}
+                fotosSalvas={romaneio.foto_cavalete_url ? [romaneio.foto_cavalete_url] : []}
+                multiple={false}
+                size="sm"
+                label="Foto cavalete"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Carga no caminhão</Label>
+              <FotoUploader
+                fotos={fotoCarga}
+                onChange={setFotoCarga}
+                fotosSalvas={romaneio.foto_carga_url ? [romaneio.foto_carga_url] : []}
+                multiple={false}
+                size="sm"
+                label="Foto carga"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Romaneio assinado pelo motorista</Label>
+              <FotoUploader
+                fotos={fotoRomaneioMotorista}
+                onChange={setFotoRomaneioMotorista}
+                fotosSalvas={romaneio.foto_romaneio_motorista_url ? [romaneio.foto_romaneio_motorista_url] : []}
+                multiple={false}
+                size="sm"
+                label="Foto motorista"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Fotos do recebimento (somente quando já entregue) */}
       {(romaneio.foto_pecas_armazenadas_url || romaneio.foto_romaneio_assinado_url) && !conferindo && (
         <>
@@ -592,10 +701,15 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
       <Button variant="outline" size="sm" className="flex-1" onClick={() => setPdfPreview(gerarPDFRomaneio(romaneio))}>
         <FileText className="h-4 w-4 mr-1" /> Gerar PDF
       </Button>
-      {canDepart && (
-        <Button size="sm" className="flex-1" disabled={loading} onClick={handleDespachar}>
+      {canDepart && !despachando && (
+        <Button size="sm" className="flex-1" onClick={startDespacho}>
+          <Truck className="h-4 w-4 mr-1" /> Despachar
+        </Button>
+      )}
+      {despachando && (
+        <Button size="sm" className="flex-1" disabled={loading} onClick={handleConfirmarDespacho}>
           {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Truck className="h-4 w-4 mr-1" />}
-          Despachar
+          Confirmar despacho
         </Button>
       )}
       {canReceive && !conferindo && (

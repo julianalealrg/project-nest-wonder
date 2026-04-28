@@ -242,49 +242,67 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
           const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status, (os as any).romaneios, os.pecas as any, peca.id) : { permitido: true };
           const isSelectable = nextStation !== null;
           const isSelected = selectedPecaIds.has(peca.id);
+          const temFotosCabine = !!(peca.foto_insumos_url || peca.foto_acabador_assinado_url);
           return (
             <div
               key={peca.id}
-              className={`flex items-center gap-3 rounded-md p-3 transition-colors flex-wrap ${
+              className={`rounded-md transition-colors ${
                 isSelected ? "bg-muted/70 ring-1 ring-border" : "bg-muted/30"
               }`}
             >
-              <Checkbox
-                checked={isSelected} disabled={!isSelectable}
-                onCheckedChange={() => togglePeca(peca.id)}
-                aria-label={`Selecionar peça ${peca.item}`}
-              />
-              <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
-              <span className="flex-1 min-w-[140px] truncate text-[13px] text-foreground">{peca.descricao}</span>
-              <TooltipProvider delayDuration={150}>
-                <div className="flex flex-wrap items-center gap-1">
-                  <StationChip station="corte" status={peca.status_corte} operador={peca.cortador} />
-                  {peca.precisa_45 && <StationChip station="45" status={peca.status_45} operador={peca.operador_45} />}
-                  {peca.precisa_poliborda && <StationChip station="poliborda" status={peca.status_poliborda} operador={peca.operador_poliborda} />}
-                  {peca.precisa_usinagem && <StationChip station="usinagem" status={peca.status_usinagem} operador={peca.operador_usinagem} />}
-                  <StationChip station="acabamento" status={peca.status_acabamento} operador={peca.acabador} />
-                  <StationChip station="cq" status={peca.status_cq} operador={peca.cq_responsavel} />
-                </div>
-              </TooltipProvider>
-              {nextStation && (
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button
-                          variant="outline" size="sm" className="h-7 px-2 text-[11px]"
-                          onClick={() => handlePecaAdvance(peca)} disabled={!guard.permitido}
-                        >
-                          <Play className="mr-1 h-3 w-3" />
-                          {STATION_LABELS_SHORT[nextStation]}
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {!guard.permitido && guard.motivo && (
-                      <TooltipContent side="left" className="max-w-[260px] text-xs">{guard.motivo}</TooltipContent>
-                    )}
-                  </Tooltip>
+              <div className="flex items-center gap-3 p-3 flex-wrap">
+                <Checkbox
+                  checked={isSelected} disabled={!isSelectable}
+                  onCheckedChange={() => togglePeca(peca.id)}
+                  aria-label={`Selecionar peça ${peca.item}`}
+                />
+                <span className="w-8 text-center text-[13px] font-medium text-foreground">{peca.item}</span>
+                <span className="flex-1 min-w-[140px] truncate text-[13px] text-foreground">{peca.descricao}</span>
+                <TooltipProvider delayDuration={150}>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <StationChip station="corte" status={peca.status_corte} operador={peca.cortador} />
+                    {peca.precisa_45 && <StationChip station="45" status={peca.status_45} operador={peca.operador_45} />}
+                    {peca.precisa_poliborda && <StationChip station="poliborda" status={peca.status_poliborda} operador={peca.operador_poliborda} />}
+                    {peca.precisa_usinagem && <StationChip station="usinagem" status={peca.status_usinagem} operador={peca.operador_usinagem} />}
+                    <StationChip station="acabamento" status={peca.status_acabamento} operador={peca.acabador} />
+                    <StationChip station="cq" status={peca.status_cq} operador={peca.cq_responsavel} />
+                  </div>
                 </TooltipProvider>
+                {nextStation && (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline" size="sm" className="h-7 px-2 text-[11px]"
+                            onClick={() => handlePecaAdvance(peca)} disabled={!guard.permitido}
+                          >
+                            <Play className="mr-1 h-3 w-3" />
+                            {STATION_LABELS_SHORT[nextStation]}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!guard.permitido && guard.motivo && (
+                        <TooltipContent side="left" className="max-w-[260px] text-xs">{guard.motivo}</TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              {temFotosCabine && (
+                <div className="flex items-center gap-2 border-t px-3 py-2">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Cabine</span>
+                  {peca.foto_insumos_url && (
+                    <a href={peca.foto_insumos_url} target="_blank" rel="noopener noreferrer">
+                      <img src={peca.foto_insumos_url} alt="Insumos" className="h-10 w-10 object-cover rounded border" title="Insumos" />
+                    </a>
+                  )}
+                  {peca.foto_acabador_assinado_url && (
+                    <a href={peca.foto_acabador_assinado_url} target="_blank" rel="noopener noreferrer">
+                      <img src={peca.foto_acabador_assinado_url} alt="Doc acabador" className="h-10 w-10 object-cover rounded border" title="Doc do acabador" />
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           );

@@ -34,6 +34,9 @@ export interface Romaneio {
   pdf_url: string | null;
   foto_romaneio_assinado_url: string | null;
   foto_pecas_armazenadas_url: string | null;
+  foto_cavalete_url: string | null;
+  foto_carga_url: string | null;
+  foto_romaneio_motorista_url: string | null;
   created_at: string;
   pecas: RomaneioPeca[];
   os_codigos: string[];
