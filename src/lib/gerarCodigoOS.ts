@@ -1,13 +1,26 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type OrigemOS = "os" | "rep" | "oc" | "of";
+
 /**
- * Gera o próximo código sequencial de OS no formato OS{YY}-{NNN}.
- * Ex: OS26-001, OS26-002, ...
- * O ano é o ano corrente em 2 dígitos. Independe da origem.
+ * Gera o próximo código sequencial de OS no formato {PREFIX}{YY}-{NNN}.
+ * O prefixo varia por origem:
+ *   os  → OS  (OS normal, criada manualmente)
+ *   rep → REP (gerada de Solicitação de Reposição)
+ *   oc  → OC  (gerada de Ocorrência de Obra)
+ *   of  → OF  (gerada de Ocorrência de Fábrica)
+ *
+ * Sequência separada por prefixo: REP26-001 e OS26-001 coexistem sem colidir.
  */
-export async function gerarCodigoOS(): Promise<string> {
+export async function gerarCodigoOS(origem: OrigemOS = "os"): Promise<string> {
+  const prefixMap: Record<OrigemOS, string> = {
+    os: "OS",
+    rep: "REP",
+    oc: "OC",
+    of: "OF",
+  };
   const year = new Date().getFullYear().toString().slice(-2);
-  const prefix = `OS${year}-`;
+  const prefix = `${prefixMap[origem]}${year}-`;
 
   const { data } = await supabase
     .from("ordens_servico")

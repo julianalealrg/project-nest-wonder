@@ -303,8 +303,9 @@ export function NovoRegistroDialog({ open, onOpenChange, onSuccess, presetOsCodi
             localizacaoOS = materialDisponivel === "sim" ? "Base 1" : "CD";
           }
 
-          // Código da OS gerada — sequencial OS{YY}-{NNN}, independente de origem
-          const codigoOS = await gerarCodigoOS();
+          // Código da OS gerada herda o prefixo da origem do Registro
+          const origemOS = origem === "obra" ? "oc" : origem === "fabrica" ? "of" : "rep";
+          const codigoOS = await gerarCodigoOS(origemOS);
 
           // Resolve cliente_id (pode reutilizar a OS de origem ou criar/buscar pelo nome)
           let clienteIdOS: string | null = null;
