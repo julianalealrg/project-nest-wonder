@@ -102,11 +102,11 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
 
   // Fetch registro_origem (origin record) for OSes generated from a registro
   const origemIds = osList.map((o: any) => o.registro_origem_id).filter(Boolean);
-  const origemRegistrosMap = new Map<string, { encaminhar_projetos: boolean; status: string; codigo: string; acao_produtiva: string | null }>();
+  const origemRegistrosMap = new Map<string, { encaminhar_projetos: boolean; status: string; codigo: string; acao_produtiva: string | null; numero_os: string | null }>();
   if (origemIds.length > 0) {
     const { data: origemRegs } = await supabase
       .from("registros")
-      .select("id, codigo, status, encaminhar_projetos, acao_produtiva")
+      .select("id, codigo, status, encaminhar_projetos, acao_produtiva, numero_os")
       .in("id", origemIds as string[]);
     for (const r of origemRegs || []) {
       origemRegistrosMap.set(r.id, {
@@ -114,6 +114,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
         status: r.status,
         codigo: r.codigo,
         acao_produtiva: (r as any).acao_produtiva ?? null,
+        numero_os: (r as any).numero_os ?? null,
       });
     }
   }
@@ -125,6 +126,15 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
     if (upper.startsWith("OC")) return "oc";
     if (upper.startsWith("OF")) return "of";
     return "os";
+  }
+
+  // Origem da OS: prefere o campo `origem` salvo no banco; cai pro prefixo do código se vier vazio.
+  function resolveOrigem(os: any): "os" | "rep" | "oc" | "of" {
+    const dbOrigem = (os.origem || "").toLowerCase();
+    if (dbOrigem === "rep" || dbOrigem === "oc" || dbOrigem === "of" || dbOrigem === "os") {
+      return dbOrigem as "os" | "rep" | "oc" | "of";
+    }
+    return detectOrigem(os.codigo);
   }
 
   return osList.map((os) => {
@@ -145,7 +155,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       data_entrega: os.data_entrega,
       status: os.status,
       localizacao: os.localizacao || "",
-      origem: detectOrigem(os.codigo),
+      origem: resolveOrigem(os),
       terceiro: null,
       pdf_url: os.pdf_url,
       updated_at: os.updated_at,
@@ -153,6 +163,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       registro_origem_aguarda_projetos: origem ? origem.encaminhar_projetos && origem.status !== "resolvido" : false,
       registro_origem_codigo: origem?.codigo ?? null,
       registro_origem_acao_produtiva: origem?.acao_produtiva ?? null,
+      registro_origem_numero_os: origem?.numero_os ?? null,
       pecas: pecasByOs.get(os.id) || [],
       romaneios: romaneiosByOs.get(os.id) || [],
       registros: registrosByOs.get(os.id) || [],

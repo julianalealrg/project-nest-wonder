@@ -111,6 +111,14 @@ export default function OSDetalhe() {
               </span>
             )}
           </div>
+          {os.origem !== "os" && os.registro_origem_numero_os && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Vinculada à OS <span className="font-medium text-foreground">{os.registro_origem_numero_os}</span>
+              {os.registro_origem_codigo && (
+                <span> · Registro {os.registro_origem_codigo}</span>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Cards de resumo */}

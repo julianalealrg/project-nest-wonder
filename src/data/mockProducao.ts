@@ -50,6 +50,7 @@ export interface MockOS {
   registro_origem_aguarda_projetos?: boolean;
   registro_origem_codigo?: string | null;
   registro_origem_acao_produtiva?: string | null;
+  registro_origem_numero_os?: string | null;
   pecas: MockPeca[];
   romaneios: { id?: string; codigo: string; tipo_rota: string; status: string; data_saida: string | null; data_recebimento?: string | null }[];
   registros: { id?: string; codigo: string; tipo: string; origem?: string; status: string; urgencia: string; encaminhar_projetos?: boolean; acao_produtiva?: string | null }[];
