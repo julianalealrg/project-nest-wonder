@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
 import { MockPeca } from "@/data/mockProducao";
+import { FotoUploader } from "@/components/common/FotoUploader";
+import { uploadUmaFoto } from "@/lib/uploadFotos";
+import { toast } from "@/hooks/use-toast";
 
 type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
 
@@ -67,6 +70,9 @@ interface PecaAdvanceDialogProps {
 export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, onConfirm, irmas }: PecaAdvanceDialogProps) {
   const [fields, setFields] = useState<Record<string, string>>({});
   const [cqResult, setCqResult] = useState<"aprovado" | "reprovado">("aprovado");
+  const [fotoInsumos, setFotoInsumos] = useState<File[]>([]);
+  const [fotoAcabador, setFotoAcabador] = useState<File[]>([]);
+  const [uploadingFotos, setUploadingFotos] = useState(false);
 
   // Pré-preenche os campos quando o dialog abre, a partir das peças irmãs.
   useEffect(() => {
@@ -92,13 +98,34 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
     }
     setFields(initial);
     setCqResult("aprovado");
+    setFotoInsumos([]);
+    setFotoAcabador([]);
   }, [open, station, irmas]);
 
-  function handleConfirm() {
+  async function handleConfirm() {
+    let extraFields: Record<string, string> = {};
+    if (station === "acabamento" && (fotoInsumos.length > 0 || fotoAcabador.length > 0) && peca) {
+      setUploadingFotos(true);
+      try {
+        if (fotoInsumos.length > 0) {
+          const url = await uploadUmaFoto(fotoInsumos[0], `peca/${peca.id}/cabine`);
+          if (url) extraFields.foto_insumos_url = url;
+        }
+        if (fotoAcabador.length > 0) {
+          const url = await uploadUmaFoto(fotoAcabador[0], `peca/${peca.id}/cabine`);
+          if (url) extraFields.foto_acabador_assinado_url = url;
+        }
+      } catch (err: any) {
+        toast({ title: "Falha no upload", description: err.message, variant: "destructive" });
+        setUploadingFotos(false);
+        return;
+      }
+      setUploadingFotos(false);
+    }
     if (station === "cq") {
       onConfirm({ ...fields, cq_result: cqResult });
     } else {
-      onConfirm(fields);
+      onConfirm({ ...fields, ...extraFields });
     }
   }
 
@@ -160,6 +187,26 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
                 <Label className="text-xs">Cabine *</Label>
                 <Input placeholder="Cabine" value={fields.cabine || ""} onChange={(e) => setField("cabine", e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Foto dos insumos entregues (opcional)</Label>
+                <FotoUploader
+                  fotos={fotoInsumos}
+                  onChange={setFotoInsumos}
+                  multiple={false}
+                  size="sm"
+                  label="Insumos"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Foto do doc assinado pelo acabador (opcional)</Label>
+                <FotoUploader
+                  fotos={fotoAcabador}
+                  onChange={setFotoAcabador}
+                  multiple={false}
+                  size="sm"
+                  label="Doc"
+                />
+              </div>
             </>
           )}
 
@@ -193,10 +240,10 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
-          <Button size="sm" onClick={handleConfirm} disabled={loading || !isValid()}>
-            {loading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-            Confirmar
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={loading || uploadingFotos}>Cancelar</Button>
+          <Button size="sm" onClick={handleConfirm} disabled={loading || uploadingFotos || !isValid()}>
+            {(loading || uploadingFotos) && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+            {uploadingFotos ? "Enviando fotos..." : "Confirmar"}
           </Button>
         </DialogFooter>
       </DialogContent>

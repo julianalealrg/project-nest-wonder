@@ -68,6 +68,8 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
       update.status_acabamento = "concluido";
       update.acabador = fields.acabador;
       update.cabine = fields.cabine;
+      if (fields.foto_insumos_url) update.foto_insumos_url = fields.foto_insumos_url;
+      if (fields.foto_acabador_assinado_url) update.foto_acabador_assinado_url = fields.foto_acabador_assinado_url;
       break;
     case "cq":
       if (fields.cq_result === "aprovado") {

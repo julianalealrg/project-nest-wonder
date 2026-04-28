@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
+import { FotoUploader } from "@/components/common/FotoUploader";
+import { uploadUmaFoto } from "@/lib/uploadFotos";
+import { toast } from "@/hooks/use-toast";
 
 type StationKey = "corte" | "45" | "poliborda" | "usinagem" | "acabamento" | "cq";
 
@@ -47,12 +50,17 @@ function pickRecente(irmas: PecaIrma[] | undefined, field: keyof PecaIrma): stri
 export function PecaBatchAdvanceDialog({ open, onOpenChange, station, count, loading, onConfirm, irmas }: PecaBatchAdvanceDialogProps) {
   const [fields, setFields] = useState<Record<string, string>>({});
   const [cqResult, setCqResult] = useState<"aprovado" | "reprovado">("aprovado");
+  const [fotoInsumos, setFotoInsumos] = useState<File[]>([]);
+  const [fotoAcabador, setFotoAcabador] = useState<File[]>([]);
+  const [uploadingFotos, setUploadingFotos] = useState(false);
 
   useEffect(() => {
     if (!open || !station) {
       if (open) {
         setFields({});
         setCqResult("aprovado");
+        setFotoInsumos([]);
+        setFotoAcabador([]);
       }
       return;
     }
@@ -77,17 +85,40 @@ export function PecaBatchAdvanceDialog({ open, onOpenChange, station, count, loa
     }
     setFields(initial);
     setCqResult("aprovado");
+    setFotoInsumos([]);
+    setFotoAcabador([]);
   }, [open, station, irmas]);
 
   function setField(key: string, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
+    let extraFields: Record<string, string> = {};
+    // Sprint 2: 1 upload por lote — fotos do batch são compartilhadas entre as N peças avançadas.
+    if (station === "acabamento" && (fotoInsumos.length > 0 || fotoAcabador.length > 0)) {
+      setUploadingFotos(true);
+      try {
+        const batchPath = `peca/batch-${crypto.randomUUID()}/cabine`;
+        if (fotoInsumos.length > 0) {
+          const url = await uploadUmaFoto(fotoInsumos[0], batchPath);
+          if (url) extraFields.foto_insumos_url = url;
+        }
+        if (fotoAcabador.length > 0) {
+          const url = await uploadUmaFoto(fotoAcabador[0], batchPath);
+          if (url) extraFields.foto_acabador_assinado_url = url;
+        }
+      } catch (err: any) {
+        toast({ title: "Falha no upload", description: err.message, variant: "destructive" });
+        setUploadingFotos(false);
+        return;
+      }
+      setUploadingFotos(false);
+    }
     if (station === "cq") {
       onConfirm({ ...fields, cq_result: cqResult });
     } else {
-      onConfirm(fields);
+      onConfirm({ ...fields, ...extraFields });
     }
   }
 
@@ -144,6 +175,26 @@ export function PecaBatchAdvanceDialog({ open, onOpenChange, station, count, loa
                 <Label className="text-xs">Cabine *</Label>
                 <Input placeholder="Cabine" value={fields.cabine || ""} onChange={(e) => setField("cabine", e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Foto dos insumos (opcional, aplica nas {count})</Label>
+                <FotoUploader
+                  fotos={fotoInsumos}
+                  onChange={setFotoInsumos}
+                  multiple={false}
+                  size="sm"
+                  label="Insumos"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Foto do doc do acabador (opcional, aplica nas {count})</Label>
+                <FotoUploader
+                  fotos={fotoAcabador}
+                  onChange={setFotoAcabador}
+                  multiple={false}
+                  size="sm"
+                  label="Doc"
+                />
+              </div>
             </>
           )}
 
@@ -177,10 +228,10 @@ export function PecaBatchAdvanceDialog({ open, onOpenChange, station, count, loa
         </div>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
-          <Button size="sm" onClick={handleConfirm} disabled={loading || !isValid()}>
-            {loading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-            Confirmar ({count})
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={loading || uploadingFotos}>Cancelar</Button>
+          <Button size="sm" onClick={handleConfirm} disabled={loading || uploadingFotos || !isValid()}>
+            {(loading || uploadingFotos) && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+            {uploadingFotos ? "Enviando fotos..." : `Confirmar (${count})`}
           </Button>
         </DialogFooter>
       </DialogContent>

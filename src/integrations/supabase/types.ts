@@ -313,6 +313,8 @@ export type Database = {
           cq_responsavel: string | null
           created_at: string
           descricao: string | null
+          foto_acabador_assinado_url: string | null
+          foto_insumos_url: string | null
           id: string
           item: string | null
           largura: number | null
@@ -342,6 +344,8 @@ export type Database = {
           cq_responsavel?: string | null
           created_at?: string
           descricao?: string | null
+          foto_acabador_assinado_url?: string | null
+          foto_insumos_url?: string | null
           id?: string
           item?: string | null
           largura?: number | null
@@ -371,6 +375,8 @@ export type Database = {
           cq_responsavel?: string | null
           created_at?: string
           descricao?: string | null
+          foto_acabador_assinado_url?: string | null
+          foto_insumos_url?: string | null
           id?: string
           item?: string | null
           largura?: number | null
@@ -693,8 +699,11 @@ export type Database = {
           data_recebimento: string | null
           data_saida: string | null
           endereco_destino: string | null
+          foto_carga_url: string | null
+          foto_cavalete_url: string | null
           foto_pecas_armazenadas_url: string | null
           foto_romaneio_assinado_url: string | null
+          foto_romaneio_motorista_url: string | null
           id: string
           motorista: string | null
           observacoes: string | null
@@ -714,8 +723,11 @@ export type Database = {
           data_recebimento?: string | null
           data_saida?: string | null
           endereco_destino?: string | null
+          foto_carga_url?: string | null
+          foto_cavalete_url?: string | null
           foto_pecas_armazenadas_url?: string | null
           foto_romaneio_assinado_url?: string | null
+          foto_romaneio_motorista_url?: string | null
           id?: string
           motorista?: string | null
           observacoes?: string | null
@@ -735,8 +747,11 @@ export type Database = {
           data_recebimento?: string | null
           data_saida?: string | null
           endereco_destino?: string | null
+          foto_carga_url?: string | null
+          foto_cavalete_url?: string | null
           foto_pecas_armazenadas_url?: string | null
           foto_romaneio_assinado_url?: string | null
+          foto_romaneio_motorista_url?: string | null
           id?: string
           motorista?: string | null
           observacoes?: string | null
