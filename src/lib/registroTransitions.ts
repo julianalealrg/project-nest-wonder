@@ -19,10 +19,12 @@ export const REGISTRO_STATUS_LABELS: Record<string, string> = {
   resolvido: "Resolvido",
 };
 
+// Labels alinhadas com o badge da OS (origemTag.ts) pra manter consistência
+// na lista de Produção e na lista de Registros: mesma sigla, mesma cor.
 export const REGISTRO_ORIGEM_LABELS: Record<string, { label: string; className: string }> = {
-  obra: { label: "OBRA", className: "bg-nue-roxo/10 text-nue-roxo" },
-  fabrica: { label: "FAB", className: "bg-nue-chumbo/15 text-nue-chumbo" },
-  solicitacao: { label: "SOL", className: "bg-nue-azul/10 text-nue-azul" },
+  obra: { label: "OC", className: "bg-nue-roxo/10 text-nue-roxo" },
+  fabrica: { label: "OF", className: "bg-nue-chumbo/15 text-nue-chumbo" },
+  solicitacao: { label: "REP", className: "bg-nue-azul/10 text-nue-azul" },
 };
 
 export const REGISTRO_URGENCIA_LABELS: Record<string, string> = {
