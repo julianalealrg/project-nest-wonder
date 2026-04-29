@@ -72,6 +72,7 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
   const [cqResult, setCqResult] = useState<"aprovado" | "reprovado">("aprovado");
   const [fotoInsumos, setFotoInsumos] = useState<File[]>([]);
   const [fotoAcabador, setFotoAcabador] = useState<File[]>([]);
+  const [fotoCq, setFotoCq] = useState<File[]>([]);
   const [uploadingFotos, setUploadingFotos] = useState(false);
 
   // Pré-preenche os campos quando o dialog abre, a partir das peças irmãs.
@@ -100,6 +101,7 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
     setCqResult("aprovado");
     setFotoInsumos([]);
     setFotoAcabador([]);
+    setFotoCq([]);
   }, [open, station, irmas]);
 
   async function handleConfirm() {
@@ -122,8 +124,20 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
       }
       setUploadingFotos(false);
     }
+    if (station === "cq" && fotoCq.length > 0 && peca) {
+      setUploadingFotos(true);
+      try {
+        const url = await uploadUmaFoto(fotoCq[0], `peca/${peca.id}/cq`);
+        if (url) extraFields.foto_cq_url = url;
+      } catch (err: any) {
+        toast({ title: "Falha no upload", description: err.message, variant: "destructive" });
+        setUploadingFotos(false);
+        return;
+      }
+      setUploadingFotos(false);
+    }
     if (station === "cq") {
-      onConfirm({ ...fields, cq_result: cqResult });
+      onConfirm({ ...fields, ...extraFields, cq_result: cqResult });
     } else {
       onConfirm({ ...fields, ...extraFields });
     }
@@ -235,6 +249,16 @@ export function PecaAdvanceDialog({ open, onOpenChange, peca, station, loading, 
                   <Input placeholder="Motivo da reprovação" value={fields.observacao || ""} onChange={(e) => setField("observacao", e.target.value)} />
                 </div>
               )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Foto da peça no CQ (opcional)</Label>
+                <FotoUploader
+                  fotos={fotoCq}
+                  onChange={setFotoCq}
+                  multiple={false}
+                  size="sm"
+                  label="Foto CQ"
+                />
+              </div>
             </>
           )}
         </div>

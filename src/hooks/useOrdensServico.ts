@@ -58,6 +58,7 @@ async function fetchOrdensServico(): Promise<MockOS[]> {
       cq_observacao: p.cq_observacao,
       foto_insumos_url: (p as any).foto_insumos_url ?? null,
       foto_acabador_assinado_url: (p as any).foto_acabador_assinado_url ?? null,
+      foto_cq_url: (p as any).foto_cq_url ?? null,
     });
     pecasByOs.set(p.os_id, list);
   }

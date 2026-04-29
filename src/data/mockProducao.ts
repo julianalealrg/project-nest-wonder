@@ -27,6 +27,7 @@ export interface MockPeca {
   cq_observacao: string | null;
   foto_insumos_url?: string | null;
   foto_acabador_assinado_url?: string | null;
+  foto_cq_url?: string | null;
 }
 
 export interface MockOS {
