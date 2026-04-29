@@ -24,13 +24,20 @@ interface RegistroPdfExtras {
   userName?: string | null;
 }
 
+// Labels por extenso pro PDF — documento formal usa nome completo,
+// lista compacta na UI usa sigla curta (OC/OF/REP) via REGISTRO_ORIGEM_LABELS
+const PDF_ORIGEM_LABELS: Record<string, string> = {
+  obra: "OCORRÊNCIA OBRA",
+  fabrica: "OCORRÊNCIA FÁBRICA",
+  solicitacao: "SOLICITAÇÃO REPOSIÇÃO",
+};
+
 function buildPills(registro: Registro) {
-  const origemLabel =
-    REGISTRO_ORIGEM_LABELS[registro.origem]?.label || registro.origem.toUpperCase();
+  const origemLabel = PDF_ORIGEM_LABELS[registro.origem] || registro.origem.toUpperCase();
   const urgenciaLabel = REGISTRO_URGENCIA_LABELS[registro.urgencia] || registro.urgencia;
   const statusLabel = REGISTRO_STATUS_LABELS[registro.status] || registro.status;
   return [
-    { label: origemLabel.toUpperCase(), color: origemColor(registro.origem) },
+    { label: origemLabel, color: origemColor(registro.origem) },
     { label: urgenciaLabel.toUpperCase(), color: urgenciaColor(registro.urgencia) },
     { label: statusLabel.toUpperCase(), color: registroStatusColor(registro.status) },
   ];
