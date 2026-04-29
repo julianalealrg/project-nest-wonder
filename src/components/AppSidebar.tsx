@@ -23,7 +23,7 @@ export function AppSidebar() {
   const allItems = isAdmin ? [...menuItems, adminItem] : menuItems;
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+    <div className="flex flex-col h-full w-full bg-sidebar text-sidebar-foreground">
       {/* Logo — currentColor herda a cor do texto, então fica claro em fundo escuro */}
       <div className="flex items-center justify-center py-8 px-4 text-[#F0EDE8]">
         <LogoNue className="h-8 w-auto" aria-label="NUE Projetos" />
