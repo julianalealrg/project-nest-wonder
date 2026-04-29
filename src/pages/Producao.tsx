@@ -67,8 +67,14 @@ export default function Producao() {
       title="Produção"
       action={
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => exportProducaoExcel(filtered)}><Download className="h-4 w-4 mr-1" />Exportar</Button>
-          <Button size="sm" onClick={() => setNovaOSOpen(true)}><Plus className="h-4 w-4 mr-1" />Nova OS</Button>
+          <Button size="sm" variant="outline" onClick={() => exportProducaoExcel(filtered)}>
+            <Download className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
+          <Button size="sm" onClick={() => setNovaOSOpen(true)}>
+            <Plus className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Nova OS</span>
+          </Button>
         </div>
       }
     >
