@@ -101,7 +101,7 @@ export function OSFilters(props: OSFiltersProps) {
 
       {/* Advanced filters */}
       {showAdvanced && (
-        <div className="flex flex-col sm:flex-row gap-4 p-3 bg-card rounded-lg border animate-fade-in">
+        <div className="flex flex-wrap gap-3 p-3 bg-card rounded-lg border animate-fade-in">
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Cliente</label>
             <Select value={props.cliente} onValueChange={props.onClienteChange}>
