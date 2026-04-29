@@ -33,8 +33,8 @@ export function OSFilters(props: OSFiltersProps) {
   return (
     <div className="space-y-3">
       {/* Primary filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        <div className="relative flex-1 basis-full sm:basis-[220px] min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar OS ou cliente..."
@@ -45,7 +45,7 @@ export function OSFilters(props: OSFiltersProps) {
         </div>
 
         <Select value={props.tipo} onValueChange={props.onTipoChange}>
-          <SelectTrigger className="w-full sm:w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[110px] sm:flex-none sm:w-[140px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
@@ -58,7 +58,7 @@ export function OSFilters(props: OSFiltersProps) {
         </Select>
 
         <Select value={props.localizacao} onValueChange={props.onLocalizacaoChange}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[130px] sm:flex-none sm:w-[160px]">
             <SelectValue placeholder="Localização" />
           </SelectTrigger>
           <SelectContent>
@@ -71,7 +71,7 @@ export function OSFilters(props: OSFiltersProps) {
         </Select>
 
         <Select value={props.status} onValueChange={props.onStatusChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="flex-1 min-w-[140px] sm:flex-none sm:w-[180px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +101,7 @@ export function OSFilters(props: OSFiltersProps) {
 
       {/* Advanced filters */}
       {showAdvanced && (
-        <div className="flex flex-col sm:flex-row gap-4 p-3 bg-card rounded-lg border animate-fade-in">
+        <div className="flex flex-wrap gap-3 p-3 bg-card rounded-lg border animate-fade-in">
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Cliente</label>
             <Select value={props.cliente} onValueChange={props.onClienteChange}>

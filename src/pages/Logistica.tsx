@@ -107,10 +107,12 @@ export default function Logistica() {
       action={
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => exportLogisticaExcel(filteredAtivo)}>
-            <Download className="h-4 w-4 mr-1" />Exportar
+            <Download className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Exportar</span>
           </Button>
           <Button size="sm" onClick={() => setNovoOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />Novo Romaneio
+            <Plus className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Novo Romaneio</span>
           </Button>
         </div>
       }
