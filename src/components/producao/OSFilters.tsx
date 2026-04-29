@@ -58,7 +58,7 @@ export function OSFilters(props: OSFiltersProps) {
         </Select>
 
         <Select value={props.localizacao} onValueChange={props.onLocalizacaoChange}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[130px] sm:flex-none sm:w-[160px]">
             <SelectValue placeholder="Localização" />
           </SelectTrigger>
           <SelectContent>
