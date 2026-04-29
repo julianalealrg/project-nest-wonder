@@ -68,11 +68,14 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
     try {
       // Re-validar status das OS vinculadas — bloqueia despacho se OS saiu do status compatível
       // (ex: alguém avançou OS pra acabamento depois do romaneio B1→B2 ter sido criado).
+      // Inclui também o status PÓS-CRIAÇÃO do romaneio (criar romaneio B1→B2 já avança a OS
+      // pra enviado_base2 imediatamente, por causa do pendingStatusAfterRomaneio do header).
+      // Sem isso, o despacho ficava preso porque a OS já não está mais no status original.
       const STATUS_COMPATIVEIS: Record<string, string[]> = {
-        base1_base2: ["cortando"],
+        base1_base2: ["cortando", "enviado_base2"],
         base2_cliente: ["expedicao"],
         base1_cliente: ["terceiros"],
-        base2_base1: ["acabamento", "cq"],
+        base2_base1: ["acabamento", "cq", "enviado_base1"],
         recolha: ["entregue"],
       };
       const statusOk = STATUS_COMPATIVEIS[romaneio!.tipo_rota] || [];
