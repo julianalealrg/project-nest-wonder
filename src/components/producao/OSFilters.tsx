@@ -33,8 +33,8 @@ export function OSFilters(props: OSFiltersProps) {
   return (
     <div className="space-y-3">
       {/* Primary filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        <div className="relative flex-1 basis-full sm:basis-[220px] min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar OS ou cliente..."
