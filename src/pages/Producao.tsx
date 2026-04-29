@@ -1,14 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Download } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Plus, Loader2, Download, List, LayoutGrid } from "lucide-react";
 import { exportProducaoExcel } from "@/lib/exportExcel";
 import { OSFilters } from "@/components/producao/OSFilters";
 import { OSTable } from "@/components/producao/OSTable";
+import { OSKanban } from "@/components/producao/OSKanban";
 import { NovaOSDialog } from "@/components/producao/NovaOSDialog";
 import { useOrdensServico } from "@/hooks/useOrdensServico";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
+
+const VIEW_STORAGE_KEY = "producao_view";
+type ProducaoView = "lista" | "kanban";
 
 export default function Producao() {
   const [search, setSearch] = useState("");
@@ -20,6 +25,15 @@ export default function Producao() {
   const [cortador, setCortador] = useState("todos");
   const [acabador, setAcabador] = useState("todos");
   const [novaOSOpen, setNovaOSOpen] = useState(false);
+  const [view, setView] = useState<ProducaoView>(() => {
+    if (typeof window === "undefined") return "lista";
+    const saved = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    return saved === "kanban" ? "kanban" : "lista";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(VIEW_STORAGE_KEY, view);
+  }, [view]);
 
   const queryClient = useQueryClient();
   const { data: osList = [], isLoading } = useOrdensServico();
@@ -66,7 +80,23 @@ export default function Producao() {
     <AppLayout
       title="Produção"
       action={
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <ToggleGroup
+            type="single"
+            value={view}
+            onValueChange={(v) => v && setView(v as ProducaoView)}
+            size="sm"
+            variant="outline"
+          >
+            <ToggleGroupItem value="lista" aria-label="Visualização em lista">
+              <List className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Lista</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="kanban" aria-label="Visualização em kanban">
+              <LayoutGrid className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Kanban</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
           <Button size="sm" variant="outline" onClick={() => exportProducaoExcel(filtered)}>
             <Download className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Exportar</span>
@@ -100,7 +130,11 @@ export default function Producao() {
           )}
         </div>
 
-        <OSTable data={filtered} onStatusChanged={handleRefresh} />
+        {view === "lista" ? (
+          <OSTable data={filtered} onStatusChanged={handleRefresh} />
+        ) : (
+          <OSKanban data={filtered} />
+        )}
       </div>
 
       <NovaOSDialog open={novaOSOpen} onOpenChange={setNovaOSOpen} onSuccess={handleRefresh} />
