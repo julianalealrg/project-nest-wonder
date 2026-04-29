@@ -14,7 +14,7 @@ export function AppLayout({ children, title, action }: AppLayoutProps) {
       <div className="flex-1 flex flex-col min-h-screen min-w-0">
         {/* Topbar */}
         <header className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-4 border-b border-[#CCC8C2] bg-[#F0EDE8]">
-          <h1 className="text-base sm:text-lg font-bold text-[#0D0D0D] pl-12 lg:pl-0 truncate min-w-0">{title}</h1>
+          <h1 className="font-display text-lg sm:text-xl text-[#0D0D0D] pl-12 lg:pl-0 truncate min-w-0">{title}</h1>
           {action && <div className="flex-shrink-0">{action}</div>}
         </header>
 

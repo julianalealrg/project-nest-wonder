@@ -240,7 +240,7 @@ export function OSKanban({ data }: OSKanbanProps) {
                 >
                   {headerLabel}
                 </span>
-                <span className="text-xs font-semibold text-muted-foreground">
+                <span className="font-display text-base text-muted-foreground">
                   {osDaColuna.length}
                 </span>
               </div>

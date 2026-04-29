@@ -25,7 +25,7 @@ export function DashboardKPIs({ registrosAbertos, osEmProducao, taxaResolucao, t
           <CardContent className="p-4 flex items-center gap-3">
             <c.icon className={`h-8 w-8 ${c.color} shrink-0`} />
             <div>
-              <p className="text-2xl font-bold text-foreground">{c.value}</p>
+              <p className="font-display text-3xl text-foreground">{c.value}</p>
               <p className="text-xs text-muted-foreground">{c.label}</p>
             </div>
           </CardContent>
