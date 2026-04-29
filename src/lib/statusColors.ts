@@ -4,16 +4,16 @@
 // (small chips with subtle bg + dark/colored text), never large surfaces.
 
 export const OS_STATUS_BADGE: Record<string, string> = {
-  aguardando_material: "bg-muted text-muted-foreground",
-  fila_corte: "bg-nue-laranja/10 text-nue-laranja",
-  cortando: "bg-nue-laranja/15 text-nue-laranja",
-  enviado_base2: "bg-nue-azul/10 text-nue-azul",
-  acabamento: "bg-nue-laranja/10 text-nue-laranja",
-  cq: "bg-nue-amarelo/15 text-nue-amarelo",
-  expedicao: "bg-nue-azul/15 text-nue-azul",
-  em_transito: "bg-nue-azul/10 text-nue-azul",
-  entregue: "bg-nue-verde/15 text-nue-verde",
-  terceiros: "bg-nue-chumbo/15 text-nue-chumbo",
+  aguardando_material: "bg-nue-chumbo/25 text-nue-chumbo font-semibold",
+  fila_corte: "bg-nue-laranja/80 text-white",
+  cortando: "bg-nue-laranja text-white",
+  enviado_base2: "bg-nue-azul/75 text-white",
+  acabamento: "bg-nue-laranja text-white",
+  cq: "bg-nue-amarelo text-nue-chumbo font-semibold",
+  expedicao: "bg-nue-azul text-white",
+  em_transito: "bg-nue-azul/75 text-white",
+  entregue: "bg-nue-verde text-white",
+  terceiros: "bg-nue-chumbo text-white",
 };
 
 export const REGISTRO_STATUS_BADGE: Record<string, string> = {

@@ -143,7 +143,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                           return (
                             <span
                               title={`${ocorrenciasPendentes} ocorrência(s) sem encaminhamento`}
-                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-red-100 text-red-700"
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-nue-vermelho text-white"
                             >
                               Ocorrência ({ocorrenciasPendentes})
                             </span>
@@ -153,7 +153,7 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                           const emTransito = (os.romaneios || []).some((r) => r.status === "em_transito");
                           if (!emTransito) return null;
                           return (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-blue-100 text-blue-700">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-nue-azul text-white">
                               Em trânsito
                             </span>
                           );
