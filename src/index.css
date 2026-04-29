@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Questrial&display=swap');
+/* Fontes oficiais NUE Projetos: Questrial (display), IBM Plex Sans (corpo), IBM Plex Mono (códigos). */
+@import url('https://fonts.googleapis.com/css2?family=Questrial&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;

@@ -179,7 +179,7 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
             <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${tag.badgeClass}`}>
               {tag.label}
             </span>
-            <h2 className="text-xl font-semibold text-foreground tracking-tight" style={{ fontFamily: "'Questrial', 'Helvetica Neue', sans-serif" }}>
+            <h2 className="font-display text-xl text-foreground tracking-tight">
               {os.codigo}
             </h2>
             <span className="text-muted-foreground">•</span>
