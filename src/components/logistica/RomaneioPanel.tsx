@@ -65,6 +65,35 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   async function handleConfirmarDespacho() {
     setLoading(true);
     try {
+      // Re-validar status das OS vinculadas — bloqueia despacho se OS saiu do status compatível
+      // (ex: alguém avançou OS pra acabamento depois do romaneio B1→B2 ter sido criado).
+      const STATUS_COMPATIVEIS: Record<string, string[]> = {
+        base1_base2: ["cortando"],
+        base2_cliente: ["expedicao"],
+        base1_cliente: ["terceiros"],
+        base2_base1: ["acabamento", "cq"],
+        recolha: ["entregue"],
+      };
+      const statusOk = STATUS_COMPATIVEIS[romaneio!.tipo_rota] || [];
+      const osIdsRom = Array.from(new Set(romaneio!.pecas.map((p) => p.os_id).filter(Boolean))) as string[];
+      if (statusOk.length > 0 && osIdsRom.length > 0) {
+        const { data: osCheck } = await supabase
+          .from("ordens_servico")
+          .select("codigo, status")
+          .in("id", osIdsRom);
+        const inconsistentes = (osCheck || []).filter((o: any) => !statusOk.includes(o.status));
+        if (inconsistentes.length > 0) {
+          const lista = inconsistentes.map((o: any) => `${o.codigo} (${o.status})`).join(", ");
+          toast({
+            title: "Despacho bloqueado: OS fora do status compatível",
+            description: `${lista}. Esperado: ${statusOk.join(", ")}. Atualize a OS antes de despachar este romaneio.`,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       let fotoCavaleteUrl: string | null = romaneio!.foto_cavalete_url;
       let fotoCargaUrl: string | null = romaneio!.foto_carga_url;
       let fotoMotoristaUrl: string | null = romaneio!.foto_romaneio_motorista_url;

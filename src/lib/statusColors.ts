@@ -37,6 +37,7 @@ export const ROMANEIO_STATUS_BADGE: Record<string, string> = {
   pendente: "bg-muted text-muted-foreground",
   em_transito: "bg-nue-azul/10 text-nue-azul",
   entregue: "bg-nue-verde/15 text-nue-verde",
+  cancelado: "bg-red-100 text-red-700 line-through",
 };
 
 export function osBadgeClass(status: string): string {
