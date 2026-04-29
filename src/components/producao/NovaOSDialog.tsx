@@ -33,6 +33,7 @@ interface OSForm {
   projetista_outro: string;
   data_entrega: string;
   area_m2: number | "";
+  area_m2_manual: boolean; // true = travada (não recalcula via trigger). Default true quando vier do cabeçalho do PDF.
   pecas: PecaForm[];
   _pdfFile?: File; // internal: the source PDF for this OS
 }
@@ -102,6 +103,7 @@ function emptyOS(): OSForm {
     projetista_outro: "",
     data_entrega: "",
     area_m2: "",
+    area_m2_manual: false,
     pecas: [emptyPeca()],
   };
 }
@@ -134,6 +136,7 @@ async function parseSinglePdf(file: File): Promise<any> {
 }
 
 function mapExtractedToOS(d: any, file: File): OSForm {
+  const areaFromHeader = d?.area_m2 != null ? Number(d.area_m2) : null;
   const os: OSForm = {
     codigo: d?.codigo || "",
     ambiente: d?.ambiente || "",
@@ -141,7 +144,10 @@ function mapExtractedToOS(d: any, file: File): OSForm {
     projetista: "",
     projetista_outro: "",
     data_entrega: sanitizeDate(d?.data_entrega) || "",
-    area_m2: d?.area_m2 != null ? Number(d.area_m2) : "",
+    area_m2: areaFromHeader != null ? areaFromHeader : "",
+    // Quando o PDF traz a área no cabeçalho (m² oficial do projeto),
+    // travamos pra que o trigger de auto-soma das peças não sobrescreva.
+    area_m2_manual: areaFromHeader != null && areaFromHeader > 0,
     pecas: [],
     _pdfFile: file,
   };
@@ -455,6 +461,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
             projetista: projetistaFinal || null,
             data_entrega: sanitizeDate(os.data_entrega),
             area_m2: os.area_m2 === "" ? null : Number(os.area_m2),
+            area_m2_manual: !!os.area_m2_manual,
             status: "aguardando_material",
             localizacao: "CD",
             data_emissao: sanitizeDate(new Date().toISOString().split("T")[0]),
@@ -881,23 +888,47 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                     <Input type="date" value={os.data_entrega} onChange={(e) => updateOS(osIdx, { data_entrega: e.target.value })} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Área (calculada das peças)</Label>
-                    {(() => {
-                      const computed = os.pecas.reduce((sum, p) => {
-                        if (p.comprimento !== "" && p.largura !== "") {
-                          return sum + Number(p.comprimento) * Number(p.largura) * (p.quantidade || 1);
-                        }
-                        return sum;
-                      }, 0);
-                      return (
-                        <Input
-                          type="text"
-                          readOnly
-                          value={`${computed.toFixed(4)} m²`}
-                          className="bg-muted/40 cursor-not-allowed"
-                        />
-                      );
-                    })()}
+                    <Label className="text-xs flex items-center justify-between gap-2">
+                      <span>
+                        {os.area_m2_manual ? "Área (do cabeçalho do PDF)" : "Área (calculada das peças)"}
+                      </span>
+                      {os.area_m2_manual && (
+                        <button
+                          type="button"
+                          onClick={() => updateOS(osIdx, { area_m2_manual: false, area_m2: "" })}
+                          className="text-[10px] underline text-muted-foreground hover:text-foreground"
+                          title="Trocar para soma automática das peças"
+                        >
+                          usar auto-soma
+                        </button>
+                      )}
+                    </Label>
+                    {os.area_m2_manual ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={os.area_m2 === "" ? "" : os.area_m2}
+                        onChange={(e) => updateOS(osIdx, { area_m2: e.target.value === "" ? "" : Number(e.target.value) })}
+                        className="bg-nue-amarelo/10 border-nue-amarelo/40"
+                      />
+                    ) : (
+                      (() => {
+                        const computed = os.pecas.reduce((sum, p) => {
+                          if (p.comprimento !== "" && p.largura !== "") {
+                            return sum + Number(p.comprimento) * Number(p.largura) * (p.quantidade || 1);
+                          }
+                          return sum;
+                        }, 0);
+                        return (
+                          <Input
+                            type="text"
+                            readOnly
+                            value={`${computed.toFixed(4)} m²`}
+                            className="bg-muted/40 cursor-not-allowed"
+                          />
+                        );
+                      })()
+                    )}
                   </div>
                 </div>
 
