@@ -36,44 +36,80 @@ export function gerarPDFRomaneio(romaneio: Romaneio, extras: RomaneioPdfExtras =
     tipo: "Romaneio",
   });
 
-  // Banner de rota colorido com seta desenhada graficamente (→ não renderiza na Montserrat embutida)
+  // Bloco de rota — estética sóbria alinhada ao RDO/PDF da OS:
+  // fundo branco com borda fina e barra lateral colorida (4mm) na cor da rota.
+  // Layout DE | seta | PARA com labels uppercase pequenas e nomes em destaque.
   const bannerColor = rotaColor(romaneio.tipo_rota);
-  const bannerH = 11;
+  const bannerH = 18;
   const pageW = doc.internal.pageSize.getWidth();
-  doc.setFillColor(...bannerColor);
-  doc.roundedRect(14, y, pageW - 28, bannerH, 2, 2, "F");
+  const bannerX = 14;
+  const bannerW = pageW - 28;
 
-  doc.setFont(PDF_FONT, "bold");
-  doc.setFontSize(PDF_SIZES.title);
-  doc.setTextColor(...PDF_COLORS.white);
+  doc.setFillColor(...PDF_COLORS.white);
+  doc.setDrawColor(...PDF_COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(bannerX, y, bannerW, bannerH, 1.5, 1.5, "FD");
+  doc.setLineWidth(0.2);
+  // Barra lateral colorida (4mm)
+  doc.setFillColor(...bannerColor);
+  doc.rect(bannerX, y, 1.6, bannerH, "F");
 
   const rotaLabel = ROTA_LABELS[romaneio.tipo_rota] || romaneio.tipo_rota;
-  // Detecta se há "→" ou "->" pra desenhar seta gráfica; senão centraliza texto direto
   const splitMatch = rotaLabel.split(/\s*(?:→|->)\s*/);
-  const bannerCenterY = y + 7.5;
+  const contentX = bannerX + 6;
+  const contentW = bannerW - 8;
+
   if (splitMatch.length === 2) {
     const [esq, dir] = splitMatch;
+    // Label "ROTA" no canto superior esquerdo
+    doc.setFont(PDF_FONT, "normal");
+    doc.setFontSize(PDF_SIZES.small - 1);
+    doc.setTextColor(...PDF_COLORS.muted);
+    doc.text("ROTA", contentX, y + 5);
+
+    // DE [nome] → PARA [nome] em uma linha horizontal centralizada
+    doc.setFont(PDF_FONT, "bold");
+    doc.setFontSize(PDF_SIZES.title);
+    doc.setTextColor(...PDF_COLORS.text);
+
+    // Calcula larguras pra centralizar o conjunto
     const esqW = doc.getTextWidth(esq);
     const dirW = doc.getTextWidth(dir);
-    const setaW = 12;
+    const setaW = 14;
     const totalW = esqW + 6 + setaW + 6 + dirW;
-    const xStart = (pageW - totalW) / 2;
-    doc.text(esq, xStart, bannerCenterY);
+    const xStart = contentX + (contentW - totalW) / 2;
+    const baseY = y + 13;
+
+    doc.text(esq, xStart, baseY);
+
+    // Seta gráfica entre os nomes — usa cor da rota como acento
+    const setaY = baseY - 1.5;
     const setaX1 = xStart + esqW + 6;
     const setaX2 = setaX1 + setaW;
-    // Linha + ponta da seta
-    doc.setDrawColor(...PDF_COLORS.white);
-    doc.setLineWidth(0.6);
-    doc.line(setaX1, bannerCenterY - 1.5, setaX2 - 2, bannerCenterY - 1.5);
-    doc.setFillColor(...PDF_COLORS.white);
-    doc.triangle(setaX2, bannerCenterY - 1.5, setaX2 - 3, bannerCenterY - 3, setaX2 - 3, bannerCenterY, "F");
+    doc.setDrawColor(...bannerColor);
+    doc.setLineWidth(0.7);
+    doc.line(setaX1, setaY, setaX2 - 2, setaY);
+    doc.setFillColor(...bannerColor);
+    doc.triangle(setaX2, setaY, setaX2 - 3, setaY - 2, setaX2 - 3, setaY + 2, "F");
     doc.setLineWidth(0.2);
-    doc.text(dir, setaX2 + 6, bannerCenterY);
+
+    doc.setFont(PDF_FONT, "bold");
+    doc.setFontSize(PDF_SIZES.title);
+    doc.setTextColor(...PDF_COLORS.text);
+    doc.text(dir, setaX2 + 6, baseY);
   } else {
-    doc.text(rotaLabel, pageW / 2, bannerCenterY, { align: "center" });
+    doc.setFont(PDF_FONT, "normal");
+    doc.setFontSize(PDF_SIZES.small - 1);
+    doc.setTextColor(...PDF_COLORS.muted);
+    doc.text("ROTA", contentX, y + 5);
+    doc.setFont(PDF_FONT, "bold");
+    doc.setFontSize(PDF_SIZES.title);
+    doc.setTextColor(...PDF_COLORS.text);
+    doc.text(rotaLabel, contentX + contentW / 2, y + 13, { align: "center" });
   }
+
   doc.setTextColor(...PDF_COLORS.text);
-  y += bannerH + 5;
+  y += bannerH + 6;
 
   // Data
   doc.setFont(PDF_FONT, "normal");
