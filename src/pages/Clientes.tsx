@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Loader2, Search } from "lucide-react";
+import { Plus, Loader2, Search, GitMerge } from "lucide-react";
 import { useClientes, type ClienteComResumo, type Cliente } from "@/hooks/useClientes";
 import { ClienteDialog } from "@/components/clientes/ClienteDialog";
+import { detectarDuplicados } from "@/lib/clienteSimilarity";
 
 export default function Clientes() {
   const navigate = useNavigate();
@@ -26,6 +27,11 @@ export default function Clientes() {
     );
   }, [clientes, search]);
 
+  const duplicadosCount = useMemo(
+    () => detectarDuplicados(clientes).length,
+    [clientes],
+  );
+
   function handleNew() {
     setEditing(null);
     setDialogOpen(true);
@@ -39,10 +45,26 @@ export default function Clientes() {
     <AppLayout
       title="Clientes"
       action={
-        <Button size="sm" onClick={handleNew}>
-          <Plus className="h-4 w-4 sm:mr-1" />
-          <span className="hidden sm:inline">Novo Cliente</span>
-        </Button>
+        <div className="flex gap-2 items-center">
+          {duplicadosCount > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/clientes/mesclar")}
+              className="border-nue-amarelo/50 text-nue-chumbo"
+            >
+              <GitMerge className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Mesclar</span>
+              <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-semibold bg-nue-amarelo text-nue-chumbo">
+                {duplicadosCount}
+              </span>
+            </Button>
+          )}
+          <Button size="sm" onClick={handleNew}>
+            <Plus className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Novo Cliente</span>
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4">

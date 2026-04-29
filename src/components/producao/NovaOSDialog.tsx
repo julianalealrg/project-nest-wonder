@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AutocompleteInput } from "./AutocompleteInput";
+import { ClienteAutocomplete } from "@/components/clientes/ClienteAutocomplete";
 import { Plus, Trash2, Loader2, Upload, FileText, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -37,12 +38,22 @@ interface OSForm {
 }
 
 interface ClienteForm {
+  id: string | null;
   nome: string;
   endereco: string;
   supervisor: string;
   supervisor_outro: string;
   contato: string;
 }
+
+const EMPTY_CLIENTE: ClienteForm = {
+  id: null,
+  nome: "",
+  endereco: "",
+  supervisor: "",
+  supervisor_outro: "",
+  contato: "",
+};
 
 const PROJETISTAS = ["Letícia", "Lucas", "Rebeca", "Izabeli"];
 const SUPERVISORES = ["Gino", "Maurício", "Gustavo"];
@@ -165,9 +176,7 @@ function mapExtractedToOS(d: any, file: File): OSForm {
 
 export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProps) {
   const [mode, setMode] = useState<"manual" | "pdf">("manual");
-  const [cliente, setCliente] = useState<ClienteForm>({
-    nome: "", endereco: "", supervisor: "", supervisor_outro: "", contato: "",
-  });
+  const [cliente, setCliente] = useState<ClienteForm>(EMPTY_CLIENTE);
   const [osList, setOsList] = useState<OSForm[]>([emptyOS()]);
   const [saving, setSaving] = useState(false);
   const [ambientes, setAmbientes] = useState<string[]>(DEFAULT_AMBIENTES);
@@ -194,7 +203,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
   }, [open]);
 
   function reset() {
-    setCliente({ nome: "", endereco: "", supervisor: "", supervisor_outro: "", contato: "" });
+    setCliente(EMPTY_CLIENTE);
     setOsList([emptyOS()]);
     setMode("manual");
     setParseSuccess(false);
@@ -282,6 +291,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
     // Fill client from first PDF
     if (firstClientData) {
       const newCliente: ClienteForm = {
+        id: null,
         nome: firstClientData.cliente || "",
         endereco: "",
         supervisor: "",
@@ -366,15 +376,11 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
         ? cliente.supervisor_outro
         : cliente.supervisor;
 
-      const { data: existingCliente } = await supabase
-        .from("clientes")
-        .select("id")
-        .eq("nome", cliente.nome.trim())
-        .maybeSingle();
-
+      // Se a usuária já selecionou um cliente existente via autocomplete, usa o id direto.
+      // Senão, faz lookup por nome exato (fallback) e por último cria.
       let clienteId: string;
-      if (existingCliente) {
-        clienteId = existingCliente.id;
+      if (cliente.id) {
+        clienteId = cliente.id;
         await supabase
           .from("clientes")
           .update({
@@ -384,18 +390,36 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
           })
           .eq("id", clienteId);
       } else {
-        const { data: newCliente, error: clienteError } = await supabase
+        const { data: existingCliente } = await supabase
           .from("clientes")
-          .insert({
-            nome: cliente.nome.trim(),
-            endereco: cliente.endereco || null,
-            supervisor: supervisorFinal || null,
-            contato: cliente.contato || null,
-          })
           .select("id")
-          .single();
-        if (clienteError) throw clienteError;
-        clienteId = newCliente.id;
+          .eq("nome", cliente.nome.trim())
+          .maybeSingle();
+
+        if (existingCliente) {
+          clienteId = existingCliente.id;
+          await supabase
+            .from("clientes")
+            .update({
+              endereco: cliente.endereco || null,
+              supervisor: supervisorFinal || null,
+              contato: cliente.contato || null,
+            })
+            .eq("id", clienteId);
+        } else {
+          const { data: newCliente, error: clienteError } = await supabase
+            .from("clientes")
+            .insert({
+              nome: cliente.nome.trim(),
+              endereco: cliente.endereco || null,
+              supervisor: supervisorFinal || null,
+              contato: cliente.contato || null,
+            })
+            .select("id")
+            .single();
+          if (clienteError) throw clienteError;
+          clienteId = newCliente.id;
+        }
       }
 
       let savedCount = 0;
@@ -624,7 +648,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
           <DialogTitle className="text-lg font-semibold">Nova Ordem de Serviço</DialogTitle>
           <div className="flex gap-2 mt-3">
             <button
-              onClick={() => { setMode("manual"); setParseSuccess(false); setOsList([emptyOS()]); setCliente({ nome: "", endereco: "", supervisor: "", supervisor_outro: "", contato: "" }); }}
+              onClick={() => { setMode("manual"); setParseSuccess(false); setOsList([emptyOS()]); setCliente(EMPTY_CLIENTE); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 mode === "manual"
                   ? "bg-foreground text-background"
@@ -691,7 +715,7 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
                       onClick={() => {
                         setParseSuccess(false);
                         setOsList([emptyOS()]);
-                        setCliente({ nome: "", endereco: "", supervisor: "", supervisor_outro: "", contato: "" });
+                        setCliente(EMPTY_CLIENTE);
                       }}
                     >
                       Enviar outros PDFs
@@ -724,10 +748,30 @@ export function NovaOSDialog({ open, onOpenChange, onSuccess }: NovaOSDialogProp
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Nome *</Label>
-                  <Input
+                  <ClienteAutocomplete
                     value={cliente.nome}
-                    onChange={(e) => setCliente((c) => ({ ...c, nome: e.target.value }))}
-                    placeholder="Nome do cliente"
+                    selectedId={cliente.id}
+                    onChange={(v) => setCliente((c) => ({ ...c, nome: v }))}
+                    onSelect={(sel) => {
+                      if (sel) {
+                        const supervisorMatch = sel.supervisor
+                          ? SUPERVISORES.find(
+                              (s) => s.toLowerCase() === sel.supervisor!.toLowerCase(),
+                            )
+                          : null;
+                        setCliente({
+                          id: sel.id,
+                          nome: sel.nome,
+                          endereco: sel.endereco || "",
+                          supervisor: supervisorMatch || (sel.supervisor ? "outro" : ""),
+                          supervisor_outro:
+                            sel.supervisor && !supervisorMatch ? sel.supervisor : "",
+                          contato: sel.contato || "",
+                        });
+                      } else {
+                        setCliente(EMPTY_CLIENTE);
+                      }
+                    }}
                   />
                 </div>
                 <div className="space-y-1">
