@@ -410,7 +410,7 @@ function addAnexoOcorrencias(doc: jsPDF, osCodigo: string, registros: any[]) {
     } else {
       doc.setFont(PDF_FONT, "italic");
       doc.setFontSize(PDF_SIZES.small);
-      doc.setTextColor(...PDF_COLORS.vermelho[0], PDF_COLORS.vermelho[1], PDF_COLORS.vermelho[2]);
+      doc.setTextColor(PDF_COLORS.vermelho[0], PDF_COLORS.vermelho[1], PDF_COLORS.vermelho[2]);
       doc.text("→ Pendente — sem encaminhamento", 14, y);
       y += 4;
     }
