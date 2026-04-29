@@ -11,6 +11,7 @@ export const OS_STATUS_BADGE: Record<string, string> = {
   acabamento: "bg-nue-laranja text-white",
   cq: "bg-nue-amarelo text-nue-chumbo font-semibold",
   expedicao: "bg-nue-azul text-white",
+  enviado_base1: "bg-nue-azul/60 text-white",
   em_transito: "bg-nue-azul/75 text-white",
   entregue: "bg-nue-verde text-white",
   terceiros: "bg-nue-chumbo text-white",

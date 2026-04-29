@@ -24,6 +24,8 @@ const REGRESSIVE_TRANSITIONS = new Set<string>([
   "cq->acabamento",
   "terceiros->terceiros_recusado",
   "terceiros_recusado->cortando",
+  "acabamento->enviado_base1",
+  "cq->enviado_base1",
 ]);
 function isRegressive(from: string, to: string) {
   return REGRESSIVE_TRANSITIONS.has(`${from}->${to}`);
@@ -51,6 +53,13 @@ function getBotaoProximoStatus(os: MockOS, nextStatus: string): { label: string;
   }
   if (os.status === "terceiros_recusado" && nextStatus === "terceiros") {
     if (guard.kind === "select_terceiro") return { label: "Reencaminhar a outro terceiro", disabled: false };
+  }
+  if ((os.status === "acabamento" || os.status === "cq") && nextStatus === "enviado_base1") {
+    if (guard.kind === "open_romaneio") return { label: "Voltar para Base 1 (gerar romaneio)", disabled: false };
+  }
+  if (os.status === "enviado_base1" && nextStatus === "cortando") {
+    if (guard.kind === "blocked") return { label: "Aguardando conferência B1", disabled: true, tooltip: guard.reason };
+    return { label: "Confirmar retorno na B1", disabled: false };
   }
   if (guard.kind === "blocked") return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: true, tooltip: guard.reason };
   return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: false };

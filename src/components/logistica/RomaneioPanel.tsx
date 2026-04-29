@@ -54,6 +54,7 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   const canDepart = romaneio.status === "pendente";
   const canReceive = romaneio.status === "em_transito";
   const isB1B2 = romaneio.tipo_rota === "base1_base2";
+  const isB2B1 = romaneio.tipo_rota === "base2_base1";
 
   function startDespacho() {
     setFotoCavalete([]);
@@ -366,6 +367,43 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
               to_status: "acabamento",
               romaneio_id: romaneio!.id,
               romaneio_codigo: romaneio!.codigo,
+            },
+          }));
+          await supabase.from("activity_logs").insert(logs);
+        }
+      }
+
+      // B2→B1 recebido: OS volta de "enviado_base1" pra "cortando" pra refazer corte
+      if (isB2B1 && osIdsAvancar.length > 0) {
+        const { data: osParaAtualizar } = await supabase
+          .from("ordens_servico")
+          .select("id, codigo")
+          .in("id", osIdsAvancar)
+          .eq("status", "enviado_base1");
+
+        if (osParaAtualizar && osParaAtualizar.length > 0) {
+          const idsParaAtualizar = osParaAtualizar.map((o) => o.id);
+          await supabase
+            .from("ordens_servico")
+            .update({
+              status: "cortando",
+              localizacao: "Base 1",
+              updated_at: new Date().toISOString(),
+            })
+            .in("id", idsParaAtualizar);
+
+          const logs = osParaAtualizar.map((o) => ({
+            action: "avanco_automatico_pos_recebimento",
+            entity_type: "ordens_servico",
+            entity_id: o.id,
+            entity_description: o.codigo,
+            user_name: profile?.nome || "Sistema",
+            details: {
+              from_status: "enviado_base1",
+              to_status: "cortando",
+              romaneio_id: romaneio!.id,
+              romaneio_codigo: romaneio!.codigo,
+              motivo: "Recebido na Base 1 — refazer corte/usinagem antes de retornar à Base 2",
             },
           }));
           await supabase.from("activity_logs").insert(logs);

@@ -23,6 +23,27 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
     return { kind: "allow" };
   }
 
+  // Acabamento/CQ -> Retorno à Base 1 : abrir popup de Novo Romaneio (B2->B1) já com a OS pré-selecionada
+  if ((os.status === "acabamento" || os.status === "cq") && toStatus === "enviado_base1") {
+    return { kind: "open_romaneio", tipoRota: "base2_base1", presetOsId: os.id };
+  }
+
+  // Em retorno à Base 1 -> Cortando : exige que o romaneio B2->B1 tenha sido recebido na Base 1
+  if (os.status === "enviado_base1" && toStatus === "cortando") {
+    const romaneios = (os as any).romaneios || [];
+    const rom = romaneios.find((r: any) => r.tipo_rota === "base2_base1");
+    const recebido = rom && (rom.status === "entregue" || rom.status === "recebido");
+    if (!recebido) {
+      return {
+        kind: "blocked",
+        title: "Aguardando conferência na Base 1",
+        reason:
+          "A OS só pode voltar para Cortando depois que a Base 1 conferir e confirmar o recebimento do romaneio B2→B1. Vá para Logística e registre o recebimento.",
+      };
+    }
+    return { kind: "allow" };
+  }
+
   // Cortando -> Enviado Base 2 : abrir popup de Novo Romaneio (B1->B2) já com a OS pré-selecionada
   if (os.status === "cortando" && toStatus === "enviado_base2") {
     const pendentes = pecas.filter((p) => p.status_corte !== "concluido" && p.status_corte !== "nao_aplicavel");
