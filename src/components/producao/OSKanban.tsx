@@ -81,8 +81,17 @@ function OSCard({ os, onClick }: { os: MockOS; onClick: () => void }) {
         )}
       </div>
 
-      {(ocorrenciasPendentes > 0 || emTransito || isAtrasado || pecasReprovadas > 0) && (
+      {(ocorrenciasPendentes > 0 ||
+        emTransito ||
+        isAtrasado ||
+        pecasReprovadas > 0 ||
+        os.status === "terceiros_recusado") && (
         <div className="flex flex-wrap items-center gap-1">
+          {os.status === "terceiros_recusado" && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-nue-vermelho text-white">
+              Terceiro recusou
+            </span>
+          )}
           {isAtrasado && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-destructive text-destructive-foreground">
               Atrasado
@@ -114,8 +123,12 @@ export function OSKanban({ data }: OSKanbanProps) {
   const handleClick = (os: MockOS) => navigate(`/producao/${os.id}`);
 
   const terceirosOSs = data.filter((os) => os.status === "terceiros");
+  const recusadasOSs = data.filter((os) => os.status === "terceiros_recusado");
   const fluxoOSs = data.filter(
-    (os) => os.status !== "terceiros" && isVisivelNoKanban(os),
+    (os) =>
+      os.status !== "terceiros" &&
+      os.status !== "terceiros_recusado" &&
+      isVisivelNoKanban(os),
   );
 
   const grupos: Record<string, MockOS[]> = {};
@@ -134,21 +147,37 @@ export function OSKanban({ data }: OSKanbanProps) {
       {/* Faixa horizontal de Terceiros */}
       <div className="bg-card border rounded-lg p-3">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-nue-chumbo/15 text-nue-chumbo">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-nue-chumbo text-white">
               Terceiros
             </span>
             <span className="text-muted-foreground font-normal">
               ({terceirosOSs.length})
             </span>
+            {recusadasOSs.length > 0 && (
+              <>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-nue-vermelho text-white">
+                  Recusados
+                </span>
+                <span className="text-muted-foreground font-normal">
+                  ({recusadasOSs.length})
+                </span>
+              </>
+            )}
           </h3>
         </div>
-        {terceirosOSs.length === 0 ? (
+        {terceirosOSs.length === 0 && recusadasOSs.length === 0 ? (
           <div className="text-xs text-muted-foreground italic px-1">
             Nenhuma OS em terceiros
           </div>
         ) : (
           <div className="flex gap-2 overflow-x-auto pb-1">
+            {recusadasOSs.map((os) => (
+              <div key={os.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
+                <OSCard os={os} onClick={() => handleClick(os)} />
+              </div>
+            ))}
             {terceirosOSs.map((os) => (
               <div key={os.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
                 <OSCard os={os} onClick={() => handleClick(os)} />

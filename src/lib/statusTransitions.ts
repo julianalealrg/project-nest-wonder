@@ -8,7 +8,8 @@ export const STATUS_TRANSITIONS: Record<string, string[]> = {
   acabamento: ["cq"],
   cq: ["expedicao", "acabamento"],
   expedicao: ["entregue"],
-  terceiros: ["entregue"],
+  terceiros: ["entregue", "terceiros_recusado"],
+  terceiros_recusado: ["cortando", "terceiros"],
 };
 
 export const STATUS_LOCATION: Record<string, string> = {
@@ -21,6 +22,7 @@ export const STATUS_LOCATION: Record<string, string> = {
   expedicao: "Base 2",
   entregue: "Cliente",
   terceiros: "Terceiro",
+  terceiros_recusado: "Base 1",
 };
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -33,6 +35,7 @@ export const STATUS_LABELS: Record<string, string> = {
   expedicao: "Expedição",
   entregue: "Entregue",
   terceiros: "Terceiros",
+  terceiros_recusado: "Terceiro recusou",
 };
 
 export function getNextStatuses(currentStatus: string): string[] {
