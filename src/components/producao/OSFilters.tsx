@@ -45,7 +45,7 @@ export function OSFilters(props: OSFiltersProps) {
         </div>
 
         <Select value={props.tipo} onValueChange={props.onTipoChange}>
-          <SelectTrigger className="w-full sm:w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[110px] sm:flex-none sm:w-[140px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
