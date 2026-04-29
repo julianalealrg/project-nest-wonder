@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { osBadgeClass } from "@/lib/statusColors";
 import { getOrigemTagInfo } from "@/lib/origemTag";
+import { formatDuracaoCurta, corNivelTempo } from "@/lib/tempoEstacao";
+import { Clock } from "lucide-react";
 
 const KANBAN_COLUNAS = [
   "aguardando_material",
@@ -80,6 +82,10 @@ function OSCard({ os, onClick }: { os: MockOS; onClick: () => void }) {
           </span>
         )}
       </div>
+
+      {os.status !== "entregue" && (
+        <TempoNaEstacao updatedAt={os.updated_at} />
+      )}
 
       {(ocorrenciasPendentes > 0 ||
         emTransito ||
@@ -239,6 +245,26 @@ export function OSKanban({ data }: OSKanbanProps) {
           ? ` · ${ocultosEntregue} entregue${ocultosEntregue !== 1 ? "s" : ""} há mais de ${ENTREGUE_DIAS_VISIVEL} dias (oculta${ocultosEntregue !== 1 ? "s" : ""})`
           : ""}
       </div>
+    </div>
+  );
+}
+
+function TempoNaEstacao({ updatedAt }: { updatedAt: string }) {
+  const ms = Date.now() - new Date(updatedAt).getTime();
+  const nivel = corNivelTempo(ms);
+  const cls =
+    nivel === "vermelho"
+      ? "bg-nue-vermelho text-white"
+      : nivel === "amarelo"
+        ? "bg-nue-amarelo text-nue-chumbo"
+        : "bg-muted text-muted-foreground";
+  return (
+    <div
+      className={`mb-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${cls}`}
+      title={`Última atualização há ${formatDuracaoCurta(ms)}`}
+    >
+      <Clock className="h-3 w-3" />
+      Há {formatDuracaoCurta(ms)} nesta etapa
     </div>
   );
 }

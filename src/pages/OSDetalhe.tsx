@@ -13,6 +13,8 @@ import { OSDetalheHeader } from "@/components/producao/detalhe/OSDetalheHeader";
 import { OSDetalheOperacao } from "@/components/producao/detalhe/OSDetalheOperacao";
 import { OSDetalheOcorrencias } from "@/components/producao/detalhe/OSDetalheOcorrencias";
 import { OSDetalheHistorico } from "@/components/producao/detalhe/OSDetalheHistorico";
+import { OSDetalheLinhaDoTempo } from "@/components/producao/detalhe/OSDetalheLinhaDoTempo";
+import { tempoEmProducaoMs, formatDuracao } from "@/lib/tempoEstacao";
 
 export default function OSDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +91,7 @@ export default function OSDetalhe() {
         <OSDetalheHeader os={os} onStatusChanged={handleRefresh} />
 
         {/* Cards de resumo — info recorrente */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Material</p>
             <p className="mt-1 text-sm font-medium text-foreground truncate" title={os.material || "—"}>{os.material || "—"}</p>
@@ -97,6 +99,19 @@ export default function OSDetalhe() {
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Área</p>
             <p className="mt-1 text-sm font-semibold text-foreground">{Number(os.area_m2 ?? 0).toFixed(2)} m²</p>
+          </div>
+          <div className="rounded-lg border bg-card p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Em produção</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">
+              {os.status === "entregue"
+                ? "—"
+                : formatDuracao(tempoEmProducaoMs(os))}
+            </p>
+            {os.data_emissao && (
+              <p className="text-[10px] text-muted-foreground">
+                desde {new Date(os.data_emissao).toLocaleDateString("pt-BR")}
+              </p>
+            )}
           </div>
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Prazo</p>
@@ -121,6 +136,7 @@ export default function OSDetalhe() {
         <Tabs defaultValue="operacao" className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto md:w-auto">
             <TabsTrigger value="operacao">Operação</TabsTrigger>
+            <TabsTrigger value="linha_tempo">Linha do tempo</TabsTrigger>
             <TabsTrigger value="ocorrencias">
               Ocorrências{ocorrenciasPendentes > 0 ? (
                 <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground">
@@ -135,6 +151,10 @@ export default function OSDetalhe() {
 
           <TabsContent value="operacao" className="mt-4 rounded-lg border bg-card p-5">
             <OSDetalheOperacao os={os} onStatusChanged={handleRefresh} />
+          </TabsContent>
+
+          <TabsContent value="linha_tempo" className="mt-4 rounded-lg border bg-card p-5">
+            <OSDetalheLinhaDoTempo os={os} />
           </TabsContent>
 
           <TabsContent value="ocorrencias" className="mt-4 rounded-lg border bg-card p-5">
