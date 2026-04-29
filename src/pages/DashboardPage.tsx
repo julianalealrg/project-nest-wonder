@@ -32,7 +32,8 @@ export default function DashboardPage() {
       title="Dashboard"
       action={
         <Button size="sm" variant="outline" onClick={() => exportDashboardExcel(charts)} disabled={isLoading}>
-          <Download className="h-4 w-4 mr-1" />Exportar
+          <Download className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Exportar</span>
         </Button>
       }
     >
