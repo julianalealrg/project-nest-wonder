@@ -52,28 +52,46 @@ export type Database = {
       }
       clientes: {
         Row: {
+          arquiteta: string | null
+          cnpj_cpf: string | null
           contato: string | null
           created_at: string
+          email: string | null
           endereco: string | null
           id: string
           nome: string
+          observacoes: string | null
           supervisor: string | null
+          telefone: string | null
+          updated_at: string
         }
         Insert: {
+          arquiteta?: string | null
+          cnpj_cpf?: string | null
           contato?: string | null
           created_at?: string
+          email?: string | null
           endereco?: string | null
           id?: string
           nome: string
+          observacoes?: string | null
           supervisor?: string | null
+          telefone?: string | null
+          updated_at?: string
         }
         Update: {
+          arquiteta?: string | null
+          cnpj_cpf?: string | null
           contato?: string | null
           created_at?: string
+          email?: string | null
           endereco?: string | null
           id?: string
           nome?: string
+          observacoes?: string | null
           supervisor?: string | null
+          telefone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

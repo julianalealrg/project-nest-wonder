@@ -1,4 +1,4 @@
-import { Home, Factory, Truck, FileText, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { Home, Factory, Truck, FileText, BarChart3, Settings, LogOut, Menu, X, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogoNue } from "@/components/common/LogoNue";
@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const menuItems = [
   { title: "Início", url: "/", icon: Home, color: "" },
+  { title: "Clientes", url: "/clientes", icon: Users, color: "text-nue-verde" },
   { title: "Produção", url: "/producao", icon: Factory, color: "text-nue-laranja" },
   { title: "Logística", url: "/logistica", icon: Truck, color: "text-nue-azul" },
   { title: "Registros", url: "/registros", icon: FileText, color: "text-nue-roxo" },
