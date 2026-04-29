@@ -1,6 +1,17 @@
 import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { ArrowUpRight, ChevronDown, ChevronRight, Loader2, Palette, AlertCircle, Truck, Clock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpRight, ChevronDown, ChevronRight, Loader2, Palette, AlertCircle, Truck, Clock, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { MockOS, STATUS_LABELS } from "@/data/mockProducao";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -84,6 +95,11 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
   const [romaneioPreset, setRomaneioPreset] = useState<{ tipoRota: string; osId: string } | null>(null);
   const [pendingStatusAfterRomaneio, setPendingStatusAfterRomaneio] = useState<string | null>(null);
   const romaneioSuccessRef = useRef(false);
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const isAdmin = profile?.perfil === "admin";
 
   const nextStatuses = getNextStatuses(os.status);
   const tag = getOrigemTagInfo(os.origem);
@@ -190,6 +206,51 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
       toast({ title: "Erro ao reprovar", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDeleteOS() {
+    if (deleteConfirmText.trim() !== os.codigo) {
+      toast({ title: "Código não confere", description: "Digite o código exatamente como está", variant: "destructive" });
+      return;
+    }
+    setDeleting(true);
+    try {
+      // Desvincular registros (preserva histórico do registro, só solta a OS)
+      await supabase
+        .from("registros")
+        .update({ os_id: null, numero_os: null } as any)
+        .eq("os_id", os.id);
+
+      // Remover peças do romaneio (não cascateia)
+      await supabase.from("romaneio_pecas").delete().eq("os_id", os.id);
+
+      // Apagar a OS (peças cascateiam por ON DELETE CASCADE)
+      const { error } = await supabase.from("ordens_servico").delete().eq("id", os.id);
+      if (error) throw error;
+
+      // Log da exclusão (entity órfã, mas fica auditoria)
+      await supabase.from("activity_logs").insert({
+        action: "exclusao_os",
+        entity_type: "ordens_servico",
+        entity_id: os.id,
+        entity_description: os.codigo,
+        user_name: profile?.nome || "Admin",
+        details: {
+          cliente: os.cliente,
+          status_no_momento: os.status,
+          pecas_apagadas: os.pecas.length,
+        },
+      });
+
+      toast({ title: `${os.codigo} excluída`, description: `${os.pecas.length} peça(s) apagada(s)` });
+      navigate("/producao");
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir OS", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setDeleteConfirmText("");
     }
   }
 
@@ -301,7 +362,7 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
               return buttonNode;
             })()
           )}
-          {secondaryStatuses.length > 0 && (
+          {(secondaryStatuses.length > 0 || isAdmin) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="lg">
@@ -330,6 +391,19 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
                     </div>
                   );
                 })}
+                {isAdmin && (
+                  <>
+                    {secondaryStatuses.length > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuItem
+                      disabled={loading || deleting}
+                      onClick={() => setDeleteOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      <span className="text-sm">Excluir OS (admin)</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -378,6 +452,53 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
           onStatusChanged?.();
         }}
       />
+
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(o) => {
+          if (!deleting) {
+            setDeleteOpen(o);
+            if (!o) setDeleteConfirmText("");
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Excluir OS {os.codigo}?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                Vai apagar a OS <strong>{os.codigo}</strong> ({os.cliente}) e suas{" "}
+                <strong>{os.pecas.length} peça(s)</strong>. Romaneios vinculados são
+                desvinculados, registros mantêm o histórico mas perdem a referência.
+              </span>
+              <span className="block font-semibold text-destructive">
+                Esta ação é irreversível.
+              </span>
+              <span className="block text-sm">
+                Pra confirmar, digite o código <code className="font-mono bg-muted px-1.5 py-0.5 rounded">{os.codigo}</code> abaixo:
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder={os.codigo}
+            disabled={deleting}
+            autoFocus
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOS}
+              disabled={deleting || deleteConfirmText.trim() !== os.codigo}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
