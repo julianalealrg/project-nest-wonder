@@ -14,7 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Montserrat", "sans-serif"],
+        // Padrão NUE Projetos: IBM Plex Sans pro corpo, Questrial pra display, IBM Plex Mono pra códigos
+        sans: ['"IBM Plex Sans"', "Helvetica Neue", "Arial", "sans-serif"],
+        display: ["Questrial", "Helvetica Neue", "Arial", "sans-serif"],
+        mono: ['"IBM Plex Mono"', '"SF Mono"', "Menlo", "monospace"],
       },
       colors: {
         nue: {

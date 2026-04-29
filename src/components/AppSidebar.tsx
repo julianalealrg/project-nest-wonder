@@ -1,7 +1,7 @@
 import { Home, Factory, Truck, FileText, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import logoNue from "@/assets/logo-nue-v1.svg";
+import { LogoNue } from "@/components/common/LogoNue";
 import { useState } from "react";
 
 const menuItems = [
@@ -24,9 +24,9 @@ export function AppSidebar() {
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
-      {/* Logo */}
-      <div className="flex items-center justify-center py-8 px-4">
-        <img src={logoNue} alt="NUE Projetos" className="h-10 w-auto invert" />
+      {/* Logo — currentColor herda a cor do texto, então fica claro em fundo escuro */}
+      <div className="flex items-center justify-center py-8 px-4 text-[#F0EDE8]">
+        <LogoNue className="h-8 w-auto" aria-label="NUE Projetos" />
       </div>
 
       {/* Nav */}

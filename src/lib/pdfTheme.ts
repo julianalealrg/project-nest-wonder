@@ -1,7 +1,12 @@
 // Shared PDF design tokens — paleta NUE, fontes e tamanhos consistentes.
 // Usado pelos 4 PDFs (OS, Romaneio, Ocorrência completa, Registro produção).
 
-export const PDF_FONT = "Montserrat";
+// jsPDF tem fontes embutidas: helvetica, times, courier, symbol, zapfdingbats.
+// Helvetica é a mais próxima visualmente do IBM Plex Sans (padrão NUE Projetos).
+// Pra ter IBM Plex Sans real no PDF seria necessário registrar a fonte via VFS
+// (jsPDF.addFont), o que aumenta bastante o bundle. Helvetica funciona bem como
+// proxy enquanto não temos a fonte custom.
+export const PDF_FONT = "helvetica";
 
 // Tamanhos (pt) — usar SEMPRE estes
 export const PDF_SIZES = {
