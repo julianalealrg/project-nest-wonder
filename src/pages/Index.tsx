@@ -77,7 +77,7 @@ export default function Index() {
               <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
               <span className="text-sm text-muted-foreground">{kpi.label}</span>
             </div>
-            <div className="text-2xl font-semibold text-foreground mt-2">{kpi.value}</div>
+            <div className="font-display text-3xl text-foreground mt-2">{kpi.value}</div>
           </div>
         ))}
       </div>
@@ -97,7 +97,7 @@ export default function Index() {
               <div className={`flex items-center justify-center h-9 w-9 rounded-md ${mod.bg}`}>
                 <mod.icon className={`h-5 w-5 ${mod.color}`} />
               </div>
-              <span className="font-medium text-foreground">{mod.title}</span>
+              <span className="font-display text-base text-foreground">{mod.title}</span>
             </div>
             <p className="text-sm text-muted-foreground">{mod.description}</p>
           </Link>

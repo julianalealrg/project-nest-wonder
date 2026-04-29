@@ -94,15 +94,15 @@ export default function OSDetalhe() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Material</p>
-            <p className="mt-1 text-sm font-medium text-foreground truncate" title={os.material || "—"}>{os.material || "—"}</p>
+            <p className="mt-1 font-display text-base text-foreground truncate" title={os.material || "—"}>{os.material || "—"}</p>
           </div>
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Área</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">{Number(os.area_m2 ?? 0).toFixed(2)} m²</p>
+            <p className="mt-1 font-display text-xl text-foreground">{Number(os.area_m2 ?? 0).toFixed(2)} m²</p>
           </div>
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Em produção</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">
+            <p className="mt-1 font-display text-xl text-foreground">
               {os.status === "entregue"
                 ? "—"
                 : formatDuracao(tempoEmProducaoMs(os))}
@@ -115,7 +115,7 @@ export default function OSDetalhe() {
           </div>
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Prazo</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">
+            <p className="mt-1 font-display text-xl text-foreground">
               {dataEntrega ? dataEntrega.toLocaleDateString("pt-BR") : "—"}
             </p>
             {diasRestantes !== null && os.status !== "entregue" && (
@@ -126,8 +126,8 @@ export default function OSDetalhe() {
           </div>
           <div className="rounded-lg border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Peças</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">
-              {donePecas}/{totalPecas} <span className="text-muted-foreground font-normal">({pctPecas}%)</span>
+            <p className="mt-1 font-display text-xl text-foreground">
+              {donePecas}/{totalPecas} <span className="text-muted-foreground font-normal text-sm">({pctPecas}%)</span>
             </p>
           </div>
         </div>
