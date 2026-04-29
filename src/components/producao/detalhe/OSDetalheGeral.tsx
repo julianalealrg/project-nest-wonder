@@ -352,7 +352,7 @@ interface AreaFieldProps {
   onChanged: () => void;
 }
 
-function AreaField({ os, onChanged }: AreaFieldProps) {
+export function AreaField({ os, onChanged }: AreaFieldProps) {
   const isManual = !!os.area_m2_manual;
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState<string>(String(os.area_m2 ?? ""));
