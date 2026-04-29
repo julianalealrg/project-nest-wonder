@@ -299,45 +299,89 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
         if (peca.os_id) osIdsComProblema.add(peca.os_id);
       }
 
-      // 5. Avanço automático da OS de "enviado_base2" → "acabamento" só para OS sem problema
-      if (isB1B2) {
-        const osIds = Array.from(
-          new Set(romaneio!.pecas.map((p) => p.os_id).filter(Boolean)),
-        ) as string[];
-        const osIdsAvancar = osIds.filter((id) => !osIdsComProblema.has(id));
-        if (osIdsAvancar.length > 0) {
-          const { data: osParaAtualizar } = await supabase
+      // 5. Avanço automático da OS conforme rota do romaneio recebido.
+      // - B1→B2: "enviado_base2" → "acabamento" (só pra OS sem ocorrência pendente)
+      // - B2→Cliente: "expedicao" → "entregue" + marca confirmação
+      // - B1→Cliente (terceiros direto): "terceiros" → "entregue" + marca confirmação
+      const osIds = Array.from(
+        new Set(romaneio!.pecas.map((p) => p.os_id).filter(Boolean)),
+      ) as string[];
+      const osIdsAvancar = osIds.filter((id) => !osIdsComProblema.has(id));
+
+      if (isB1B2 && osIdsAvancar.length > 0) {
+        const { data: osParaAtualizar } = await supabase
+          .from("ordens_servico")
+          .select("id, codigo")
+          .in("id", osIdsAvancar)
+          .eq("status", "enviado_base2");
+
+        if (osParaAtualizar && osParaAtualizar.length > 0) {
+          const idsParaAtualizar = osParaAtualizar.map((o) => o.id);
+          await supabase
             .from("ordens_servico")
-            .select("id, codigo")
-            .in("id", osIdsAvancar)
-            .eq("status", "enviado_base2");
+            .update({
+              status: "acabamento",
+              localizacao: "Base 2",
+              updated_at: new Date().toISOString(),
+            })
+            .in("id", idsParaAtualizar);
 
-          if (osParaAtualizar && osParaAtualizar.length > 0) {
-            const idsParaAtualizar = osParaAtualizar.map((o) => o.id);
-            await supabase
-              .from("ordens_servico")
-              .update({
-                status: "acabamento",
-                localizacao: "Base 2",
-                updated_at: new Date().toISOString(),
-              })
-              .in("id", idsParaAtualizar);
+          const logs = osParaAtualizar.map((o) => ({
+            action: "avanco_automatico_pos_recebimento",
+            entity_type: "ordens_servico",
+            entity_id: o.id,
+            entity_description: o.codigo,
+            user_name: profile?.nome || "Sistema",
+            details: {
+              from_status: "enviado_base2",
+              to_status: "acabamento",
+              romaneio_id: romaneio!.id,
+              romaneio_codigo: romaneio!.codigo,
+            },
+          }));
+          await supabase.from("activity_logs").insert(logs);
+        }
+      }
 
-            const logs = osParaAtualizar.map((o) => ({
-              action: "avanco_automatico_pos_recebimento",
-              entity_type: "ordens_servico",
-              entity_id: o.id,
-              entity_description: o.codigo,
-              user_name: profile?.nome || "Sistema",
-              details: {
-                from_status: "enviado_base2",
-                to_status: "acabamento",
-                romaneio_id: romaneio!.id,
-                romaneio_codigo: romaneio!.codigo,
-              },
-            }));
-            await supabase.from("activity_logs").insert(logs);
-          }
+      // Auto-entregue quando romaneio para o cliente é confirmado
+      const rotaParaCliente = romaneio!.tipo_rota === "base2_cliente" || romaneio!.tipo_rota === "base1_cliente";
+      if (rotaParaCliente && osIdsAvancar.length > 0) {
+        const statusOrigem = romaneio!.tipo_rota === "base2_cliente" ? "expedicao" : "terceiros";
+        const { data: osParaEntregar } = await supabase
+          .from("ordens_servico")
+          .select("id, codigo")
+          .in("id", osIdsAvancar)
+          .eq("status", statusOrigem);
+
+        if (osParaEntregar && osParaEntregar.length > 0) {
+          const ids = osParaEntregar.map((o) => o.id);
+          const agora = new Date().toISOString();
+          await supabase
+            .from("ordens_servico")
+            .update({
+              status: "entregue",
+              localizacao: "Cliente",
+              entregue_confirmado_em: agora,
+              entregue_confirmado_por: profile?.nome || "Sistema",
+              updated_at: agora,
+            } as any)
+            .in("id", ids);
+
+          const logs = osParaEntregar.map((o) => ({
+            action: "avanco_automatico_pos_recebimento",
+            entity_type: "ordens_servico",
+            entity_id: o.id,
+            entity_description: o.codigo,
+            user_name: profile?.nome || "Sistema",
+            details: {
+              from_status: statusOrigem,
+              to_status: "entregue",
+              romaneio_id: romaneio!.id,
+              romaneio_codigo: romaneio!.codigo,
+              tipo_rota: romaneio!.tipo_rota,
+            },
+          }));
+          await supabase.from("activity_logs").insert(logs);
         }
       }
 
