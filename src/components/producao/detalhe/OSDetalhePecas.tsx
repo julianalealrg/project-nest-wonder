@@ -242,7 +242,7 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
           const guard = nextStation ? podeAvancarPecaPara(nextStation, os.status, (os as any).romaneios, os.pecas as any, peca.id) : { permitido: true };
           const isSelectable = nextStation !== null;
           const isSelected = selectedPecaIds.has(peca.id);
-          const temFotosCabine = !!(peca.foto_insumos_url || peca.foto_acabador_assinado_url);
+          const temFotosCabine = !!(peca.foto_insumos_url || peca.foto_acabador_assinado_url || peca.foto_cq_url);
           return (
             <div
               key={peca.id}
@@ -290,8 +290,10 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
                 )}
               </div>
               {temFotosCabine && (
-                <div className="flex items-center gap-2 border-t px-3 py-2">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Cabine</span>
+                <div className="flex items-center gap-2 border-t px-3 py-2 flex-wrap">
+                  {(peca.foto_insumos_url || peca.foto_acabador_assinado_url) && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Cabine</span>
+                  )}
                   {peca.foto_insumos_url && (
                     <a href={peca.foto_insumos_url} target="_blank" rel="noopener noreferrer">
                       <img src={peca.foto_insumos_url} alt="Insumos" className="h-10 w-10 object-cover rounded border" title="Insumos" />
@@ -301,6 +303,14 @@ export function OSDetalhePecas({ os, onStatusChanged }: Props) {
                     <a href={peca.foto_acabador_assinado_url} target="_blank" rel="noopener noreferrer">
                       <img src={peca.foto_acabador_assinado_url} alt="Doc acabador" className="h-10 w-10 object-cover rounded border" title="Doc do acabador" />
                     </a>
+                  )}
+                  {peca.foto_cq_url && (
+                    <>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground ml-2">CQ</span>
+                      <a href={peca.foto_cq_url} target="_blank" rel="noopener noreferrer">
+                        <img src={peca.foto_cq_url} alt="Foto CQ" className="h-10 w-10 object-cover rounded border" title="Foto CQ" />
+                      </a>
+                    </>
                   )}
                 </div>
               )}

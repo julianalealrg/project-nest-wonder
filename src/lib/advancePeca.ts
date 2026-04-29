@@ -83,6 +83,7 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
         update.status_acabamento = "pendente";
       }
       update.cq_responsavel = fields.responsavel;
+      if (fields.foto_cq_url) update.foto_cq_url = fields.foto_cq_url;
       break;
   }
 

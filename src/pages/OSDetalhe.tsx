@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrdensServico } from "@/hooks/useOrdensServico";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 import { useQueryClient } from "@tanstack/react-query";
-import { gerarPDFOS } from "@/lib/pdfOS";
+import { gerarPDFOSCompleto } from "@/lib/pdfOS";
 import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
 import { OSDetalheHeader } from "@/components/producao/detalhe/OSDetalheHeader";
 import { OSDetalheOperacao } from "@/components/producao/detalhe/OSDetalheOperacao";
@@ -75,7 +75,7 @@ export default function OSDetalhe() {
         <ArrowLeft className="mr-1 h-4 w-4" />
         Voltar
       </Button>
-      <Button size="sm" variant="outline" onClick={() => setPdfPreview(gerarPDFOS(os))}>
+      <Button size="sm" variant="outline" onClick={async () => setPdfPreview(await gerarPDFOSCompleto(os))}>
         <FileText className="mr-1 h-4 w-4" />
         Gerar PDF
       </Button>

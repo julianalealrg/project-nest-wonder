@@ -314,6 +314,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           foto_acabador_assinado_url: string | null
+          foto_cq_url: string | null
           foto_insumos_url: string | null
           id: string
           item: string | null
@@ -345,6 +346,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           foto_acabador_assinado_url?: string | null
+          foto_cq_url?: string | null
           foto_insumos_url?: string | null
           id?: string
           item?: string | null
@@ -376,6 +378,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           foto_acabador_assinado_url?: string | null
+          foto_cq_url?: string | null
           foto_insumos_url?: string | null
           id?: string
           item?: string | null
