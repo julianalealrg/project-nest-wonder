@@ -115,6 +115,38 @@ export async function advancePecaStation({ pecaId, osId, osCodigo, pecaItem, sta
       supabase.from("pecas").select("*").eq("os_id", osId),
     ]);
     if (osRow && pecasRows) {
+      // Auto-revert: se peça foi reprovada no CQ e a OS está em "cq", devolve pra
+      // "acabamento" pra retrabalho. Senão a OS segue marcada como "CQ" no Kanban e
+      // pode ser confundida com pronta pra expedir (mesmo com guard impedindo o avanço).
+      if (
+        station === "cq" &&
+        fields.cq_result === "reprovado" &&
+        osRow.status === "cq"
+      ) {
+        await supabase
+          .from("ordens_servico")
+          .update({ status: "acabamento", localizacao: "Base 2", updated_at: new Date().toISOString() } as any)
+          .eq("id", osId);
+        await supabase.from("activity_logs").insert({
+          action: "mudanca_status",
+          entity_type: "ordens_servico",
+          entity_id: osId,
+          entity_description: osCodigo,
+          user_name: "Sistema (CQ reprovado)",
+          details: {
+            from_status: "cq",
+            to_status: "acabamento",
+            motivo: `Peça reprovada no CQ — devolvida para Acabamento pra retrabalho. Motivo: ${fields.observacao || "—"}`,
+            peca_id: pecaId,
+          },
+        });
+        toast({
+          title: `${osCodigo} devolvida para Acabamento`,
+          description: `Peça ${pecaItem} reprovada no CQ — refaça e reenvie.`,
+        });
+        return;
+      }
+
       // Auto-advance OS para "cq" quando peça vai para CQ e todas as peças
       // já estão com acabamento concluído (ou não aplicável).
       if (station === "cq" && osRow.status === "acabamento") {
