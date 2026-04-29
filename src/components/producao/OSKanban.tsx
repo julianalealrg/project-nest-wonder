@@ -130,10 +130,12 @@ export function OSKanban({ data }: OSKanbanProps) {
 
   const terceirosOSs = data.filter((os) => os.status === "terceiros");
   const recusadasOSs = data.filter((os) => os.status === "terceiros_recusado");
+  const retornoB1OSs = data.filter((os) => os.status === "enviado_base1");
   const fluxoOSs = data.filter(
     (os) =>
       os.status !== "terceiros" &&
       os.status !== "terceiros_recusado" &&
+      os.status !== "enviado_base1" &&
       isVisivelNoKanban(os),
   );
 
@@ -192,6 +194,32 @@ export function OSKanban({ data }: OSKanbanProps) {
           </div>
         )}
       </div>
+
+      {/* Faixa horizontal de Retorno à B1 (só aparece quando houver) */}
+      {retornoB1OSs.length > 0 && (
+        <div className="bg-card border rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-nue-azul text-white">
+                Retorno à B1
+              </span>
+              <span className="text-muted-foreground font-normal">
+                ({retornoB1OSs.length})
+              </span>
+              <span className="text-[11px] text-muted-foreground italic font-normal">
+                em trânsito B2 → B1 pra refazer corte/usinagem
+              </span>
+            </h3>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {retornoB1OSs.map((os) => (
+              <div key={os.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
+                <OSCard os={os} onClick={() => handleClick(os)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Colunas do fluxo principal */}
       <div className="flex gap-3 overflow-x-auto pb-2">

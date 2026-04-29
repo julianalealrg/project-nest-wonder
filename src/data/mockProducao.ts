@@ -96,6 +96,7 @@ export const STATUS_LABELS: Record<string, string> = {
   acabamento: "Acabamento",
   cq: "CQ",
   expedicao: "Expedição",
+  enviado_base1: "Retorno à B1",
   entregue: "Entregue",
   terceiros: "Terceiros",
   terceiros_recusado: "Terceiro recusou",
