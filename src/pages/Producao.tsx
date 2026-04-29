@@ -96,7 +96,7 @@ export default function Producao() {
           {isLoading ? (
             <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</span>
           ) : (
-            `${filtered.length} ordem${filtered.length !== 1 ? "ns" : ""} encontrada${filtered.length !== 1 ? "s" : ""}`
+            `${filtered.length} orden${filtered.length !== 1 ? "s" : ""} encontrada${filtered.length !== 1 ? "s" : ""}`
           )}
         </div>
 
