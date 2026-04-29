@@ -42,6 +42,11 @@ export function evaluateTransition(os: MockOS, toStatus: string): GuardAction {
     return { kind: "select_terceiro" };
   }
 
+  // Terceiro recusou -> reencaminhar para outro terceiro : escolher novo terceiro
+  if (os.status === "terceiros_recusado" && toStatus === "terceiros") {
+    return { kind: "select_terceiro" };
+  }
+
   // Enviado Base 2 -> Acabamento : exige conferência do romaneio B1->B2 na Base 2
   // E nenhuma ocorrência de recebimento pendente sem encaminhamento.
   if (os.status === "enviado_base2" && toStatus === "acabamento") {

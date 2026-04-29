@@ -26,6 +26,11 @@ const TRANSITION_FIELDS: Record<string, TransitionField[]> = {
   "cq->acabamento": [{ key: "motivo_reprovacao", label: "Motivo da reprovação", required: true }],
   "expedicao->entregue": [],
   "terceiros->entregue": [],
+  "terceiros->terceiros_recusado": [
+    { key: "motivo_recusa", label: "Motivo da recusa do terceiro", required: true },
+  ],
+  "terceiros_recusado->cortando": [],
+  "terceiros_recusado->terceiros": [],
 };
 
 export function getTransitionFields(from: string, to: string): TransitionField[] {

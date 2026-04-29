@@ -20,7 +20,11 @@ import { NovoRomaneioDialog } from "@/components/logistica/NovoRomaneioDialog";
 import { getOrigemTagInfo } from "@/lib/origemTag";
 import { OSDetalheDetalhes } from "./OSDetalheDetalhes";
 
-const REGRESSIVE_TRANSITIONS = new Set<string>(["cq->acabamento"]);
+const REGRESSIVE_TRANSITIONS = new Set<string>([
+  "cq->acabamento",
+  "terceiros->terceiros_recusado",
+  "terceiros_recusado->cortando",
+]);
 function isRegressive(from: string, to: string) {
   return REGRESSIVE_TRANSITIONS.has(`${from}->${to}`);
 }
@@ -38,6 +42,15 @@ function getBotaoProximoStatus(os: MockOS, nextStatus: string): { label: string;
   }
   if (os.status === "cortando" && nextStatus === "terceiros") {
     if (guard.kind === "select_terceiro") return { label: "Enviar para terceiro", disabled: false };
+  }
+  if (os.status === "terceiros" && nextStatus === "terceiros_recusado") {
+    return { label: "Terceiro recusou", disabled: false };
+  }
+  if (os.status === "terceiros_recusado" && nextStatus === "cortando") {
+    return { label: "Refazer na Base 1", disabled: false };
+  }
+  if (os.status === "terceiros_recusado" && nextStatus === "terceiros") {
+    if (guard.kind === "select_terceiro") return { label: "Reencaminhar a outro terceiro", disabled: false };
   }
   if (guard.kind === "blocked") return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: true, tooltip: guard.reason };
   return { label: TRANSITION_LABELS[nextStatus] || nextStatus, disabled: false };

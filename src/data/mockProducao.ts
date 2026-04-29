@@ -98,6 +98,7 @@ export const STATUS_LABELS: Record<string, string> = {
   expedicao: "Expedição",
   entregue: "Entregue",
   terceiros: "Terceiros",
+  terceiros_recusado: "Terceiro recusou",
 };
 
 function makePecas(count: number, statusCorte: string, statusAcab: string, cortador: string | null, acabador: string | null, doneCount: number): MockPeca[] {

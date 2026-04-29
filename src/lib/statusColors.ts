@@ -14,6 +14,7 @@ export const OS_STATUS_BADGE: Record<string, string> = {
   em_transito: "bg-nue-azul/75 text-white",
   entregue: "bg-nue-verde text-white",
   terceiros: "bg-nue-chumbo text-white",
+  terceiros_recusado: "bg-nue-vermelho text-white",
 };
 
 export const REGISTRO_STATUS_BADGE: Record<string, string> = {
