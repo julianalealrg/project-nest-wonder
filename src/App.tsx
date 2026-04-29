@@ -12,6 +12,8 @@ import Unsubscribe from "./pages/Unsubscribe";
 import Index from "./pages/Index";
 import Producao from "./pages/Producao";
 import OSDetalhe from "./pages/OSDetalhe";
+import Clientes from "./pages/Clientes";
+import ClienteDetalhe from "./pages/ClienteDetalhe";
 import Logistica from "./pages/Logistica";
 import Registros from "./pages/Registros";
 import DashboardPage from "./pages/DashboardPage";
@@ -56,6 +58,8 @@ function AppRoutes() {
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/producao" element={<ProtectedRoute><Producao /></ProtectedRoute>} />
       <Route path="/producao/:id" element={<ProtectedRoute><OSDetalhe /></ProtectedRoute>} />
+      <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
+      <Route path="/clientes/:id" element={<ProtectedRoute><ClienteDetalhe /></ProtectedRoute>} />
       <Route path="/logistica" element={<ProtectedRoute><Logistica /></ProtectedRoute>} />
       <Route path="/registros" element={<ProtectedRoute><Registros /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
