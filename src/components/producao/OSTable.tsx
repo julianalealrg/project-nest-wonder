@@ -150,6 +150,18 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                           );
                         })()}
                         {(() => {
+                          const pecasReprovadas = os.pecas.filter((p) => p.status_cq === "reprovado").length;
+                          if (pecasReprovadas === 0) return null;
+                          return (
+                            <span
+                              title={`${pecasReprovadas} peça(s) reprovada(s) no CQ esperando retrabalho`}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-nue-vermelho text-white"
+                            >
+                              Retrabalho ({pecasReprovadas})
+                            </span>
+                          );
+                        })()}
+                        {(() => {
                           const emTransito = (os.romaneios || []).some((r) => r.status === "em_transito");
                           if (!emTransito) return null;
                           return (

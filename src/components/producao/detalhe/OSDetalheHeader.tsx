@@ -80,6 +80,7 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
   const dataEntrega = os.data_entrega ? new Date(os.data_entrega) : null;
   const diasRestantes = dataEntrega ? Math.ceil((dataEntrega.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const atrasada = diasRestantes !== null && diasRestantes < 0 && os.status !== "entregue";
+  const pecasReprovadas = os.pecas.filter((p) => p.status_cq === "reprovado").length;
 
   async function doChangeStatus(newStatus: string, extraFields: Record<string, string>) {
     setLoading(true);
@@ -212,8 +213,13 @@ export function OSDetalheHeader({ os, onStatusChanged }: Props) {
       </div>
 
       {/* Linha de alertas — só renderiza se houver algum */}
-      {(ocorrenciasPendentes > 0 || romaneioEmTransito || atrasada || os.registro_origem_aguarda_projetos) && (
+      {(ocorrenciasPendentes > 0 || romaneioEmTransito || atrasada || pecasReprovadas > 0 || os.registro_origem_aguarda_projetos) && (
         <div className="px-5 pb-3 flex flex-wrap gap-2">
+          {pecasReprovadas > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-nue-vermelho text-white">
+              <AlertCircle className="h-3 w-3" /> {pecasReprovadas} peça(s) reprovada(s) — retrabalho
+            </span>
+          )}
           {ocorrenciasPendentes > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-red-100 text-red-700">
               <AlertCircle className="h-3 w-3" /> {ocorrenciasPendentes} ocorrência(s) pendente(s)

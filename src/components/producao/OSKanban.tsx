@@ -42,6 +42,7 @@ function OSCard({ os, onClick }: { os: MockOS; onClick: () => void }) {
     new Date(os.data_entrega).getTime() < Date.now();
   const donePecas = os.pecas.filter((p) => p.status_cq === "aprovado").length;
   const totalPecas = os.pecas.length;
+  const pecasReprovadas = os.pecas.filter((p) => p.status_cq === "reprovado").length;
 
   return (
     <button
@@ -80,11 +81,16 @@ function OSCard({ os, onClick }: { os: MockOS; onClick: () => void }) {
         )}
       </div>
 
-      {(ocorrenciasPendentes > 0 || emTransito || isAtrasado) && (
+      {(ocorrenciasPendentes > 0 || emTransito || isAtrasado || pecasReprovadas > 0) && (
         <div className="flex flex-wrap items-center gap-1">
           {isAtrasado && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-destructive text-destructive-foreground">
               Atrasado
+            </span>
+          )}
+          {pecasReprovadas > 0 && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-vermelho text-white">
+              Retrabalho ({pecasReprovadas})
             </span>
           )}
           {ocorrenciasPendentes > 0 && (
