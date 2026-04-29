@@ -71,7 +71,7 @@ export function OSFilters(props: OSFiltersProps) {
         </Select>
 
         <Select value={props.status} onValueChange={props.onStatusChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="flex-1 min-w-[140px] sm:flex-none sm:w-[180px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
