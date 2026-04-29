@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { X, FileText, CheckCircle, Loader2, Truck } from "lucide-react";
+import { X, FileText, CheckCircle, Loader2, Truck, Trash2 } from "lucide-react";
 import { gerarPDFRomaneio } from "@/lib/pdfRomaneio";
 import { PdfPreviewDialog } from "@/components/common/PdfPreviewDialog";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { Romaneio, RomaneioPeca, ROTA_LABELS, ROMANEIO_STATUS_LABELS } from "@/hooks/useRomaneios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,7 +49,11 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
   const [fotoCarga, setFotoCarga] = useState<File[]>([]);
   const [fotoRomaneioMotorista, setFotoRomaneioMotorista] = useState<File[]>([]);
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const isAdmin = profile?.perfil === "admin";
 
   if (!romaneio) return null;
 
@@ -468,6 +474,39 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
     }
   }
 
+  async function handleDelete() {
+    if (!romaneio) return;
+    setDeleting(true);
+    try {
+      await supabase.from("romaneio_pecas").delete().eq("romaneio_id", romaneio.id);
+      const { error } = await supabase.from("romaneios").delete().eq("id", romaneio.id);
+      if (error) throw error;
+
+      await supabase.from("activity_logs").insert({
+        action: "exclusao_romaneio",
+        entity_type: "romaneios",
+        entity_id: romaneio.id,
+        entity_description: romaneio.codigo,
+        user_name: profile?.nome || "Admin",
+        details: {
+          tipo_rota: romaneio.tipo_rota,
+          status_no_momento: romaneio.status,
+          pecas: romaneio.pecas.length,
+        },
+      });
+
+      toast({ title: `${romaneio.codigo} excluído` });
+      queryClient.invalidateQueries({ queryKey: ["romaneios"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens_servico"] });
+      setDeleteOpen(false);
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const headerNode = (
     <div className="flex items-center justify-between px-5 py-4 border-b">
       <div>
@@ -837,17 +876,48 @@ export function RomaneioPanel({ romaneio, onClose, onChanged, asDialog = false }
           Confirmar
         </Button>
       )}
+      {isAdmin && !despachando && !conferindo && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-destructive border-destructive/40 hover:bg-destructive/10"
+          onClick={() => setDeleteOpen(true)}
+          disabled={deleting}
+          title="Excluir romaneio (admin)"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 
   const pdfDialog = (
-    <PdfPreviewDialog
-      open={!!pdfPreview}
-      onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
-      blobUrl={pdfPreview?.blobUrl || null}
-      fileName={pdfPreview?.fileName || "documento.pdf"}
-      title={`PDF — ${romaneio.codigo}`}
-    />
+    <>
+      <PdfPreviewDialog
+        open={!!pdfPreview}
+        onOpenChange={(v) => { if (!v) setPdfPreview(null); }}
+        blobUrl={pdfPreview?.blobUrl || null}
+        fileName={pdfPreview?.fileName || "documento.pdf"}
+        title={`PDF — ${romaneio.codigo}`}
+      />
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={`Excluir romaneio ${romaneio.codigo}?`}
+        confirmText={romaneio.codigo}
+        loading={deleting}
+        onConfirm={handleDelete}
+        description={
+          <div>
+            Vai apagar o romaneio <strong>{romaneio.codigo}</strong> ({ROTA_LABELS[romaneio.tipo_rota] || romaneio.tipo_rota}) e remover {romaneio.pecas.length} peça(s) vinculada(s) a ele.
+            <br />
+            As OS continuam existindo, mas perdem este romaneio do histórico.
+            <br />
+            <span className="font-semibold text-destructive">Esta ação é irreversível.</span>
+          </div>
+        }
+      />
+    </>
   );
 
   if (asDialog) {

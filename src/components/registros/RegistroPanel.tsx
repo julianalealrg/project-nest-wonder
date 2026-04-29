@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { X, FileText, ChevronRight, Loader2, AlertTriangle, Truck, Palette } from "lucide-react";
+import { X, FileText, ChevronRight, Loader2, AlertTriangle, Truck, Palette, Trash2 } from "lucide-react";
 import { Registro } from "@/hooks/useRegistros";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getNextRegistroStatuses,
   REGISTRO_STATUS_LABELS,
@@ -29,13 +32,51 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
   const [loading, setLoading] = useState(false);
   const [pdfPreview, setPdfPreview] = useState<{ blobUrl: string; fileName: string } | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   // Revoke do blobUrl é feito pelo PdfPreviewDialog (no unmount/troca de URL).
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const isAdmin = profile?.perfil === "admin";
 
   if (!registro) return null;
 
   const nextStatuses = getNextRegistroStatuses(registro.status);
   const origemTag = REGISTRO_ORIGEM_LABELS[registro.origem] || { label: registro.origem, className: "bg-muted text-muted-foreground" };
+
+  async function handleDelete() {
+    if (!registro) return;
+    setDeleting(true);
+    try {
+      // Desvincula OS que possa ter sido gerada por este registro
+      await supabase
+        .from("ordens_servico")
+        .update({ registro_origem_id: null } as any)
+        .eq("registro_origem_id", registro.id);
+
+      const { error } = await supabase.from("registros").delete().eq("id", registro.id);
+      if (error) throw error;
+
+      await supabase.from("activity_logs").insert({
+        action: "exclusao_registro",
+        entity_type: "registros",
+        entity_id: registro.id,
+        entity_description: registro.codigo,
+        user_name: profile?.nome || "Admin",
+        details: { cliente: registro.cliente, origem: registro.origem, status: registro.status },
+      });
+
+      toast({ title: `${registro.codigo} excluído` });
+      queryClient.invalidateQueries({ queryKey: ["registros"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens_servico"] });
+      setDeleteOpen(false);
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleStatusChange(newStatus: string) {
     if (!registro) return;
@@ -308,6 +349,18 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ))}
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive border-destructive/40 hover:bg-destructive/10"
+              disabled={deleting}
+              onClick={() => setDeleteOpen(true)}
+              title="Excluir (admin)"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -317,6 +370,23 @@ export function RegistroPanel({ registro, onClose, onStatusChanged }: RegistroPa
         blobUrl={pdfPreview?.blobUrl || null}
         fileName={pdfPreview?.fileName || "documento.pdf"}
         title={`PDF — ${registro.codigo}`}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={`Excluir ${registro.codigo}?`}
+        confirmText={registro.codigo}
+        loading={deleting}
+        onConfirm={handleDelete}
+        description={
+          <div>
+            Vai apagar o registro <strong>{registro.codigo}</strong> ({registro.cliente || "—"}).
+            OS gerada por este registro perde a referência (mas não é apagada).
+            <br />
+            <span className="font-semibold text-destructive">Esta ação é irreversível.</span>
+          </div>
+        }
       />
     </>
   );

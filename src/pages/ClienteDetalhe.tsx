@@ -13,12 +13,18 @@ import {
   FileText,
   Hash,
   Briefcase,
+  Trash2,
 } from "lucide-react";
 import { useCliente, useOSDoCliente } from "@/hooks/useClientes";
 import { ClienteDialog } from "@/components/clientes/ClienteDialog";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { osBadgeClass } from "@/lib/statusColors";
 import { getOrigemTagInfo } from "@/lib/origemTag";
 import { STATUS_LABELS } from "@/data/mockProducao";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ClienteDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +32,49 @@ export default function ClienteDetalhe() {
   const { data: cliente, isLoading } = useCliente(id);
   const { data: osList = [] } = useOSDoCliente(id);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const isAdmin = profile?.perfil === "admin";
+
+  async function handleDelete() {
+    if (!cliente) return;
+    setDeleting(true);
+    try {
+      if (osList.length > 0) {
+        toast({
+          title: "Não dá pra apagar",
+          description: `Esse cliente tem ${osList.length} OS vinculada(s). Apague ou desvincule as OS primeiro.`,
+          variant: "destructive",
+        });
+        setDeleting(false);
+        setDeleteOpen(false);
+        return;
+      }
+      const { error } = await supabase.from("clientes").delete().eq("id", cliente.id);
+      if (error) throw error;
+
+      await supabase.from("activity_logs").insert({
+        action: "exclusao_cliente",
+        entity_type: "clientes",
+        entity_id: cliente.id,
+        entity_description: cliente.nome,
+        user_name: profile?.nome || "Admin",
+        details: { cnpj_cpf: cliente.cnpj_cpf },
+      });
+
+      toast({ title: `${cliente.nome} excluído` });
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      navigate("/clientes");
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir cliente", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -66,6 +115,19 @@ export default function ClienteDetalhe() {
             <Pencil className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Editar</span>
           </Button>
+          {isAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive border-destructive/40 hover:bg-destructive/10"
+              onClick={() => setDeleteOpen(true)}
+              title="Excluir cliente (admin)"
+              disabled={deleting}
+            >
+              <Trash2 className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Excluir</span>
+            </Button>
+          )}
         </div>
       }
     >
@@ -202,6 +264,35 @@ export default function ClienteDetalhe() {
       </div>
 
       <ClienteDialog open={editOpen} onOpenChange={setEditOpen} cliente={cliente} />
+
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={`Excluir cliente ${cliente.nome}?`}
+        confirmText={cliente.nome}
+        loading={deleting}
+        onConfirm={handleDelete}
+        description={
+          <div>
+            Vai apagar o cadastro de <strong>{cliente.nome}</strong>.
+            {osList.length > 0 ? (
+              <>
+                <br />
+                <span className="font-semibold text-destructive">
+                  Bloqueado: este cliente tem {osList.length} OS vinculada(s).
+                </span>
+                <br />
+                Apague ou desvincule as OS primeiro.
+              </>
+            ) : (
+              <>
+                <br />
+                <span className="font-semibold text-destructive">Esta ação é irreversível.</span>
+              </>
+            )}
+          </div>
+        }
+      />
     </AppLayout>
   );
 }
