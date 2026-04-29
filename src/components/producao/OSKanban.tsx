@@ -88,12 +88,12 @@ function OSCard({ os, onClick }: { os: MockOS; onClick: () => void }) {
             </span>
           )}
           {ocorrenciasPendentes > 0 && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-vermelho text-white">
               Ocorrência ({ocorrenciasPendentes})
             </span>
           )}
           {emTransito && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-nue-azul text-white">
               Em trânsito
             </span>
           )}
