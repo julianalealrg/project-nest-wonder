@@ -55,6 +55,7 @@ export const ROMANEIO_STATUS_LABELS: Record<string, string> = {
   pendente: "Pendente",
   em_transito: "Em Trânsito",
   entregue: "Entregue",
+  cancelado: "Cancelado",
 };
 
 // Categorias de rota — para separar visão Interna vs Expedição Cliente

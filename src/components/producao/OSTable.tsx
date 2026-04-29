@@ -135,6 +135,29 @@ export function OSTable({ data, onSelect }: OSTableProps) {
                             </span>
                           );
                         })()}
+                        {(() => {
+                          const ocorrenciasPendentes = (os.registros || []).filter(
+                            (r) => r.status !== "resolvido" && !r.acao_produtiva,
+                          ).length;
+                          if (ocorrenciasPendentes === 0) return null;
+                          return (
+                            <span
+                              title={`${ocorrenciasPendentes} ocorrência(s) sem encaminhamento`}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-red-100 text-red-700"
+                            >
+                              Ocorrência ({ocorrenciasPendentes})
+                            </span>
+                          );
+                        })()}
+                        {(() => {
+                          const emTransito = (os.romaneios || []).some((r) => r.status === "em_transito");
+                          if (!emTransito) return null;
+                          return (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-blue-100 text-blue-700">
+                              Em trânsito
+                            </span>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">

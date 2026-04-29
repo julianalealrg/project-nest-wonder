@@ -19,8 +19,33 @@ interface OSOption {
   codigo: string;
   cliente_nome: string;
   cliente_endereco: string | null;
+  status: string;
   pecas: { id: string; item: string; descricao: string }[];
 }
+
+/**
+ * Mapeia tipo de rota → status de OS compatíveis para criar romaneio.
+ * Bloqueia o "porta lateral" de criar romaneio fora do fluxo da OS.
+ */
+const STATUS_COMPATIVEIS_POR_ROTA: Record<string, string[]> = {
+  base1_base2: ["cortando"],
+  base2_cliente: ["expedicao"],
+  base1_cliente: ["terceiros"],
+  base2_base1: ["acabamento", "cq"],
+  recolha: ["entregue"],
+};
+
+const STATUS_LABEL_PT: Record<string, string> = {
+  aguardando_material: "Ag. Material",
+  fila_corte: "Fila Corte",
+  cortando: "Cortando",
+  enviado_base2: "Enviado B2",
+  acabamento: "Acabamento",
+  cq: "CQ",
+  expedicao: "Expedição",
+  entregue: "Entregue",
+  terceiros: "Terceiros",
+};
 
 interface NovoRomaneioDialogProps {
   open: boolean;
@@ -53,8 +78,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
       setLoadingOs(true);
       const { data } = await supabase
         .from("ordens_servico")
-        .select("id, codigo, clientes(nome, endereco)")
-        .neq("status", "entregue")
+        .select("id, codigo, status, clientes(nome, endereco)")
         .order("codigo");
       if (data) {
         const osIds = data.map((d) => d.id);
@@ -77,6 +101,7 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
             codigo: d.codigo,
             cliente_nome: cli?.nome || "—",
             cliente_endereco: cli?.endereco || null,
+            status: d.status,
             pecas: pecasMap.get(d.id) || [],
           };
         });
@@ -154,10 +179,72 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
 
   const selectedOSes = osList.filter((o) => selectedOsIds.includes(o.id));
 
+  // Filtra OS exibidas pela compatibilidade com o tipo de rota selecionado
+  const statusCompativeis = tipoRota ? STATUS_COMPATIVEIS_POR_ROTA[tipoRota] || [] : [];
+  const osListFiltrada = tipoRota
+    ? osList.filter((o) => statusCompativeis.includes(o.status))
+    : [];
+
+  // Lista de status compatíveis em PT pra mostrar no empty state
+  const statusCompativeisLabel = statusCompativeis.map((s) => STATUS_LABEL_PT[s] || s).join(", ");
+
+  /**
+   * Verifica se já existe romaneio pendente/em_transito da mesma OS+rota.
+   * Retorna o array de romaneios conflitantes (pode estar vazio).
+   */
+  async function buscarRomaneiosConflitantes(osIds: string[], rota: string) {
+    const { data } = await supabase
+      .from("romaneio_pecas")
+      .select("romaneio_id, os_id, romaneios(id, codigo, tipo_rota, status)")
+      .in("os_id", osIds);
+
+    const conflitos = new Map<string, { id: string; codigo: string; os_ids: Set<string> }>();
+    for (const rp of data || []) {
+      const rom = (rp as any).romaneios;
+      if (!rom) continue;
+      if (rom.tipo_rota !== rota) continue;
+      if (rom.status !== "pendente" && rom.status !== "em_transito") continue;
+      const existing = conflitos.get(rom.id) || { id: rom.id, codigo: rom.codigo, os_ids: new Set() };
+      existing.os_ids.add(rp.os_id as string);
+      conflitos.set(rom.id, existing);
+    }
+    return Array.from(conflitos.values());
+  }
+
   async function handleSave() {
     if (!tipoRota) { toast({ title: "Selecione a rota", variant: "destructive" }); return; }
     if (selectedOsIds.length === 0) { toast({ title: "Selecione ao menos uma OS", variant: "destructive" }); return; }
     if (selectedPecaIds.size === 0 && tipoRota !== "base2_cliente") { toast({ title: "Selecione ao menos uma peça", variant: "destructive" }); return; }
+
+    // Verifica conflito com romaneios já abertos da mesma OS+rota
+    const conflitos = await buscarRomaneiosConflitantes(selectedOsIds, tipoRota);
+    if (conflitos.length > 0) {
+      const lista = conflitos.map((c) => c.codigo).join(", ");
+      const escolha = window.confirm(
+        `Já existe romaneio aberto pra alguma OS selecionada nesta rota: ${lista}\n\n` +
+        `Cancelar o(s) anterior(es) e criar um novo?\n\n` +
+        `OK = cancela anteriores e cria novo\n` +
+        `Cancelar = mantém todos (criar romaneio adicional)`
+      );
+      if (escolha) {
+        // Cancelar romaneios anteriores
+        const ids = conflitos.map((c) => c.id);
+        await supabase
+          .from("romaneios")
+          .update({ status: "cancelado" } as any)
+          .in("id", ids);
+        for (const c of conflitos) {
+          await supabase.from("activity_logs").insert({
+            action: "romaneio_cancelado",
+            entity_type: "romaneios",
+            entity_id: c.id,
+            entity_description: c.codigo,
+            user_name: profile?.nome || "Sistema",
+            details: { motivo: "Substituído por romaneio novo da mesma OS+rota" },
+          });
+        }
+      }
+    }
 
     setSaving(true);
     try {
@@ -279,28 +366,41 @@ export function NovoRomaneioDialog({ open, onOpenChange, onSuccess, presetTipoRo
               </div>
             </div>
 
-            {/* OS selection */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Selecionar OS *</Label>
-              {loadingOs ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
-                </div>
-              ) : (
-                <div className="space-y-1 max-h-[200px] overflow-y-auto border rounded-md p-2">
-                  {osList.map((os) => (
-                    <label key={os.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/30 cursor-pointer text-sm">
-                      <Checkbox
-                        checked={selectedOsIds.includes(os.id)}
-                        onCheckedChange={() => toggleOs(os.id)}
-                      />
-                      <span className="font-medium">{os.codigo}</span>
-                      <span className="text-muted-foreground text-xs">— {os.cliente_nome}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* OS selection — só aparece após escolher a rota */}
+            {tipoRota && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">
+                  Selecionar OS * <span className="font-normal text-muted-foreground">(status compatível: {statusCompativeisLabel})</span>
+                </Label>
+                {loadingOs ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+                  </div>
+                ) : osListFiltrada.length === 0 ? (
+                  <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
+                    Nenhuma OS no status <span className="font-medium">{statusCompativeisLabel}</span> agora. Avance a OS no painel de Produção pra que ela apareça aqui.
+                  </div>
+                ) : (
+                  <div className="space-y-1 max-h-[200px] overflow-y-auto border rounded-md p-2">
+                    {osListFiltrada.map((os) => (
+                      <label key={os.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/30 cursor-pointer text-sm">
+                        <Checkbox
+                          checked={selectedOsIds.includes(os.id)}
+                          onCheckedChange={() => toggleOs(os.id)}
+                        />
+                        <span className="font-medium">{os.codigo}</span>
+                        <span className="text-muted-foreground text-xs">— {os.cliente_nome}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {!tipoRota && (
+              <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
+                Selecione a rota acima pra ver as OS disponíveis.
+              </div>
+            )}
 
             {/* Peças checklist */}
             {selectedOSes.length > 0 && (
